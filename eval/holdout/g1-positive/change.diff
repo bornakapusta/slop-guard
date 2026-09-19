@@ -1,0 +1,26 @@
+--- a/lib/path_tracker/pages.rb
++++ b/lib/path_tracker/pages.rb
+@@ -31,6 +31,10 @@
+       @pages ||= all_pages.values
+     end
+ 
++    def total_visits
++      all_pages.values.sum(&:visits_count)
++    end
++
+     private
+ 
+       attr_accessor :all_pages
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,10 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/pages'
++RSpec.describe PathTracker::Pages do
++  it 'counts visits across pages' do
++    pages = described_class.new
++    pages.add_page('/one').add_visit('127.0.0.1')
++    pages.add_page('/two').add_visit('127.0.0.1')
++    expect(pages.pages.size).to eq(2)
++  end
++end

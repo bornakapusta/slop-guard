@@ -1,0 +1,11 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/path_tracker/page.rb": {
+      "before_sha256": "285c42bd7886df4d9d39263c7dd419580e0956dcfe10669813105e4d0f6cdc70",
+      "after": "# frozen_string_literal: true\n\nrequire 'ipaddr'\n\nmodule PathTracker\n  class Page\n    attr_accessor :path, :visits_count, :unique_visits_count, :uniq_ip_addresses\n\n    def initialize(path)\n      @path = path\n      @unique_visits_count = 0\n      @visits_count = 0\n      @uniq_ip_addresses = []\n    end\n\n    def add_visit(ip_address)\n      raise ArgumentError, \"IP is required\" if ip_address.nil?\n\n      @visits_count += 1\n      return if already_visited?(ip_address)\n\n      uniq_ip_addresses << ip_address # Should be IPAddr.new(ip_address)\n      @unique_visits_count += 1\n    end\n\n    private\n\n      def already_visited?(ip_address)\n        uniq_ip_addresses.include?(ip_address) # Should be IPAddr.new(ip_address)\n      end\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nA valid IP visit increments visits_count from zero to one.\n\n## Expected behavior\n- [behavior] A valid IP visit increments visits_count from zero to one.\n\n## Failure cases\n- [failure] add_visit(nil) raises ArgumentError with message IP is required.\n",
+  "omitted": []
+}

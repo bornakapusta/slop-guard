@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "no_concern",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The documented tolerant mode ignores nil without recording a visit. Its assertion tests this behavior; demanding an exception would invent a requirement."
+}

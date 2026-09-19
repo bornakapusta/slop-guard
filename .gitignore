@@ -1,0 +1,18 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# Installed dependencies and Ruby tooling
+.bundle/
+vendor/
+.ruby-lsp/
+.rubocop_cache/
+
+# Generated reports and coverage (eval/ contains versioned fixtures)
+tmp/
+coverage/
+
+# Local workspace and macOS metadata
+.context/
+.DS_Store

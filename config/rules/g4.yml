@@ -1,0 +1,14 @@
+name: Justified abstractions
+version: 1
+high: 0.85
+low: 0.20
+applicable: Does the PR introduce or expand a factory, strategy, registry, interface, or wrapper layer?
+global: Does a newly introduced abstraction have no demonstrated present purpose after considering all callers, testing isolation, framework requirements and explicit project constraints?
+candidate:
+  abstraction: Is this candidate part of a newly introduced indirection or abstraction layer rather than a concrete component?
+  consumers: Does the supplied source demonstrate multiple current production implementations or independent production consumers with distinct needs for this layer? Repeated test invocations do not establish that variation.
+  constraint: Does this layer serve a stated present constraint, including dependency injection, isolation or a framework contract?
+positive: [abstraction]
+negative: [consumers, constraint]
+message: The new abstraction has no demonstrated purpose in the supplied context.
+correction: Use the existing concrete component, or explain and demonstrate the present constraint served by this layer.

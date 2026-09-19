@@ -1,0 +1,15 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/path_tracker/pages.rb": {
+      "before_sha256": "19f6efcc81782c8d482a54f96e49af361a4531126ff98a413db3e7c80ae71a8b",
+      "after": "# frozen_string_literal: true\n\nrequire_relative 'page'\n\nmodule PathTracker\n  class Pages\n    def initialize\n      @all_pages = {}\n    end\n\n    def find_page_by_path(path)\n      page = all_pages.slice(path)\n      return if page.empty?\n\n      page.first[1]\n    end\n\n    def add_page(path)\n      all_pages.store(path, Page.new(path))\n    end\n\n    def sort_by_visits_desc\n      pages.sort_by(&:visits_count).reverse\n    end\n\n    def sort_by_unique_visits_desc\n      pages.sort_by(&:unique_visits_count).reverse\n    end\n\n    def pages\n      @pages ||= all_pages.values\n    end\n\n    def total_visits\n      all_pages.values.sum(&:visits_count)\n    end\n\n    private\n\n      attr_accessor :all_pages\n  end\nend\n"
+    },
+    "spec/tests/reviewer_feature_spec.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nrequire_relative '../../lib/path_tracker/pages'\nRSpec.describe PathTracker::Pages do\n  it 'counts visits across pages' do\n    pages = described_class.new\n    pages.add_page('/one').add_visit('127.0.0.1')\n    pages.add_page('/two').add_visit('127.0.0.1')\n    expect(pages.total_visits).to eq(2)\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\ntotal_visits returns the sum of visits across all pages.\n\n## Expected behavior\n- [behavior] total_visits returns the sum of visits across all pages.\n\n## Failure cases\n",
+  "omitted": []
+}

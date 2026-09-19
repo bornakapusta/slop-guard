@@ -1,0 +1,27 @@
+--- a/lib/path_tracker/visit_order.rb
++++ b/lib/path_tracker/visit_order.rb
+@@ -0,0 +1,9 @@
++# frozen_string_literal: true
++module PathTracker
++  class VisitOrder
++    ORDERS = { total: ->(page) { page.visits_count } }.freeze
++    def self.sort(pages, by: :total)
++      pages.sort_by(&ORDERS.fetch(by)).reverse
++    end
++  end
++end
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,12 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++require_relative '../../lib/path_tracker/visit_order'
++RSpec.describe PathTracker::VisitOrder do
++  it 'orders by visits' do
++    one = PathTracker::Page.new('/one')
++    two = PathTracker::Page.new('/two')
++    one.add_visit('127.0.0.1')
++    one.add_visit('127.0.0.1')
++    expect(described_class.sort([two, one])).to eq([one, two])
++  end
++end

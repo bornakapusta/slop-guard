@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "inconclusive",
+    "G2": "inconclusive",
+    "G3": "inconclusive",
+    "G4": "inconclusive"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The violation makes every counting call emit terminal output, coupling computation to presentation. The concrete presenter owns that side effect in the controls."
+}

@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "CSV serialization embeds a format in the counting collection. A concrete presenter keeps serialization out of that collection."
+}

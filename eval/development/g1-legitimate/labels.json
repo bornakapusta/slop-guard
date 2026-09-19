@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The requirement is repeated-IP counting. A path-only assertion cannot verify it; the real assertion uses two production calls. The legitimate case keeps that assertion outside the diff."
+}

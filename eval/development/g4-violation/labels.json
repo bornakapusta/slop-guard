@@ -1,0 +1,54 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "concern"
+  },
+  "findings": [
+    {
+      "rule": "G4",
+      "topic": "Presenters::ReportFormat",
+      "anchors": [
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 1
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 2
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 3
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 4
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 5
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 6
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 7
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 8
+        },
+        {
+          "path": "lib/presenters/report_format.rb",
+          "line": 9
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The registry selects among one format without a present variability requirement. The fixed version is a concrete formatter; the legitimate control implements both required formats."
+}

@@ -1,0 +1,11 @@
+--- a/lib/path_tracker/pages.rb
++++ b/lib/path_tracker/pages.rb
+@@ -16,6 +16,8 @@
+     end
+ 
+     def add_page(path)
++      raise ArgumentError, "Path is empty" if path.empty?
++
+       all_pages.store(path, Page.new(path))
+     end
+ 

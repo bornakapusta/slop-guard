@@ -1,0 +1,17 @@
+name: Focused responsibilities
+version: 1
+high: 0.85
+low: 0.20
+applicable: Does this PR change production methods involved in parsing, visit counting, or result presentation?
+global: Does a change mix parsing, counting, or presentation responsibilities with a concrete adverse consequence, beyond legitimate CLI orchestration?
+candidate:
+  parsing_counting: Does the changed candidate implement both log parsing and visit accounting beyond calling their public interfaces?
+  parsing_presentation: Does the changed candidate implement both log parsing and output formatting beyond calling their public interfaces?
+  counting_presentation: Does the changed candidate implement both visit accounting and output formatting beyond calling their public interfaces?
+  consequence: Does the change concretely couple an existing computation to an unrelated output format or side effect?
+  justified: Is this combination justified by the existing component boundary or a CLI orchestration role?
+positive: [consequence]
+any_positive: [parsing_counting, parsing_presentation, counting_presentation]
+negative: [justified]
+message: The changed method couples computation and presentation responsibilities.
+correction: Keep computation in its existing component and place formatting in the presenter; do not add a class without a demonstrated need.

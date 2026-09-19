@@ -1,0 +1,329 @@
+{
+  "run_id": "20260919T195144-20791",
+  "split": "development",
+  "repetitions": 1,
+  "versions": {
+    "model": "jev-1.13.0",
+    "rules": "e33a42bb9bbda4d1aaecce25b57c8309f02c633414b6ae6ee0b46e291c4d91cf",
+    "engine": "76836c6bd1dec884cd03ca2fa26b613a87e7add1b01db3397af9596fe422aea3",
+    "dataset": "36bbaf78f4cf4100a5b36e1ccaa240a008587a0e4883619b34107f0ffc7bbcef",
+    "lockfile": "b643c9d72ca6dab7320d1551fcfed7b779ea5038cf3b361dc2e312a4fd378507",
+    "ruby": "3.4.5",
+    "profile": "0ab896d23b0f5cb7a88fe52a091f9c141e8cb22ad04c90652dbcf5d4fa9e256e"
+  },
+  "labels_reviewed": false,
+  "case_passes": 4,
+  "case_count": 16,
+  "metrics": {
+    "true_positives": 0,
+    "false_positives": 0,
+    "misses": 4,
+    "correct_abstentions": 16,
+    "unnecessary_abstentions": 19,
+    "precision": null,
+    "recall": 0.0,
+    "operational_failures": 0,
+    "outcome_flips": 0,
+    "by_rule": {
+      "G1": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 2,
+        "precision": null,
+        "recall": 0.0
+      },
+      "G2": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 2,
+        "precision": null,
+        "recall": 0.0
+      },
+      "G3": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 12,
+        "precision": null,
+        "recall": 0.0
+      },
+      "G4": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 3,
+        "precision": null,
+        "recall": 0.0
+      }
+    }
+  },
+  "requests": 62,
+  "input_tokens": 646409,
+  "estimated_usd": 0.027149178000000003,
+  "reserved_usd": 0.166656,
+  "seconds": 61.192442999992636,
+  "cases": [
+    {
+      "case": "g1-violation",
+      "passed": false,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g1-legitimate",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g1-fixed",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g1-incomplete",
+      "passed": true,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      }
+    },
+    {
+      "case": "g2-violation",
+      "passed": false,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "concern",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g2-legitimate",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "no_concern",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g2-fixed",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "no_concern",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "no_concern",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g2-incomplete",
+      "passed": true,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      }
+    },
+    {
+      "case": "g3-violation",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g3-legitimate",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g3-fixed",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g3-incomplete",
+      "passed": true,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      }
+    },
+    {
+      "case": "g4-violation",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "concern"
+      }
+    },
+    {
+      "case": "g4-legitimate",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "no_concern"
+      }
+    },
+    {
+      "case": "g4-fixed",
+      "passed": false,
+      "actual": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "inconclusive",
+        "G4": "not_applicable"
+      },
+      "expected": {
+        "G1": "no_concern",
+        "G2": "not_applicable",
+        "G3": "no_concern",
+        "G4": "not_applicable"
+      }
+    },
+    {
+      "case": "g4-incomplete",
+      "passed": true,
+      "actual": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      },
+      "expected": {
+        "G1": "inconclusive",
+        "G2": "inconclusive",
+        "G3": "inconclusive",
+        "G4": "inconclusive"
+      }
+    }
+  ]
+}

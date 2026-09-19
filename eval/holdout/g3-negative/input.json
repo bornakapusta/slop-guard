@@ -1,0 +1,15 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/presenters/csv_report.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nmodule Presenters\n  class CsvReport\n    def self.render(pages)\n      pages.pages.map { |page| \"#{page.path},#{page.visits_count}\" }.join(\"\\n\")\n    end\n  end\nend\n"
+    },
+    "spec/tests/reviewer_feature_spec.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nrequire_relative '../../lib/path_tracker/pages'\nrequire_relative '../../lib/presenters/csv_report'\nRSpec.describe 'CSV output' do\n  it 'formats the page visit total' do\n    pages = PathTracker::Pages.new\n    pages.add_page('/home').add_visit('127.0.0.1')\n    expect(Presenters::CsvReport.render(pages)).to eq('/home,1')\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nCSV output renders the path and total visits as /home,1.\n\n## Expected behavior\n- [behavior] CSV output renders the path and total visits as /home,1.\n\n## Failure cases\n",
+  "omitted": []
+}

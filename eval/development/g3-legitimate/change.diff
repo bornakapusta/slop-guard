@@ -1,0 +1,24 @@
+--- a/lib/presenters/visit_summary.rb
++++ b/lib/presenters/visit_summary.rb
+@@ -0,0 +1,8 @@
++# frozen_string_literal: true
++module Presenters
++  class VisitSummary
++    def self.print(page)
++      puts "#{page.path}: #{page.visits_count} visits"
++    end
++  end
++end
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,10 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++require_relative '../../lib/presenters/visit_summary'
++RSpec.describe Presenters::VisitSummary do
++  it 'prints the count' do
++    page = PathTracker::Page.new('/home')
++    page.add_visit('127.0.0.1')
++    expect { described_class.print(page) }.to output("/home: 1 visits\n").to_stdout
++  end
++end

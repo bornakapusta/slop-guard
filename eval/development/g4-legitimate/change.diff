@@ -1,0 +1,25 @@
+--- a/lib/presenters/report_format.rb
++++ b/lib/presenters/report_format.rb
+@@ -0,0 +1,9 @@
++# frozen_string_literal: true
++module Presenters
++  class ReportFormat
++    FORMATS = { plain: ->(page) { "#{page.path}: #{page.visits_count}" }, csv: ->(page) { "#{page.path},#{page.visits_count}" } }.freeze
++    def self.render(page, format: :plain)
++      FORMATS.fetch(format).call(page)
++    end
++  end
++end
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,10 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++require_relative '../../lib/presenters/report_format'
++RSpec.describe Presenters::ReportFormat do
++  it 'renders a plain report' do
++    page = PathTracker::Page.new('/home')
++    expect(described_class.render(page)).to eq('/home: 0')
++    expect(described_class.render(page, format: :csv)).to eq('/home,0')
++  end
++end

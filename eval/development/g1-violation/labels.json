@@ -1,0 +1,42 @@
+{
+  "outcomes": {
+    "G1": "concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [
+    {
+      "rule": "G1",
+      "topic": "behavior",
+      "anchors": [
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 13
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 18
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 24
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 25
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 26
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 27
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The requirement is repeated-IP counting. A path-only assertion cannot verify it; the real assertion uses two production calls. The legitimate case keeps that assertion outside the diff."
+}

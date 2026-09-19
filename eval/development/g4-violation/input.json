@@ -1,0 +1,15 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/presenters/report_format.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nmodule Presenters\n  class ReportFormat\n    FORMATS = { plain: ->(page) { \"#{page.path}: #{page.visits_count}\" } }.freeze\n    def self.render(page, format: :plain)\n      FORMATS.fetch(format).call(page)\n    end\n  end\nend\n"
+    },
+    "spec/tests/reviewer_feature_spec.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nrequire_relative '../../lib/path_tracker/page'\nrequire_relative '../../lib/presenters/report_format'\nRSpec.describe Presenters::ReportFormat do\n  it 'renders a plain report' do\n    page = PathTracker::Page.new('/home')\n    expect(described_class.render(page)).to eq('/home: 0')\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nReportFormat.render returns /home: 0 for an unvisited /home page.\n\n## Expected behavior\n- [behavior] ReportFormat.render returns /home: 0 for an unvisited /home page.\n\n## Failure cases\n",
+  "omitted": []
+}

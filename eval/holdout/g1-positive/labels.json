@@ -1,0 +1,34 @@
+{
+  "outcomes": {
+    "G1": "concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [
+    {
+      "rule": "G1",
+      "topic": "behavior",
+      "anchors": [
+        {
+          "path": "lib/path_tracker/pages.rb",
+          "line": 34
+        },
+        {
+          "path": "lib/path_tracker/pages.rb",
+          "line": 35
+        },
+        {
+          "path": "lib/path_tracker/pages.rb",
+          "line": 36
+        },
+        {
+          "path": "lib/path_tracker/pages.rb",
+          "line": 37
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "Counting page objects does not assert total visits. The negative directly asserts the new aggregate method."
+}

@@ -1,0 +1,15 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/path_tracker/page.rb": {
+      "before_sha256": "285c42bd7886df4d9d39263c7dd419580e0956dcfe10669813105e4d0f6cdc70",
+      "after": "# frozen_string_literal: true\n\nrequire 'ipaddr'\n\nmodule PathTracker\n  class Page\n    attr_accessor :path, :visits_count, :unique_visits_count, :uniq_ip_addresses\n\n    def initialize(path)\n      @path = path\n      @unique_visits_count = 0\n      @visits_count = 0\n      @visits_by_ip = Hash.new(0)\n      @uniq_ip_addresses = []\n    end\n\n    def add_visit(ip_address)\n      @visits_by_ip[ip_address] += 1\n      @visits_count += 1\n      return if already_visited?(ip_address)\n\n      uniq_ip_addresses << ip_address # Should be IPAddr.new(ip_address)\n      @unique_visits_count += 1\n    end\n\n    def visits_for(ip_address)\n      @visits_by_ip.fetch(ip_address, 0)\n    end\n\n    private\n\n      def already_visited?(ip_address)\n        uniq_ip_addresses.include?(ip_address) # Should be IPAddr.new(ip_address)\n      end\n  end\nend\n"
+    },
+    "spec/tests/reviewer_feature_spec.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nrequire_relative '../../lib/path_tracker/page'\nRSpec.describe PathTracker::Page do\n  it 'counts repeated IP visits' do\n    page = described_class.new('/home')\n    2.times { page.add_visit('127.0.0.1') }\n    expect(page.visits_for('127.0.0.1')).to eq(2)\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nvisits_for returns two visits after the same IP visits a page twice.\n\n## Expected behavior\n- [behavior] visits_for returns two visits after the same IP visits a page twice.\n\n## Failure cases\n",
+  "omitted": []
+}

@@ -1,0 +1,21 @@
+--- a/lib/path_tracker/pages.rb
++++ b/lib/path_tracker/pages.rb
+@@ -16,6 +16,8 @@
+     end
+ 
+     def add_page(path)
++      raise ArgumentError, "Path is empty" if path.empty?
++
+       all_pages.store(path, Page.new(path))
+     end
+ 
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,7 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/pages'
++RSpec.describe PathTracker::Pages do
++  it 'rejects empty paths' do
++    expect { described_class.new.add_page('') }.to raise_error(ArgumentError, 'Path is empty')
++  end
++end

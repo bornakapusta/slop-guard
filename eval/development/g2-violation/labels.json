@@ -1,0 +1,26 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "concern",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [
+    {
+      "rule": "G2",
+      "topic": "failure",
+      "anchors": [
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 17
+        },
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 18
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "Existing Page tests cover a valid IP. The new nil-input contract needs its own error assertion; the corrected test supplies it."
+}

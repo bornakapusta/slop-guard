@@ -1,0 +1,22 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "concern",
+    "G4": "not_applicable"
+  },
+  "findings": [
+    {
+      "rule": "G3",
+      "topic": "PathTracker::Page#add_visit",
+      "anchors": [
+        {
+          "path": "lib/path_tracker/page.rb",
+          "line": 18
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "The violation makes every counting call emit terminal output, coupling computation to presentation. The concrete presenter owns that side effect in the controls."
+}

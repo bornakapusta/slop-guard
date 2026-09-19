@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "Counting page objects does not assert total visits. The negative directly asserts the new aggregate method."
+}

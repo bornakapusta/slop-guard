@@ -1,0 +1,20 @@
+--- a/lib/path_tracker/page.rb
++++ b/lib/path_tracker/page.rb
+@@ -15,6 +15,7 @@
+ 
+     def add_visit(ip_address)
+       @visits_count += 1
++      puts "#{path}: #{visits_count} visits"
+       return if already_visited?(ip_address)
+ 
+       uniq_ip_addresses << ip_address # Should be IPAddr.new(ip_address)
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,7 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++RSpec.describe PathTracker::Page do
++  it 'prints the updated count' do
++    expect { described_class.new('/home').add_visit('127.0.0.1') }.to output("/home: 1 visits\n").to_stdout
++  end
++end

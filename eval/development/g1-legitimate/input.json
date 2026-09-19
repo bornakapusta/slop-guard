@@ -1,0 +1,11 @@
+{
+  "baseline": "baselines/g1-legitimate.json",
+  "changes": {
+    "lib/path_tracker/page.rb": {
+      "before_sha256": "19ee211e976cc912d75187fc2a9c9228a6921e10a00b48ee6c5f21d0d67b8d14",
+      "after": "# frozen_string_literal: true\n\nrequire 'ipaddr'\n\nmodule PathTracker\n  class Page\n    attr_accessor :path, :visits_count, :unique_visits_count, :uniq_ip_addresses\n\n    def initialize(path)\n      @path = path\n      @unique_visits_count = 0\n      @visits_count = 0\n      @visits_by_ip = Hash.new(0)\n      @uniq_ip_addresses = []\n    end\n\n    def add_visit(ip_address)\n      @visits_by_ip[ip_address] += 1\n      @visits_count += 1\n      return if already_visited?(ip_address)\n\n      uniq_ip_addresses << ip_address # Should be IPAddr.new(ip_address)\n      @unique_visits_count += 1\n    end\n\n    def visits_for(ip_address)\n      @visits_by_ip[ip_address]\n    end\n\n    private\n\n      def already_visited?(ip_address)\n        uniq_ip_addresses.include?(ip_address) # Should be IPAddr.new(ip_address)\n      end\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nvisits_for returns two visits after the same IP visits a page twice.\n\n## Expected behavior\n- [behavior] visits_for returns two visits after the same IP visits a page twice.\n\n## Failure cases\n",
+  "omitted": []
+}

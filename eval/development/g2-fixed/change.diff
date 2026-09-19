@@ -1,0 +1,21 @@
+--- a/lib/path_tracker/page.rb
++++ b/lib/path_tracker/page.rb
+@@ -14,6 +14,8 @@
+     end
+ 
+     def add_visit(ip_address)
++      raise ArgumentError, "IP is required" if ip_address.nil?
++
+       @visits_count += 1
+       return if already_visited?(ip_address)
+ 
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,7 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++RSpec.describe PathTracker::Page do
++  it 'rejects missing IP' do
++    expect { described_class.new('/home').add_visit(nil) }.to raise_error(ArgumentError, 'IP is required')
++  end
++end

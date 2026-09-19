@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "label_status": "authored_before_model_calls; maintainer review pending",
+  "cases": [
+    {
+      "id": "g1-violation",
+      "split": "development",
+      "family": "visits-per-ip",
+      "input": "development/g1-violation/input.json",
+      "labels": "development/g1-violation/labels.json"
+    },
+    {
+      "id": "g1-legitimate",
+      "split": "development",
+      "family": "visits-per-ip",
+      "input": "development/g1-legitimate/input.json",
+      "labels": "development/g1-legitimate/labels.json"
+    },
+    {
+      "id": "g1-fixed",
+      "split": "development",
+      "family": "visits-per-ip",
+      "input": "development/g1-fixed/input.json",
+      "labels": "development/g1-fixed/labels.json"
+    },
+    {
+      "id": "g1-incomplete",
+      "split": "development",
+      "family": "visits-per-ip",
+      "input": "development/g1-incomplete/input.json",
+      "labels": "development/g1-incomplete/labels.json"
+    },
+    {
+      "id": "g2-violation",
+      "split": "development",
+      "family": "nil-visitor-validation",
+      "input": "development/g2-violation/input.json",
+      "labels": "development/g2-violation/labels.json"
+    },
+    {
+      "id": "g2-legitimate",
+      "split": "development",
+      "family": "nil-visitor-validation",
+      "input": "development/g2-legitimate/input.json",
+      "labels": "development/g2-legitimate/labels.json"
+    },
+    {
+      "id": "g2-fixed",
+      "split": "development",
+      "family": "nil-visitor-validation",
+      "input": "development/g2-fixed/input.json",
+      "labels": "development/g2-fixed/labels.json"
+    },
+    {
+      "id": "g2-incomplete",
+      "split": "development",
+      "family": "nil-visitor-validation",
+      "input": "development/g2-incomplete/input.json",
+      "labels": "development/g2-incomplete/labels.json"
+    },
+    {
+      "id": "g3-violation",
+      "split": "development",
+      "family": "counting-console-output",
+      "input": "development/g3-violation/input.json",
+      "labels": "development/g3-violation/labels.json"
+    },
+    {
+      "id": "g3-legitimate",
+      "split": "development",
+      "family": "counting-console-output",
+      "input": "development/g3-legitimate/input.json",
+      "labels": "development/g3-legitimate/labels.json"
+    },
+    {
+      "id": "g3-fixed",
+      "split": "development",
+      "family": "counting-console-output",
+      "input": "development/g3-fixed/input.json",
+      "labels": "development/g3-fixed/labels.json"
+    },
+    {
+      "id": "g3-incomplete",
+      "split": "development",
+      "family": "counting-console-output",
+      "input": "development/g3-incomplete/input.json",
+      "labels": "development/g3-incomplete/labels.json"
+    },
+    {
+      "id": "g4-violation",
+      "split": "development",
+      "family": "report-format-registry",
+      "input": "development/g4-violation/input.json",
+      "labels": "development/g4-violation/labels.json"
+    },
+    {
+      "id": "g4-legitimate",
+      "split": "development",
+      "family": "report-format-registry",
+      "input": "development/g4-legitimate/input.json",
+      "labels": "development/g4-legitimate/labels.json"
+    },
+    {
+      "id": "g4-fixed",
+      "split": "development",
+      "family": "report-format-registry",
+      "input": "development/g4-fixed/input.json",
+      "labels": "development/g4-fixed/labels.json"
+    },
+    {
+      "id": "g4-incomplete",
+      "split": "development",
+      "family": "report-format-registry",
+      "input": "development/g4-incomplete/input.json",
+      "labels": "development/g4-incomplete/labels.json"
+    },
+    {
+      "id": "g1-positive",
+      "split": "holdout",
+      "family": "aggregate-total-visits",
+      "input": "holdout/g1-positive/input.json",
+      "labels": "holdout/g1-positive/labels.json"
+    },
+    {
+      "id": "g2-positive",
+      "split": "holdout",
+      "family": "empty-page-path",
+      "input": "holdout/g2-positive/input.json",
+      "labels": "holdout/g2-positive/labels.json"
+    },
+    {
+      "id": "g3-positive",
+      "split": "holdout",
+      "family": "csv-collection-export",
+      "input": "holdout/g3-positive/input.json",
+      "labels": "holdout/g3-positive/labels.json"
+    },
+    {
+      "id": "g4-positive",
+      "split": "holdout",
+      "family": "visit-order-selection",
+      "input": "holdout/g4-positive/input.json",
+      "labels": "holdout/g4-positive/labels.json"
+    },
+    {
+      "id": "g1-negative",
+      "split": "holdout",
+      "family": "aggregate-total-visits",
+      "input": "holdout/g1-negative/input.json",
+      "labels": "holdout/g1-negative/labels.json"
+    },
+    {
+      "id": "g2-negative",
+      "split": "holdout",
+      "family": "empty-page-path",
+      "input": "holdout/g2-negative/input.json",
+      "labels": "holdout/g2-negative/labels.json"
+    },
+    {
+      "id": "g3-negative",
+      "split": "holdout",
+      "family": "csv-collection-export",
+      "input": "holdout/g3-negative/input.json",
+      "labels": "holdout/g3-negative/labels.json"
+    },
+    {
+      "id": "g4-negative",
+      "split": "holdout",
+      "family": "visit-order-selection",
+      "input": "holdout/g4-negative/input.json",
+      "labels": "holdout/g4-negative/labels.json"
+    }
+  ],
+  "labels_reviewed": false
+}

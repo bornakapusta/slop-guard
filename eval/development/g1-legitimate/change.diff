@@ -1,0 +1,11 @@
+--- a/lib/path_tracker/page.rb
++++ b/lib/path_tracker/page.rb
+@@ -24,7 +24,7 @@
+     end
+ 
+     def visits_for(ip_address)
+-      @visits_by_ip.fetch(ip_address, 0)
++      @visits_by_ip[ip_address]
+     end
+ 
+     private

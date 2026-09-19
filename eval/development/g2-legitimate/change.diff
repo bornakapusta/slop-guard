@@ -1,0 +1,23 @@
+--- a/lib/path_tracker/page.rb
++++ b/lib/path_tracker/page.rb
+@@ -14,6 +14,8 @@
+     end
+ 
+     def add_visit(ip_address)
++      return if ip_address.nil?
++
+       @visits_count += 1
+       return if already_visited?(ip_address)
+ 
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,9 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++RSpec.describe PathTracker::Page do
++  it 'ignores a missing IP without recording a visit' do
++    page = described_class.new('/home')
++    page.add_visit(nil)
++    expect(page.visits_count).to eq(0)
++  end
++end

@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'dotenv'
+require 'optparse'
+require_relative '../lib/slop_guard'
+
+options = { inspect: false, live: false, json: false }
+parser = OptionParser.new do |opts|
+  opts.banner = 'Usage: bin/review CASE_ID [--inspect | --live]'
+  opts.on('--inspect', 'Print the evidence without calling Jev') { options[:inspect] = true }
+  opts.on('--json', 'Print a machine-readable report') { options[:json] = true }
+  opts.on('--live', 'Review this intentionally supplied demo case using Jev') { options[:live] = true }
+end
+begin
+  parser.parse!
+  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.size == 1 && [options[:inspect], options[:live]].count(true) == 1
+  dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+  snapshot = SlopGuard::Snapshot.new(dataset.input(ARGV.first))
+  if options[:inspect]
+    puts JSON.pretty_generate('snapshot' => snapshot.identity, 'gaps' => snapshot.gaps, 'evidence' => snapshot.state)
+  else
+    Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
+    directory = File.join(SlopGuard::ROOT, 'tmp/reviews', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
+    raise SlopGuard::ProviderError, 'TYPESAFE_API_KEY is not configured' if ENV['TYPESAFE_API_KEY'].to_s.strip.empty?
+    budget = SlopGuard::Budget.new(ledger: File.join(directory, 'requests.jsonl'))
+    client = SlopGuard::JevClient.new(api_key: ENV['TYPESAFE_API_KEY'], budget: budget)
+    report = SlopGuard::Evaluator.new(client: client).call(snapshot)
+    File.write(File.join(directory, 'report.json'), JSON.pretty_generate(report))
+    puts(options[:json] ? JSON.pretty_generate(report) : SlopGuard::Report.markdown(report))
+    exit 2 unless report['status'] == 'complete'
+  end
+rescue SlopGuard::Error, OptionParser::ParseError => e
+  warn e.message
+  exit 2
+end

@@ -1,0 +1,11 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "no_concern",
+    "G3": "no_concern",
+    "G4": "not_applicable"
+  },
+  "findings": [],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "Existing Page tests cover a valid IP. The new nil-input contract needs its own error assertion; the corrected test supplies it."
+}

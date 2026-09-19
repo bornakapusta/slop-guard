@@ -1,0 +1,54 @@
+{
+  "outcomes": {
+    "G1": "no_concern",
+    "G2": "not_applicable",
+    "G3": "no_concern",
+    "G4": "concern"
+  },
+  "findings": [
+    {
+      "rule": "G4",
+      "topic": "PathTracker::VisitOrder",
+      "anchors": [
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 1
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 2
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 3
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 4
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 5
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 6
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 7
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 8
+        },
+        {
+          "path": "lib/path_tracker/visit_order.rb",
+          "line": 9
+        }
+      ]
+    }
+  ],
+  "forbidden_findings": "All concerns other than the listed rule, topic and allowed anchors.",
+  "rationale": "One ordering criterion does not require a selector registry. The negative supplies and tests two actually required criteria."
+}

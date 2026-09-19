@@ -1,0 +1,15 @@
+{
+  "baseline": "baselines/parser.json",
+  "changes": {
+    "lib/path_tracker/visit_order.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nmodule PathTracker\n  class VisitOrder\n    ORDERS = { total: ->(page) { page.visits_count } }.freeze\n    def self.sort(pages, by: :total)\n      pages.sort_by(&ORDERS.fetch(by)).reverse\n    end\n  end\nend\n"
+    },
+    "spec/tests/reviewer_feature_spec.rb": {
+      "before_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "after": "# frozen_string_literal: true\nrequire_relative '../../lib/path_tracker/page'\nrequire_relative '../../lib/path_tracker/visit_order'\nRSpec.describe PathTracker::VisitOrder do\n  it 'orders by visits' do\n    one = PathTracker::Page.new('/one')\n    two = PathTracker::Page.new('/two')\n    one.add_visit('127.0.0.1')\n    one.add_visit('127.0.0.1')\n    expect(described_class.sort([two, one])).to eq([one, two])\n  end\nend\n"
+    }
+  },
+  "pr_body": "## Before\nExisting log parser.\n\n## After\nVisitOrder.sort orders pages by total visits descending.\n\n## Expected behavior\n- [behavior] VisitOrder.sort orders pages by total visits descending.\n\n## Failure cases\n",
+  "omitted": []
+}

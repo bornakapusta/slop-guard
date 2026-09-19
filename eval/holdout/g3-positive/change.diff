@@ -1,0 +1,25 @@
+--- a/lib/path_tracker/pages.rb
++++ b/lib/path_tracker/pages.rb
+@@ -31,6 +31,10 @@
+       @pages ||= all_pages.values
+     end
+ 
++    def export_csv
++      all_pages.values.map { |page| "#{page.path},#{page.visits_count}" }.join("\n")
++    end
++
+     private
+ 
+       attr_accessor :all_pages
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,9 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/pages'
++RSpec.describe 'CSV output' do
++  it 'formats the page visit total' do
++    pages = PathTracker::Pages.new
++    pages.add_page('/home').add_visit('127.0.0.1')
++    expect(pages.export_csv).to eq('/home,1')
++  end
++end

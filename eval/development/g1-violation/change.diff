@@ -1,0 +1,32 @@
+--- a/lib/path_tracker/page.rb
++++ b/lib/path_tracker/page.rb
+@@ -10,15 +10,21 @@
+       @path = path
+       @unique_visits_count = 0
+       @visits_count = 0
++      @visits_by_ip = Hash.new(0)
+       @uniq_ip_addresses = []
+     end
+ 
+     def add_visit(ip_address)
++      @visits_by_ip[ip_address] += 1
+       @visits_count += 1
+       return if already_visited?(ip_address)
+ 
+       uniq_ip_addresses << ip_address # Should be IPAddr.new(ip_address)
+       @unique_visits_count += 1
++    end
++
++    def visits_for(ip_address)
++      @visits_by_ip.fetch(ip_address, 0)
+     end
+ 
+     private
+--- a/spec/tests/reviewer_feature_spec.rb
++++ b/spec/tests/reviewer_feature_spec.rb
+@@ -0,0 +1,5 @@
++# frozen_string_literal: true
++require_relative '../../lib/path_tracker/page'
++RSpec.describe PathTracker::Page do
++  it('creates a page') { expect(described_class.new('/home').path).to eq('/home') }
++end
