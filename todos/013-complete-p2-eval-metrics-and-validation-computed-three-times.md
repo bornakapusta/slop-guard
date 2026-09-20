@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "013"
 tags: [code-review, simplification, quality]
@@ -74,3 +74,10 @@ EvalRunner#run builds totals, per-rule precision/recall and `probability_ranges`
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- EvaluationAnalysis#metrics is the single definition of totals, rates and per-rule counts; the runner stores it. probability_ranges and the duplicated ratio removed. EvaluationSummary keeps only its CI-contract validation.

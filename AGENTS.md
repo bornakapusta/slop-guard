@@ -4,12 +4,13 @@
 
 Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The log parser is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
 
-- `lib/slop_guard/git_source.rb`: bounded, read-only local Git snapshots for repository reviews.
-- `lib/slop_guard/service/`: the Ruby GitHub App receiver, durable inbox, worker, source adapter and publisher.
+- `lib/slop_guard.rb` loads the engine only: `profile.rb` (trusted file patterns, rules directory and Ruby/RSpec conventions), evidence extraction (`snapshot.rb`, `candidates.rb`, `expectations.rb`), `rules.rb`, `evaluator.rb`, `jev_client.rb`, `budget.rb`, `report.rb`, `git_source.rb` (bounded, read-only local Git snapshots) and `cli.rb` (the `bin/review` command and its exit codes).
+- `lib/slop_guard/eval/`: the evaluation harness (dataset, runner, analysis, CI summary, threshold replay), loaded with `require 'slop_guard/eval'`. Product code never depends on it.
+- `lib/slop_guard/service/`: the Ruby GitHub App receiver, durable inbox, worker, source adapter and publisher, loaded with `require 'slop_guard/service'`.
 - `bin/app-server`, `bin/app-worker`: hosted App entry points; setup and operations are in `docs/github-app.md`.
-- `lib/slop_guard/`: evidence extraction, rule evaluation, provider client, budgets, and reports; `lib/slop_guard.rb` loads the engine.
-- `bin/review`, `bin/evaluate`, and `bin/analyze-evaluation`: review, evaluation, and offline analysis entry points.
-- `config/rules/`: trusted YAML questions and thresholds for rules G1–G4.
+- `bin/review`, `bin/evaluate`, and `bin/analyze-evaluation`: review, evaluation, and offline analysis entry points. `script/` holds thin CI entry points only.
+- `config/demo.yml` and `config/repository.yml`: the `demo` and `ruby` profiles. `config/rules/` holds the saved benchmark rule definitions G1–G4; `config/rules/ruby/` holds the Ruby profile's rules. Each rule declares `kind`, plus `scenarios` or `candidate_kind`.
+- `docs/report-schema.md`: the review report layout and exit codes.
 - `spec/slop_guard/` and `spec/eval/`: engine and evaluation-harness specs.
 - `eval/`: baselines, manifest, development cases, and holdout cases. Each case includes `input.json`, `change.diff`, and `labels.json`.
 - `docs/`: guidelines, evaluation procedures, plans, and verification evidence. Generated reports belong in ignored `tmp/`.

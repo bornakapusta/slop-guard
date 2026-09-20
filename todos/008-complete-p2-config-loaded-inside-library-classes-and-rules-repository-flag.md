@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "008"
 tags: [code-review, architecture]
@@ -93,3 +93,10 @@ GitSource loads config/repository.yml in its constructor, Snapshot loads config/
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `SlopGuard::Profile` (name, file_patterns, rules_dir, Ruby/RSpec conventions) is built by the CLI, GitHub App or harness and passed to GitSource, GitHubSource, Snapshot, Candidates and Rules. `--profile ruby|demo`; ruby rules live in config/rules/ruby with G1/G2/G4 copies. Snapshot identity always includes the profile.

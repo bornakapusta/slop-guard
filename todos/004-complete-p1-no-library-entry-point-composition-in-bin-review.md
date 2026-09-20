@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "004"
 tags: [code-review, architecture, agent-native]
@@ -91,3 +91,10 @@ bin/review reads expectations, builds GitSource, builds Snapshot with the profil
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `SlopGuard::CLI` (lib/slop_guard/cli.rb) owns composition; `Evaluator` emits `source` and `report_version`; bin/review is three lines; cli_spec runs in-process.

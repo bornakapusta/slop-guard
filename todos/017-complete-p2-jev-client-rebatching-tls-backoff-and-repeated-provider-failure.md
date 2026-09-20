@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "017"
 tags: [code-review, performance, reliability, budget]
@@ -72,3 +72,10 @@ The batcher re-encodes model, state and all accumulated questions for every ques
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- State encoded once with a running byte count; one started Net::HTTP reused and dropped on transport errors or abandoned bodies; exponential backoff with injected RNG jitter; timeouts clamped to at least 1 ms; injectable `http:`; Evaluator stops remaining rules after a provider or budget failure.

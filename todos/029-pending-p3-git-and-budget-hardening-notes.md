@@ -73,3 +73,10 @@ Four hardening items that are not exploitable as shipped but narrow guarantees t
 - Drafted solution options
 
 
+
+### 2026-09-20 - Mostly done
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- protocol.allow=never and core.fsmonitor=false on every Git call; --repo must be the repository root; timeouts clamped; session-ledger semantics and chmod 600 documented. Git < 2.46 is documented, not refused (ubuntu-24.04 CI ships 2.43).

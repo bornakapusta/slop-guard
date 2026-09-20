@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "028"
 tags: [code-review, security]
@@ -79,3 +79,10 @@ Report.escape neutralises Markdown punctuation but not `\n`, `\r` or ANSI escape
 - Specs: a forged heading via gap text no longer produces a heading; a terminal message keeps its newline but escapes ESC.
 - Remaining (Phase 2): reject control characters in Git tree paths at `git_source.rb:55-58`.
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Git tree paths containing control characters are rejected; report and terminal escaping landed in Phase 1.

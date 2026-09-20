@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "014"
 tags: [code-review, quality, budget]
@@ -72,3 +72,10 @@ dependencies: []
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- SlopGuard::Limits (file, count, bundle, body, changed files, test candidates, scenarios) and JevClient::USD_PER_INPUT_TOKEN / MAX_STATE_BYTES / MAX_REQUEST_BYTES / MAX_RESPONSE_BYTES.

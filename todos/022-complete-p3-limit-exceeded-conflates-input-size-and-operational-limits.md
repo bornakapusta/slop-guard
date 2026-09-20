@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "022"
 tags: [code-review, architecture]
@@ -68,3 +68,10 @@ GitSource raises LimitExceeded for oversized files, too many files and an oversi
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `InputTooLarge < InvalidInput` for size bounds in GitSource, GitHubSource and the CLI input document; budget and deadline keep LimitExceeded. Oversized files are skipped with a gap in both adapters.

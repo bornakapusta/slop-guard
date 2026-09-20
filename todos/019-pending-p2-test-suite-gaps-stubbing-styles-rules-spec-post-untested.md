@@ -89,3 +89,10 @@ The suite is behaviour-named, never hits the provider, and git_source_spec prove
 - `spec/slop_guard/rules_spec.rb` added: default load and revision, repository-mode G3 substitution, custom directory, inverted/equal/out-of-range thresholds, unknown candidate refs, empty lists, optional `any_positive`, blank text, missing key/file, malformed YAML.
 - Remaining: 019b GitSource specs (Phase 2); 019c (Phase 5).
 
+
+### 2026-09-20 - Mostly done
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- 019b GitSource specs (submodule, executable blob, ambiguous ref, control-char path, subdirectory, GIT_DIR, output/time limits, two merge bases) and 019c (JevClient#post via injected connection, Evaluator skip-after-failure, Snapshot selection and scenario anchors, Expectations bounds, Candidates dependency gaps, Budget boundary) added. Not done: splitting the remaining multi-behaviour examples; rubocop-rspec not adopted.

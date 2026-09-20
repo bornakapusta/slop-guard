@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "012"
 tags: [code-review, architecture]
@@ -74,3 +74,10 @@ lib/slop_guard.rb requires dataset, eval_runner and evaluation_analysis alongsid
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Dataset, EvalRunner, EvaluationAnalysis, EvaluationSummary and ThresholdCalibration live under lib/slop_guard/eval/ behind `require "slop_guard/eval"`; script/ holds thin entry points; `Rules.from_definitions` replaces the SingleRule subclass.

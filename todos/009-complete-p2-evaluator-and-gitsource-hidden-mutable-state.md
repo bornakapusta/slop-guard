@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "009"
 tags: [code-review, quality, architecture]
@@ -87,3 +87,10 @@ Evaluator#call sets @snapshot, @id, @rule and @result inside the rules loop and 
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `Evaluator::RuleRun` holds per-rule state; `Evaluator#call` is reentrant. `GitSource::Tree` replaces scratch ivars. Fingerprints eager. `client.model` on the client interface.

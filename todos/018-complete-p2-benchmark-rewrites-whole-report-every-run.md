@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "018"
 tags: [code-review, performance]
@@ -67,3 +67,10 @@ EvalRunner#run pretty-prints and renames the full result after each case review.
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Each run is appended to runs.jsonl; report.json is checkpointed per repetition and on benchmark stop; `EvalRunner.load` merges the two and the CI summary uses it; evaluate.yml uploads runs.jsonl.

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "024"
 tags: [code-review, agent-native]
@@ -67,3 +67,10 @@ Expectations must be a file, so a bot holding the PR body as a string must write
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `--expectations -` reads stdin; `--input FILE` reviews a saved document; `--show-rules` prints profile, files and definitions; `--inspect` includes the profile.

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "026"
 tags: [code-review, security, prompt-injection]
@@ -71,3 +71,10 @@ Evaluator builds `context = "Scenario #{id}: #{scenario['text']}"` and puts it i
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Instructions reference scenarios and candidates by ID only; scenario text travels in state.scenarios and candidate names in the candidates table. Spec asserts instructions never contain scenario text.

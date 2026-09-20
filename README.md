@@ -84,7 +84,9 @@ bundle exec ruby bin/review --repo /path/to/project \
   --base main --head HEAD --expectations /path/to/change.md --live
 ```
 
-Repository mode uses general Ruby responsibility questions; the saved log-parser benchmarks keep their original questions. Reports record the base, head, merge-base and rule revision. No GitHub token, webhook server or installation in the target repo is needed.
+Repository mode defaults to the `ruby` profile (`config/repository.yml`, rules in `config/rules/ruby/`), whose G3 asks general responsibility questions; saved cases default to the `demo` profile (`config/demo.yml`, rules in `config/rules/`), which keeps the original log-parser questions. Choose explicitly with `--profile ruby|demo`, or point `--rules-dir` at another trusted directory. `--show-rules` prints the resolved profile and definitions. Reports record the base, head, merge-base and rule revision. No GitHub token, webhook server or installation in the target repo is needed.
+
+Only the changed files, the test files and whatever they reach through `require_relative` are sent in full; other permitted files are listed by path. `--inspect` reports `state_bytes` and whether the evidence fits the live request limit.
 
 This is a bounded Ruby/RSpec reviewer, not a whole-repository audit. Source selection, custom rules, size limits and offline test behavior are explained in [local repository reviews](docs/local-repository-review.md).
 
@@ -99,7 +101,7 @@ bundle exec ruby bin/review g2-violation --live --json --env-file .env
 
 This makes paid requests. Requests use `jev-1.13.0`, bounded contexts, at most 20 attempts and a 120-second review deadline. Cost reservations cap each review at $0.10 and an evaluation session at $2 using the documented input price. Actual billing may differ; unknown usage retains its reservation. Reports are saved under ignored `tmp/`.
 
-A concern does not fail the single-review command: exit 0 means the review completed, not that the code is correct. Exit 2 means invalid input, incomplete context, or an operational failure. Evaluation exits 1 for mismatched expected outcomes and 2 for setup errors.
+A concern does not fail the single-review command: exit 0 means the review completed, not that the code is correct. Exit 1 means the review completed with incomplete evidence (the report is still written), exit 2 means invalid input or usage, and exit 3 means a provider, budget or deadline failure. With `--json`, errors are printed as a JSON object. `--output DIR` (or `SLOP_GUARD_OUTPUT_DIR`) chooses where reports and ledgers go. Evaluation exits 1 for mismatched expected outcomes and 2 for setup errors. The report layout and exit codes are documented in [the report schema](docs/report-schema.md). Keep `.env` readable only by you (`chmod 600 .env`).
 
 ## Evaluate quality before GitHub
 

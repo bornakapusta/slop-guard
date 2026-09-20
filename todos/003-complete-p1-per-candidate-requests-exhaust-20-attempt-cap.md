@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "003"
 tags: [code-review, performance, architecture, budget]
@@ -88,3 +88,10 @@ Budget caps a review at 20 attempts and $0.10. Evaluator issues one request per 
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- One `ask` per rule for all scenarios (keys `<scenario>/<question>`) and one for all design candidates (`<candidate>/<question>`); the client batches by a running byte count. Paid check: 4-5 requests per review.

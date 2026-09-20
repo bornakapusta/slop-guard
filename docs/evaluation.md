@@ -24,7 +24,7 @@ bundle exec ruby bin/evaluate --freeze tmp/evaluations/RUN/report.json
 bundle exec ruby bin/evaluate --live --split holdout --repeats 3 --frozen tmp/frozen.json --env-file .env
 ```
 
-Each invocation creates a new evaluation directory with `report.json` and a request-reservation ledger. Interrupted sessions retain the last complete case report and conservative cost reservations. There is no automatic resume or request-cache path; a new invocation starts a new explicitly requested session. Do not keep retrying a failed holdout until it happens to pass.
+Each invocation creates a new evaluation directory with `report.json`, a `runs.jsonl` line per finished review and a request-reservation ledger. `report.json` is checkpointed after each repetition and finalized at the end; interrupted sessions keep every finished review in `runs.jsonl`, which the CI summary merges back in, and conservative cost reservations. The `$2` session limit spans one `bin/evaluate` invocation; `bin/review` starts a fresh ledger per review and is bounded by its per-review limits only. There is no automatic resume or request-cache path; a new invocation starts a new explicitly requested session. Do not keep retrying a failed holdout until it happens to pass.
 
 ## Calibrating thresholds from saved readings
 
@@ -58,7 +58,7 @@ After the workflow is merged into `main`, dispatch **Development evaluation** fr
 
 The job summary distinguishes a completed label match, mismatch, interrupted run and unavailable report. It reports provisional-label status, per-rule counts, repeat variability, versions, estimated input cost and request reservations. Download the raw report and ledger within 14 days. Code-quality CI and this workflow are independent; a green CI run is not model qualification. See [CI operation](ci.md).
 
-The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version.
+The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version. The 2026-09-20 remediation changed the prompts themselves (evidence selection, one batched request per rule, scenario and candidate text moved into the state), so `first-live-development`, `threshold-calibration` and `evaluation-benchmark` describe superseded prompts. The first run on the new prompts is [the Phase 4 development check](verification/phase4-development.md), with an offline threshold replay alongside it.
 
 ## Accuracy and repeatability reports
 

@@ -9,6 +9,7 @@ Analyze an existing report without credentials or provider calls:
 ```sh
 bundle exec ruby bin/analyze-evaluation tmp/evaluations/RUN/report.json
 bundle exec ruby bin/analyze-evaluation tmp/evaluations/RUN/report.json --json > tmp/analysis.json
+# report.json is checkpointed per repetition; runs.jsonl in the same directory has every finished review.
 ```
 
 A readable report includes per-rule outcome agreement, repeat agreement, detected concerns, latency and cost. JSON adds confusion counts, finding precision/recall, per-case exact matches and per-question variance. Exit 0 means analysis succeeded, even if the reviewer performed badly. Invalid input exits 2. Use `bin/evaluate`'s exit status for evaluation pass/fail.
