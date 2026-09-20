@@ -112,18 +112,102 @@ RSpec.describe SlopGuard::GitSource do
     expect(snapshot.skipped).to include('README.md')
   end
 
-  it 'rejects invalid refs, option injection, unrelated history and oversized files' do
-    expect { source(base: '--help').input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput)
-    expect { source(base: 'missing').input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /rev-parse failed/)
+  it 'rejects option-like and unknown refs, naming the Git diagnostic without mixing it into data' do
+    expect { source(base: '--help').input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /non-option/)
+    expect { source(base: 'missing').input(pr_body: body) }
+      .to raise_error(SlopGuard::InvalidInput, /rev-parse failed \(fatal: .*\); check repository/)
+  end
+
+  it 'rejects unrelated history and more than one merge base' do
+    git('checkout', '--orphan', 'unrelated')
+    git('commit', '-m', 'Unrelated root')
+    expect { source(head: 'unrelated').input(pr_body: body) }
+      .to raise_error(SlopGuard::InvalidInput, /merge-base failed/)
+    git('checkout', 'main')
+    write('lib/main_side.rb', 'class MainSide; end')
+    git('add', '.')
+    git('commit', '-m', 'Main side')
+    main_side = git('rev-parse', 'main')
+    git('checkout', 'feature')
+    feature_side = git('rev-parse', 'feature')
+    git('merge', '--no-edit', main_side)
+    git('checkout', 'main')
+    git('merge', '--no-edit', feature_side)
+    expect(git('merge-base', '--all', 'main', 'feature').lines.size).to eq(2)
+    expect { source.input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /one merge base/)
+  end
+
+  it 'reports an oversized file as an evidence gap without reading it' do
     write('lib/large.rb', 'x' * 16_385)
     git('add', '.')
     git('commit', '-m', 'Oversized file')
-    expect { source.input(pr_body: body) }.to raise_error(SlopGuard::LimitExceeded, /16 KiB/)
-    git('checkout', '--orphan', 'unrelated')
-    git('commit', '-m', 'Unrelated root')
-    expect do
-      source(head: 'unrelated').input(pr_body: body)
-    end.to raise_error(SlopGuard::InvalidInput, /merge-base failed/)
+    input = source.input(pr_body: body)
+    expect(input['files']).not_to have_key('lib/large.rb')
+    expect(input['source_gaps']).to include('File exceeds 16 KiB: lib/large.rb')
+  end
+
+  it 'keeps Git warnings out of parsed data when a branch and a tag share a name' do
+    git('tag', 'rel', 'main')
+    git('branch', 'rel', 'feature')
+    adapter = source(base: 'rel')
+    input = adapter.input(pr_body: body)
+    expect(adapter.metadata['base']).to match(/\A\h{40}\z/)
+    expect(input['files']['lib/calculator.rb']).to eq(updated)
+  end
+
+  it 'rejects tree paths containing control characters' do
+    write("lib/evil\e[31m.rb", 'class Evil; end')
+    git('add', '.')
+    git('commit', '-m', 'Hostile path')
+    expect { source.input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /Invalid Git tree path/)
+  end
+
+  it 'records submodules as gaps, accepts executable blobs and reads each revision in one object stream' do
+    commit = git('rev-parse', 'HEAD')
+    File.chmod(0o755, File.join(@repository, 'lib/calculator.rb'))
+    git('add', 'lib/calculator.rb')
+    # A gitlink without a checkout; `git add .` would stage its removal, so commit straight from the index.
+    git('update-index', '--add', '--cacheinfo', "160000,#{commit},vendor/tool")
+    git('commit', '-m', 'Submodule and executable')
+    expect(git('ls-tree', 'HEAD', 'lib/calculator.rb')).to start_with('100755')
+    adapter = source
+    calls = []
+    allow(Open3).to receive(:popen3).and_wrap_original do |original, *args, **options, &block|
+      calls << args.grep_v(Hash)
+      original.call(*args, **options, &block)
+    end
+    input = adapter.input(pr_body: body)
+    expect(input['files']['lib/calculator.rb']).to eq(updated)
+    expect(input['source_gaps']).to include('Submodule was not inspected: vendor/tool')
+    expect(calls.count { |args| args.include?('cat-file') }).to eq(2)
+    expect(calls).to all(include('protocol.allow=never', 'core.fsmonitor=false'))
+  end
+
+  it 'reviews the named repository only, ignoring GIT_DIR, and refuses a subdirectory path' do
+    other = Dir.mktmpdir('slop-guard-other-')
+    Open3.capture3('git', '-C', other, 'init', '-q')
+    begin
+      ENV['GIT_DIR'] = File.join(other, '.git')
+      expect(source.input(pr_body: body)['files']['lib/calculator.rb']).to eq(updated)
+    ensure
+      ENV.delete('GIT_DIR')
+      FileUtils.remove_entry(other)
+    end
+    inside = described_class.new(repository: File.join(@repository, 'lib'), base: 'main', head: 'feature')
+    expect { inside.input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /repository root/)
+  end
+
+  it 'bounds Git output and time' do
+    expect { source.send(:git, 'ls-tree', '-r', 'HEAD', limit: 8) }
+      .to raise_error(SlopGuard::LimitExceeded, /byte limit/)
+    stub_const('SlopGuard::GitSource::TIMEOUT_SECONDS', 0.05)
+    # Stand a sleeping process in for Git so the deadline, not the command, ends the read.
+    allow(Open3).to receive(:popen3).and_wrap_original do |original, env, *_command, **options, &block|
+      original.call(env, 'sleep', '5', **options, &block)
+    end
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    expect { source.send(:git, 'ls-tree', 'HEAD') }.to raise_error(SlopGuard::LimitExceeded, /timed out/)
+    expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 2
   end
 
   it 'rejects binary input and a repository above the file limit' do
