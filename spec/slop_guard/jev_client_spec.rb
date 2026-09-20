@@ -7,7 +7,7 @@ RSpec.describe SlopGuard::JevClient do
       example.run
     end
   end
-  let(:budget) { SlopGuard::Budget.new(ledger: File.join(@directory, 'ledger.jsonl')) }
+  let(:budget) { SlopGuard::Budget.open(ledger: File.join(@directory, 'ledger.jsonl')) }
   let(:client) { described_class.new(api_key: 'test-secret', budget: budget, sleeper: ->(_) {}) }
   let(:questions) { { 'q' => { 'type' => 'noul', 'instructions' => 'Is this covered?' } } }
   let(:payload) do
@@ -79,7 +79,7 @@ RSpec.describe SlopGuard::JevClient do
     expect(client).not_to receive(:post)
     expect { client.ask('x' * 30_000, questions) }.to raise_error(SlopGuard::LimitExceeded, /not truncated/)
     expect(budget.attempts).to eq(0)
-    small = SlopGuard::Budget.new(ledger: File.join(@directory, 'small.jsonl'), max_attempts: 2)
+    small = SlopGuard::Budget.open(ledger: File.join(@directory, 'small.jsonl'), max_attempts: 2)
     retrying = described_class.new(api_key: 'test', budget: small, sleeper: ->(_) {})
     expect(retrying).to receive(:post).twice.and_return(response(429, ''))
     expect { retrying.ask('source', questions) }.to raise_error(SlopGuard::LimitExceeded, /request budget/)
@@ -89,7 +89,7 @@ end
 RSpec.describe 'question batching' do
   it 'retains the same complete state in every batch and merges all answers' do
     Dir.mktmpdir do |directory|
-      budget = SlopGuard::Budget.new(ledger: File.join(directory, 'ledger'))
+      budget = SlopGuard::Budget.open(ledger: File.join(directory, 'ledger'))
       client = SlopGuard::JevClient.new(api_key: 'test', budget: budget)
       requests = []
       allow(client).to receive(:post) do |body|

@@ -24,7 +24,7 @@ module SlopGuard
       raise InvalidInput, 'Malformed evaluation report'
     end
 
-    def initialize(dataset:, profile: Profile.load('demo'), rules: Rules.new(profile.rules_dir),
+    def initialize(dataset:, profile: Profile.load('demo'), rules: Rules.load(profile.rules_dir),
                    clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       @dataset = dataset
       @profile = profile
@@ -131,12 +131,12 @@ module SlopGuard
 
       dataset.cases(split).map do |entry|
         id = entry.fetch('id')
-        [id, Snapshot.new(dataset.input(id), profile: @profile), dataset.labels(id)]
+        [id, Snapshot.build(dataset.input(id), profile: @profile), dataset.labels(id)]
       end
     end
 
     def review_case(id, snapshot, labels, repeat, directory, client_factory)
-      budget = Budget.new(ledger: File.join(directory, 'requests.jsonl'))
+      budget = Budget.open(ledger: File.join(directory, 'requests.jsonl'))
       client = client_factory.call(budget)
       review_start = @clock.call
       report = Evaluator.new(client: client, rules: rules).call(snapshot)

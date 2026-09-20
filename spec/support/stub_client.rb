@@ -26,7 +26,7 @@ module StubClient
   end
 
   def demo_snapshot(input)
-    SlopGuard::Snapshot.new(input, profile: demo_profile)
+    SlopGuard::Snapshot.build(input, profile: demo_profile)
   end
 end
 

@@ -4,9 +4,9 @@
 # value. A refactor that changes any of these has changed a published identity, not just internal structure.
 RSpec.describe 'pinned digests' do
   it 'keeps both saved rule revisions' do
-    expect(SlopGuard::Rules.new(demo_profile.rules_dir).revision)
+    expect(SlopGuard::Rules.load(demo_profile.rules_dir).revision)
       .to eq('89dea7e917d39f79a861e1b39606e8c77109bc3993e6c9328d3cb5fe67ce7e6a')
-    expect(SlopGuard::Rules.new(ruby_profile.rules_dir).revision)
+    expect(SlopGuard::Rules.load(ruby_profile.rules_dir).revision)
       .to eq('b7f212799e6fdb406252defbc4285e994f118d5734209d4cbb2692717b1d950d')
   end
 

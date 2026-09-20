@@ -89,7 +89,7 @@ RSpec.describe SlopGuard::GitSource do
     git('add', '.')
     git('commit', '-m', 'Add untrusted inputs')
     adapter = source
-    snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
+    snapshot = SlopGuard::Snapshot.build(adapter.input(pr_body: body), profile: adapter.profile)
     expect(File).not_to exist(marker)
     expect(snapshot.files).not_to have_key('lib/link.rb')
     expect(snapshot.skipped).to include('.env', 'README.md')
@@ -107,7 +107,7 @@ RSpec.describe SlopGuard::GitSource do
     git('add', '.')
     git('commit', '-m', 'Documentation')
     adapter = source(base: 'feature', head: 'main')
-    snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
+    snapshot = SlopGuard::Snapshot.build(adapter.input(pr_body: body), profile: adapter.profile)
     expect(snapshot.changed).to eq({})
     expect(snapshot.skipped).to include('README.md')
   end
@@ -234,8 +234,8 @@ RSpec.describe SlopGuard::GitSource do
     expect(output['gaps']).to eq([])
     expect(output['source']['head']).to eq(git('rev-parse', 'HEAD'))
     expect(output['evidence']['changed_lines']['lib/calculator.rb']).to include(3)
-    expect(output['rules_revision']).to eq(SlopGuard::Rules.new(ruby_profile.rules_dir).revision)
-    expect(output['rules_revision']).not_to eq(SlopGuard::Rules.new.revision)
+    expect(output['rules_revision']).to eq(SlopGuard::Rules.load(ruby_profile.rules_dir).revision)
+    expect(output['rules_revision']).not_to eq(SlopGuard::Rules.load.revision)
     _, stderr, status = Open3.capture3(*command, '--live')
     expect(status.exitstatus).to eq(2)
     expect(stderr).to include('Usage:')
@@ -243,10 +243,10 @@ RSpec.describe SlopGuard::GitSource do
 
   it 'reviews a real Git snapshot offline using a stubbed model through the existing evaluator' do
     adapter = source
-    snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
+    snapshot = SlopGuard::Snapshot.build(adapter.input(pr_body: body), profile: adapter.profile)
     client = silent_client
     allow(client).to receive(:ask) { |_state, questions| questions.transform_values { 0.5 } }
-    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.new(ruby_profile.rules_dir)).call(snapshot)
+    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.load(ruby_profile.rules_dir)).call(snapshot)
     expect(client).to have_received(:ask).at_least(:once)
     expect(result['rules']['G1']['outcome']).to eq('inconclusive')
     expect(result['rules']['G1']['readings']).not_to be_empty
@@ -257,7 +257,7 @@ RSpec.describe SlopGuard::GitSource do
     git('add', '.')
     git('commit', '-m', 'Only a symlink')
     adapter = source(base: 'HEAD~1')
-    snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
+    snapshot = SlopGuard::Snapshot.build(adapter.input(pr_body: body), profile: adapter.profile)
     expect(snapshot.changed).to eq({})
     client = silent_client
     expect(client).not_to receive(:ask)
@@ -273,7 +273,7 @@ RSpec.describe SlopGuard::GitSource do
                '--base', 'main', '--expectations', expectations, '--inspect', '--rules-dir']
     stdout, stderr, status = Open3.capture3(*command, File.join(SlopGuard::ROOT, 'config/rules'))
     expect(status.exitstatus).to eq(0), stderr
-    expect(JSON.parse(stdout)['rules_revision']).to eq(SlopGuard::Rules.new.revision)
+    expect(JSON.parse(stdout)['rules_revision']).to eq(SlopGuard::Rules.load.revision)
     write('rules/g1.yml', 'low: invalid')
     _, stderr, status = Open3.capture3(*command, File.join(@repository, 'rules'))
     expect(status.exitstatus).to eq(2)

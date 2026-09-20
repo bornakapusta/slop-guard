@@ -33,16 +33,16 @@ Exit: goldens committed; suite green. Done: 207 examples, 0 failures; non-Metric
 
 Pattern already in repo: `Profile.load` vs `Profile.new`. Constructors assign only; a class method does the work.
 
-- [ ] `Snapshot.build(input, profile:)` → digests raw input FIRST, validates, filters, diffs, builds Expectations/Candidates, returns `Snapshot.new(files:, before:, changed:, identity:, gaps:, …)`. `snapshot.rb:9-30`. Callers: `cli.rb:112,120,123`, `github_source.rb:54`, `eval/runner.rb:134`, `bin/evaluate:34`, `spec/support/stub_client.rb:29`, `snapshot_spec.rb`, `git_source_spec.rb:92,110,246,260`.
-- [ ] Extract `Changes.diff(before, files)` (`snapshot.rb:129-141`) and `EvidenceSelection` (`selected_paths`/`state`, `snapshot.rb:39-72`) as own classes; `Snapshot#state` delegates. Key order of `state` untouched.
-- [ ] `Candidates.extract(files, profile:)` (`candidates.rb:17-36`); `Expectations.parse(body)` (`expectations.rb:8-25`).
-- [ ] `Rules.load(directory)` reads/validates; `Rules.new(definitions:, files:)` holds. Keep `Dir[]` order + `rescue` mapping (`rules.rb:16-31`). Callers: `cli.rb:31`, `worker.rb:13`, `rules_spec.rb`, `git_source_spec.rb:237-276`, `worker_spec.rb:61`.
-- [ ] `Budget.open(ledger:, …)` does `mkdir_p`; deadline still starts at open (`budget.rb:9-21`). Spec-flow #9: `.new` without `.open` must not exist on any path or `reserve!` raises `ENOENT` → wrong exit 2. Callers `cli.rb:159`, `worker.rb:99`, `runner.rb:139`.
-- [ ] `Store.open(path, identity:)` runs DDL + `bind` (`store.rb:9-32`); callers `bin/app-worker:10`, `spec/support/service.rb:8`, `store_spec.rb`.
-- [ ] `Settings.from_env(env)` reads key file + `mkdir_p` (`settings.rb:12-31`); callers `bin/app-server:10`, `bin/app-worker:7`.
-- [ ] Private `attr_reader` everywhere instead of bare ivars (RuleRun `@rule/@snapshot/@result`, JevClient `@api_key`).
+- [x] `Snapshot.build(input, profile:)` → digests raw input FIRST, validates, filters, diffs, builds Expectations/Candidates, returns `Snapshot.new(files:, before:, changed:, identity:, gaps:, …)`. `snapshot.rb:9-30`. Callers: `cli.rb:112,120,123`, `github_source.rb:54`, `eval/runner.rb:134`, `bin/evaluate:34`, `spec/support/stub_client.rb:29`, `snapshot_spec.rb`, `git_source_spec.rb:92,110,246,260`.
+- [x] Extract `Changes.diff(before, files)` (`snapshot.rb:129-141`) and `EvidenceSelection` (`selected_paths`/`state`, `snapshot.rb:39-72`) as own classes; `Snapshot#state` delegates. Key order of `state` untouched.
+- [x] `Candidates.extract(files, profile:)` (`candidates.rb:17-36`); `Expectations.parse(body)` (`expectations.rb:8-25`).
+- [x] `Rules.load(directory)` reads/validates; `Rules.new(definitions:, files:)` holds. Keep `Dir[]` order + `rescue` mapping (`rules.rb:16-31`). Callers: `cli.rb:31`, `worker.rb:13`, `rules_spec.rb`, `git_source_spec.rb:237-276`, `worker_spec.rb:61`.
+- [x] `Budget.open(ledger:, …)` does `mkdir_p`; deadline still starts at open (`budget.rb:9-21`). Spec-flow #9: `.new` without `.open` must not exist on any path or `reserve!` raises `ENOENT` → wrong exit 2. Callers `cli.rb:159`, `worker.rb:99`, `runner.rb:139`.
+- [x] `Store.open(path, identity:)` runs DDL + `bind` (`store.rb:9-32`); callers `bin/app-worker:10`, `spec/support/service.rb:8`, `store_spec.rb`.
+- [x] `Settings.from_env(env)` reads key file + `mkdir_p` (`settings.rb:12-31`); callers `bin/app-server:10`, `bin/app-worker:7`.
+- [x] Private `attr_reader` everywhere instead of bare ivars (JevClient `@api_key` done; RuleRun ivars go with the Phase 2 rewrite).
 
-Exit: goldens byte-identical; `--inspect` on this repo identical except timing.
+Exit: goldens byte-identical; `--inspect` on this repo identical except timing. Done: 207 examples green, all 33 goldens + pinned digests unchanged. Notes: `Trees`/`Changes`/`Evidence` live under `snapshot/`, `Candidates::Extractor` under `candidates/`; `Budget.new`/`Store.new` are private (only `open`); `Settings` is a `Data` subclass with `from_env` and an eager `engine_revision`. `Snapshot#initialize` takes 9 kwargs (one ParameterLists offence, accepted). Metrics total unchanged at 234.
 
 ## Phase 2 — Evaluator split + value objects (rules 3, 8, 11)
 

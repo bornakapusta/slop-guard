@@ -65,6 +65,8 @@ module SlopGuard
 
     private
 
+    attr_reader :api_key
+
     def ask_batch(state, questions)
       encoded = JSON.generate('model' => MODEL, 'state' => state, 'questions' => questions)
       raise LimitExceeded, 'A question cannot fit the request byte limit' if encoded.bytesize > MAX_REQUEST_BYTES
@@ -95,7 +97,7 @@ module SlopGuard
 
     def post(body)
       request = Net::HTTP::Post.new(ENDPOINT)
-      request['Authorization'] = "Bearer #{@api_key}"
+      request['Authorization'] = "Bearer #{api_key}"
       request['Content-Type'] = 'application/json'
       request.body = body
       http = connection

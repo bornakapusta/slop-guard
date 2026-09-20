@@ -7,14 +7,14 @@ RSpec.describe SlopGuard::Service::Store do
 
   it 'refuses to reuse an existing data directory for another repository' do
     path = File.join(directory, 'bound.sqlite3')
-    first = described_class.new(path, identity: [8, 7, 42])
+    first = described_class.open(path, identity: [8, 7, 42])
     first.close
-    expect { described_class.new(path, identity: [8, 7, 99]) }.to raise_error(SlopGuard::InvalidInput, /another/)
+    expect { described_class.open(path, identity: [8, 7, 99]) }.to raise_error(SlopGuard::InvalidInput, /another/)
   end
 
   it 'persists queued work and deduplication across a database reopen' do
     store.receive('delivery', number: 1)
-    other = described_class.new(File.join(directory, 'app.sqlite3'))
+    other = described_class.open(File.join(directory, 'app.sqlite3'))
     expect(other.receive('delivery', number: 1)).to eq(:duplicate)
     expect(other.claim['pr']).to eq(1)
     expect(store.claim).to be_nil
@@ -40,7 +40,7 @@ RSpec.describe SlopGuard::Service::Store do
     store.begin_run('run-1', 1)
     store.evaluating('run-1')
     store.intend('review:run-1')
-    other = described_class.new(File.join(directory, 'app.sqlite3'))
+    other = described_class.open(File.join(directory, 'app.sqlite3'))
     expect(other.run('run-1')['phase']).to eq('evaluating')
     expect(other.publication('review:run-1')['attempted']).to eq(1)
   ensure

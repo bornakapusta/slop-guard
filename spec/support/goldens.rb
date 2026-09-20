@@ -101,7 +101,7 @@ module Goldens
   end
 
   def snapshot
-    SlopGuard::Snapshot.new(dataset.input('g1-violation'), profile: SlopGuard::Profile.load('demo'))
+    SlopGuard::Snapshot.build(dataset.input('g1-violation'), profile: SlopGuard::Profile.load('demo'))
   end
 
   def dataset

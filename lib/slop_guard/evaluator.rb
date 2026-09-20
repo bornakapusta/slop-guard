@@ -7,7 +7,7 @@ module SlopGuard
 
     attr_reader :client, :rules
 
-    def initialize(client:, rules: Rules.new)
+    def initialize(client:, rules: Rules.load)
       @client = client
       @rules = rules
     end

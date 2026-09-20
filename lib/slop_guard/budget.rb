@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
 module SlopGuard
-  # Persists conservative request reservations before contacting the provider.
+  # Persists conservative request reservations before contacting the provider. `open` prepares the ledger
+  # directory and starts the review deadline; there is no other way to obtain a Budget.
   class Budget
     RESERVATION = 64_000 * 0.042 / 1_000_000
     attr_reader :attempts, :usage, :reserved
+
+    def self.open(ledger:, **)
+      FileUtils.mkdir_p(File.dirname(ledger))
+      new(ledger: ledger, **)
+    end
+    private_class_method :new
 
     def initialize(ledger:, session_limit: 2.0, review_limit: 0.10, max_attempts: 20, seconds: 120,
                    clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
@@ -17,7 +24,6 @@ module SlopGuard
       @attempts = 0
       @usage = 0
       @reserved = 0.0
-      FileUtils.mkdir_p(File.dirname(ledger))
     end
 
     def remaining

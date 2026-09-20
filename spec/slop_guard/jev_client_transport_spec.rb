@@ -11,7 +11,7 @@ RSpec.describe SlopGuard::JevClient, 'transport' do
 
   let(:clock) { [0.0] }
   let(:budget) do
-    SlopGuard::Budget.new(ledger: File.join(@directory, 'ledger.jsonl'), seconds: 120, clock: -> { clock[0] })
+    SlopGuard::Budget.open(ledger: File.join(@directory, 'ledger.jsonl'), seconds: 120, clock: -> { clock[0] })
   end
   let(:questions) { { 'q' => { 'type' => 'noul', 'instructions' => 'Is this covered?' } } }
   let(:payload) do

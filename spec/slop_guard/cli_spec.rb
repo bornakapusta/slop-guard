@@ -30,7 +30,7 @@ RSpec.describe SlopGuard::CLI do
     output = JSON.parse(stdout.string)
     expect(output['profile']['rules_dir']).to eq('config/rules/ruby')
     expect(output['definitions'].keys).to eq(%w[G1 G2 G3 G4])
-    expect(output['rules_revision']).to eq(SlopGuard::Rules.new(ruby_profile.rules_dir).revision)
+    expect(output['rules_revision']).to eq(SlopGuard::Rules.load(ruby_profile.rules_dir).revision)
   end
 
   it 'reviews an arbitrary input document with expectations from stdin' do

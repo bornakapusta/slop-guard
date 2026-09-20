@@ -6,30 +6,49 @@ module SlopGuard
   module Service
     # Durable inbox, paid-run checkpoints, and publication intents on one local disk.
     class Store
-      def initialize(path, identity: nil)
+      SCHEMA = <<~SQL
+        PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = FULL;
+        CREATE TABLE IF NOT EXISTS identity (id INTEGER PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY);
+        CREATE TABLE IF NOT EXISTS flags (id INTEGER PRIMARY KEY, enabled INTEGER NOT NULL);
+        INSERT OR IGNORE INTO flags VALUES (1, 1);
+        CREATE TABLE IF NOT EXISTS jobs (
+          id INTEGER PRIMARY KEY, pr INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'pending',
+          attempts INTEGER NOT NULL DEFAULT 0, available_at INTEGER NOT NULL DEFAULT 0, error TEXT
+        );
+        CREATE TABLE IF NOT EXISTS runs (
+          id TEXT PRIMARY KEY, pr INTEGER NOT NULL, phase TEXT NOT NULL, report TEXT, changed TEXT
+        );
+        CREATE TABLE IF NOT EXISTS publications (
+          id TEXT PRIMARY KEY, remote_id INTEGER, attempted INTEGER NOT NULL DEFAULT 0
+        );
+      SQL
+
+      # Opens or creates the database, applies the schema and, when an identity is given, binds the data
+      # directory to it. There is no other way to obtain a Store.
+      def self.open(path, identity: nil)
+        db = SQLite3::Database.new(path)
+        db.results_as_hash = true
+        db.busy_timeout = 2000
+        db.execute_batch(SCHEMA)
+        bind(db, identity) if identity
+        new(db)
+      end
+
+      def self.bind(db, identity)
+        value = JSON.generate(identity)
+        db.execute('INSERT OR IGNORE INTO identity VALUES (1, ?)', [value])
+        return if db.execute('SELECT value FROM identity WHERE id = 1').first['value'] == value
+
+        db.close
+        raise InvalidInput, 'This data directory belongs to another GitHub App installation or repository'
+      end
+      private_class_method :new, :bind
+
+      def initialize(db)
         @mutex = Mutex.new
-        @db = SQLite3::Database.new(path)
-        @db.results_as_hash = true
-        @db.busy_timeout = 2000
-        @db.execute_batch(<<~SQL)
-          PRAGMA journal_mode = WAL;
-          PRAGMA synchronous = FULL;
-          CREATE TABLE IF NOT EXISTS identity (id INTEGER PRIMARY KEY, value TEXT NOT NULL);
-          CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY);
-          CREATE TABLE IF NOT EXISTS flags (id INTEGER PRIMARY KEY, enabled INTEGER NOT NULL);
-          INSERT OR IGNORE INTO flags VALUES (1, 1);
-          CREATE TABLE IF NOT EXISTS jobs (
-            id INTEGER PRIMARY KEY, pr INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'pending',
-            attempts INTEGER NOT NULL DEFAULT 0, available_at INTEGER NOT NULL DEFAULT 0, error TEXT
-          );
-          CREATE TABLE IF NOT EXISTS runs (
-            id TEXT PRIMARY KEY, pr INTEGER NOT NULL, phase TEXT NOT NULL, report TEXT, changed TEXT
-          );
-          CREATE TABLE IF NOT EXISTS publications (
-            id TEXT PRIMARY KEY, remote_id INTEGER, attempted INTEGER NOT NULL DEFAULT 0
-          );
-        SQL
-        bind(identity) if identity
+        @db = db
       end
 
       def health?
@@ -134,15 +153,6 @@ module SlopGuard
       end
 
       private
-
-      def bind(identity)
-        value = JSON.generate(identity)
-        query('INSERT OR IGNORE INTO identity VALUES (1, ?)', value)
-        return if query('SELECT value FROM identity WHERE id = 1').first['value'] == value
-
-        @db.close
-        raise InvalidInput, 'This data directory belongs to another GitHub App installation or repository'
-      end
 
       def query(sql, *values)
         @mutex.synchronize { @db.execute(sql, values) }

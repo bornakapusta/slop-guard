@@ -51,10 +51,10 @@ module SlopGuard
           @blobs = {}
           before = tree(ancestor)
           after = tree(head)
-          result = Snapshot.new({ 'before' => before, 'files' => after, 'pr_body' => body,
-                                  'source_gaps' => @gaps.uniq, 'skipped_paths' => @skipped.uniq,
-                                  'source' => { 'base' => base, 'head' => head, 'merge_base' => ancestor } },
-                                profile: profile)
+          result = Snapshot.build({ 'before' => before, 'files' => after, 'pr_body' => body,
+                                    'source_gaps' => @gaps.uniq, 'skipped_paths' => @skipped.uniq,
+                                    'source' => { 'base' => base, 'head' => head, 'merge_base' => ancestor } },
+                                  profile: profile)
           paths = inventory.flat_map { |file| file.values_at('filename', 'previous_filename') }.compact
           unless (result.changed.keys - paths).empty?
             raise InvalidInput,
