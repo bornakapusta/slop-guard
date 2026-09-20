@@ -9,10 +9,14 @@ vendor/
 .ruby-lsp/
 .rubocop_cache/
 
-# Generated reports and coverage (eval/ and docs/ are versioned)
+# Generated reports, coverage and local working notes (eval/ contains versioned fixtures)
 tmp/
 coverage/
 claude/
+todos/
+docs/plans/
+docs/brainstorms/
+docs/verification/
 
 # Local workspace and macOS metadata
 .context/

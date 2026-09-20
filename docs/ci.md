@@ -19,7 +19,7 @@ Each job writes a summary and uploads allowlisted reports for 14 days. Tests inc
 
 ## Main enforcement
 
-The main ruleset requires pull requests and the observed GitHub Actions checks `Tests`, `Static analysis`, `Dependencies`, and `Fixtures`, with strict up-to-date checks, no mandatory reviewer count, and no bypass actors. Paid evaluation is excluded. These are GitHub settings, not properties guaranteed by workflow YAML. See the [checkpoint](verification/ci-checkpoint.md) for actual verification status.
+The main ruleset requires pull requests and the observed GitHub Actions checks `Tests`, `Static analysis`, `Dependencies`, and `Fixtures`, with strict up-to-date checks, no mandatory reviewer count, and no bypass actors. Paid evaluation is excluded. These are GitHub settings, not properties guaranteed by workflow YAML.
 
 ## Paid development evaluation
 

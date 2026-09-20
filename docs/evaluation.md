@@ -1,6 +1,6 @@
 # Evaluating Slop Guard
 
-The local engine, HTTP contract and harness can be tested without credentials. **Live qualification has not passed.** The [first development pass](verification/first-live-development.md) completed with valid provider responses but missed all four seeded violations. The dataset was authored before any model call; its rationales and expected outcomes still need maintainer review.
+The local engine, HTTP contract and harness can be tested without credentials. **Live qualification has not passed.** The first development pass completed with valid provider responses but missed all four seeded violations. The dataset was authored before any model call; its rationales and expected outcomes still need maintainer review.
 
 ## Case format
 
@@ -44,7 +44,7 @@ After the workflow is merged into `main`, dispatch **Development evaluation** fr
 
 The job summary distinguishes a completed label match, mismatch, interrupted run and unavailable report. It reports provisional-label status, per-rule counts, repeat variability, versions, estimated input cost and request reservations. Download the raw report and ledger within 14 days. Code-quality CI and this workflow are independent; a green CI run is not model qualification. See [CI operation](ci.md).
 
-The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version. The offline threshold-replay tool that produced the calibration reports has been removed; threshold changes now require fresh repeated development evaluations. The 2026-09-20 remediation changed the prompts themselves (evidence selection, one batched request per rule, scenario and candidate text moved into the state), so `first-live-development`, `threshold-calibration` and `evaluation-benchmark` describe superseded prompts. The first run on the new prompts is [the Phase 4 development check](verification/phase4-development.md).
+Source, rule and lockfile changes alter version fingerprints, so earlier live reports are historical evidence only; they cannot freeze or qualify the current version. Threshold changes require fresh repeated development evaluations. Live evaluation reports are not checked in; keep the ones you need under ignored `tmp/` or as workflow artifacts.
 
 ## Accuracy and repeatability reports
 

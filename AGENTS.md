@@ -13,7 +13,7 @@ Slop Guard is an experimental general-purpose code reviewer implemented in Ruby,
 - `docs/report-schema.md`: the review report layout and exit codes.
 - `spec/slop_guard/` and `spec/eval/`: engine and evaluation-harness specs.
 - `eval/`: baselines, manifest, development cases, and holdout cases. Each case includes `input.json`, `change.diff`, and `labels.json`.
-- `docs/`: guidelines, evaluation procedures, plans, and verification evidence. Generated reports belong in ignored `tmp/`.
+- `docs/`: guidelines, operating procedures and schemas. Working notes (`docs/plans/`, `docs/brainstorms/`, `docs/verification/`, `todos/`) and generated reports are local only and ignored.
 
 ## Build, Test, and Development Commands
 
