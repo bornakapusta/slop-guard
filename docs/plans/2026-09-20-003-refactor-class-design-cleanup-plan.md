@@ -57,11 +57,11 @@ Exit: pinned report strings identical; `question_fingerprints` hex identical; `e
 
 ## Phase 3 — Service per-call objects (rule 2 variant)
 
-- [ ] `Publisher#publish` → builds `Publication.new(client:, store:, number:, head:, run_id:, report:, changed:, current:).call`; kills ivars `publisher.rb:16-19`. `current.call` at same points (`publisher.rb:23,66,80,122`); `intend` before any create (`:81,:128`). Split `inline` (57 lines, CC 25): `existing_inline_review`, `inline_comments`, `post_inline_review`. Worker still constructs one `Publisher` (`worker.rb:12`); interface `publish(**)` unchanged for `worker_spec.rb`.
-- [ ] `GitHubSource#snapshot` → `TreeCollection.new(client:, profile:, base:, head:, ancestor:)` owning `@bytes/@gaps/@skipped/@blobs` (`github_source.rb:48-51`) — ONE object spanning both trees so blob cache is shared (spec-flow #11). `GitHubSource` keeps `pull`, `stamp`, `snapshot` public API for `worker_spec.rb` `instance_double`.
-- [ ] Spec: second `publish` via fresh per-call object with pre-`intend`ed key raises `PublicationUncertain` without `post`. Keep `worker_spec.rb:47-84` restart/phase cases.
+- [x] `Publisher#publish` → builds `Publication.new(client:, store:, number:, head:, run_id:, report:, changed:, current:).call`; kills ivars `publisher.rb:16-19`. `current.call` at same points (`publisher.rb:23,66,80,122`); `intend` before any create (`:81,:128`). Split `inline` (57 lines, CC 25): `existing_inline_review`, `inline_comments`, `post_inline_review`. Worker still constructs one `Publisher` (`worker.rb:12`); interface `publish(**)` unchanged for `worker_spec.rb`.
+- [x] `GitHubSource#snapshot` → `TreeCollection.new(client:, profile:, base:, head:, ancestor:)` owning `@bytes/@gaps/@skipped/@blobs` (`github_source.rb:48-51`) — ONE object spanning both trees so blob cache is shared (spec-flow #11). `GitHubSource` keeps `pull`, `stamp`, `snapshot` public API for `worker_spec.rb` `instance_double`.
+- [x] Spec: second `publish` via fresh per-call object with pre-`intend`ed key raises `PublicationUncertain` without `post`. Keep `worker_spec.rb:47-84` restart/phase cases.
 
-Exit: `spec/slop_guard/service/*` green; `publisher.rb` no ivar assignment outside `initialize`.
+Exit: `spec/slop_guard/service/*` green; `publisher.rb` no ivar assignment outside `initialize`. Done: 209 examples green. Publisher delegates to per-delivery `Publisher::InlineReview` and `Publisher::Summary` over a `Delivery` base (no intermediate Publication class — two verbs, two classes). `GitHubSource::TreeCollection` spans both trees so the blob cache is shared; `GitHubSource.sha` is a class method used by both. Spec added: publisher keeps only `@client`/`@store` after a publish.
 
 ## Phase 4 — Shared boundaries, split mixed classes (rules 1, 6, 7)
 

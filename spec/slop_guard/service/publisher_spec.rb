@@ -96,6 +96,11 @@ RSpec.describe SlopGuard::Service::Publisher do
     expect(client).to have_received(:patch).with('/repos/owner/demo/issues/comments/101', anything)
   end
 
+  it 'keeps no per-publication state on the shared publisher' do
+    publish
+    expect(publisher.instance_variables).to contain_exactly(:@client, :@store)
+  end
+
   it 'reuses a matching inline thread that GitHub still maps to the changed line' do
     publish
     body = nil
