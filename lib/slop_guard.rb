@@ -7,6 +7,7 @@ require 'yaml'
 require 'time'
 require 'fileutils'
 
+# Shared review types and deterministic content fingerprints.
 module SlopGuard
   ROOT = File.expand_path('..', __dir__)
   VERSION = '0.1.0'

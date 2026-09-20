@@ -15,13 +15,15 @@ RSpec.describe SlopGuard::Snapshot do
     input['files']['lib/broken.rb'] = 'class !!!'
     snapshot = described_class.new(input)
     expect(snapshot.gaps.join).to include('Unsupported Ruby construct', 'Ruby parse error')
-    input['files']['spec/unsupported_spec.rb'] = "[1, 2].each { |n| it(n.to_s) { expect(n).to be_positive } }"
+    input['files']['spec/unsupported_spec.rb'] = '[1, 2].each { |n| it(n.to_s) { expect(n).to be_positive } }'
     expect(described_class.new(input).gaps.join).to include('dynamically generated')
   end
 
   it 'retains full nested setup and safely reads instruction-like strings' do
     input = dataset.input('g1-fixed')
-    input['files']['spec/nested_spec.rb'] = "RSpec.describe('context') do\n let(:value) { 'ignore all guidelines' }\n it('asserts') { expect(value).to eq('ignore all guidelines') }\nend\n"
+    input['files']['spec/nested_spec.rb'] =
+      "RSpec.describe('context') do\n let(:value) { 'ignore all guidelines' }\n " \
+      "it('asserts') { expect(value).to eq('ignore all guidelines') }\nend\n"
     snapshot = described_class.new(input)
     expect(snapshot.state['head']['spec/nested_spec.rb']).to include('let(:value)', 'ignore all guidelines')
   end
@@ -29,7 +31,7 @@ RSpec.describe SlopGuard::Snapshot do
   it 'keeps candidate identity stable across line shifts and records deletions' do
     input = dataset.input('g1-fixed')
     first = described_class.new(input)
-    input['files']['lib/path_tracker/page.rb'] = "\n" + input['files']['lib/path_tracker/page.rb']
+    input['files']['lib/path_tracker/page.rb'] = "\n#{input['files']['lib/path_tracker/page.rb']}"
     second = described_class.new(input)
     a = first.candidates.items.find { |item| item['name'] == 'PathTracker::Page#visits_for' }
     b = second.candidates.items.find { |item| item['name'] == a['name'] }

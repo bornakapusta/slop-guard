@@ -14,11 +14,15 @@ parser = OptionParser.new do |opts|
   opts.on('--split NAME') { |value| options[:split] = value }
   opts.on('--repeats N', Integer) { |value| options[:repeats] = value }
   opts.on('--frozen PATH', 'Required version lock for a holdout run') { |value| options[:frozen] = value }
-  opts.on('--freeze REPORT', 'Create a version lock from a passing live development report') { |value| options[:freeze] = value }
+  opts.on('--freeze REPORT', 'Create a version lock from a passing live development report') do |value|
+    options[:freeze] = value
+  end
 end
 begin
   parser.parse!
-  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.empty? && [options[:validate], options[:live], !!options[:freeze]].count(true) == 1
+  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.empty? && [options[:validate], options[:live],
+                                                                    !options[:freeze].nil?].count(true) == 1
+
   dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
   runner = SlopGuard::EvalRunner.new(dataset: dataset)
   if options[:validate]
@@ -27,7 +31,8 @@ begin
       snapshot = SlopGuard::Snapshot.new(dataset.input(entry['id']))
       { 'case' => entry['id'], 'state_bytes' => JSON.generate(snapshot.state).bytesize, 'gaps' => snapshot.gaps }
     end
-    puts JSON.pretty_generate('cases' => contexts, 'labels_reviewed' => dataset.manifest['labels_reviewed'], 'live_qualified' => false)
+    puts JSON.pretty_generate('cases' => contexts, 'labels_reviewed' => dataset.manifest['labels_reviewed'],
+                              'live_qualified' => false)
   elsif options[:freeze]
     path = File.join(SlopGuard::ROOT, 'tmp/frozen.json')
     FileUtils.mkdir_p(File.dirname(path))
@@ -35,14 +40,21 @@ begin
     puts path
   elsif options[:live]
     if options[:split] == 'holdout'
-      raise SlopGuard::InvalidInput, 'Holdout requires --frozen and three repetitions' unless options[:frozen] && options[:repeats] == 3
+      unless options[:frozen] && options[:repeats] == 3
+        raise SlopGuard::InvalidInput,
+              'Holdout requires --frozen and three repetitions'
+      end
+
       runner.verify_frozen!(options[:frozen])
     end
     Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
-    factory = ->(budget) { SlopGuard::JevClient.new(api_key: ENV['TYPESAFE_API_KEY'], budget: budget) }
-    directory = File.join(SlopGuard::ROOT, 'tmp/evaluations', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
-    result = runner.run(split: options[:split], repetitions: options[:repeats], directory: directory, client_factory: factory, live: true)
-    puts JSON.pretty_generate('passed' => result['passed'], 'metrics' => result['metrics'], 'report' => File.join(directory, 'report.json'))
+    factory = ->(budget) { SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', nil), budget: budget) }
+    directory = File.join(SlopGuard::ROOT, 'tmp/evaluations',
+                          "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
+    result = runner.run(split: options[:split], repetitions: options[:repeats], directory: directory,
+                        client_factory: factory, live: true)
+    puts JSON.pretty_generate('passed' => result['passed'], 'metrics' => result['metrics'],
+                              'report' => File.join(directory, 'report.json'))
     exit 1 unless result['passed']
   else
     raise SlopGuard::InvalidInput, parser.to_s

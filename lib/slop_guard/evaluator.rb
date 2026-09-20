@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module SlopGuard
+  # Reconciles typed readings with rule thresholds and validated source anchors.
   class Evaluator
     attr_reader :client, :rules
 
@@ -13,10 +14,12 @@ module SlopGuard
       @snapshot = snapshot
       @results = {}
       rules.definitions.each do |id, rule|
-        @id, @rule = id, rule
+        @id = id
+        @rule = rule
         @result = { 'outcome' => 'not_applicable', 'findings' => [], 'gaps' => [], 'readings' => [] }
         @results[id] = @result
         next if snapshot.changed.empty?
+
         unless snapshot.gaps.empty?
           inconclusive(snapshot.gaps.join('; '))
           next
@@ -30,8 +33,13 @@ module SlopGuard
       end
       errors = @results.values.any? { |value| value['error'] }
       gaps = @results.values.any? { |value| !value['gaps'].empty? }
+      status = if errors
+                 'failed'
+               else
+                 (gaps ? 'incomplete' : 'complete')
+               end
       { 'snapshot' => snapshot.identity, 'version' => VERSION, 'model' => JevClient::MODEL,
-        'rules_revision' => rules.revision, 'status' => errors ? 'failed' : (gaps ? 'incomplete' : 'complete'),
+        'rules_revision' => rules.revision, 'status' => status,
         'rules' => @results, 'skipped_paths' => snapshot.skipped }
     end
 
@@ -65,12 +73,16 @@ module SlopGuard
       end
       scenarios.each do |scenario|
         context = "Scenario #{scenario.fetch('id')}: #{scenario.fetch('text')}"
-        questions = { 'clear' => "#{context}. Is this a single unambiguous requirement consistent with the PR's stated purpose?",
+        questions = { 'clear' => "#{context}. Is this a single unambiguous requirement " \
+                                 "consistent with the PR's stated purpose?",
                       'applicable' => "#{context}. Is this scenario relevant to behavior changed by the PR?",
                       'missing' => "#{context}. #{@rule.fetch('missing')}" }
         @snapshot.candidates.tests.each do |test|
-          reference = "Test candidate #{test['id']} in #{test['path']}:#{test['line']}, including surrounding setup. #{context}."
-          questions["exercise_#{test['id']}"] = "#{reference} Does this test exercise the relevant production behavior rather than replacing that behavior with a stub?"
+          reference = "Test candidate #{test['id']} in #{test['path']}:#{test['line']}, " \
+                      "including surrounding setup. #{context}."
+          questions["exercise_#{test['id']}"] =
+            "#{reference} Does this test exercise the relevant production behavior " \
+            'rather than replacing that behavior with a stub?'
           questions["assert_#{test['id']}"] = "#{reference} Does this test assert the scenario's promised result?"
         end
         values = ask(questions)
@@ -80,7 +92,10 @@ module SlopGuard
           inconclusive("Unclear applicability or expectation: #{scenario['id']}")
           next
         end
-        pairs = @snapshot.candidates.tests.map { |test| [values["exercise_#{test['id']}"], values["assert_#{test['id']}"]] }
+
+        pairs = @snapshot.candidates.tests.map do |test|
+          [values["exercise_#{test['id']}"], values["assert_#{test['id']}"]]
+        end
         covered = pairs.any? { |exercise, assertion| high?(exercise) && high?(assertion) }
         all_absent = pairs.all? { |exercise, assertion| low?(exercise) || low?(assertion) }
         if high?(values['missing']) && all_absent
@@ -96,6 +111,7 @@ module SlopGuard
     def evaluate_design
       global = ask('applicable' => @rule.fetch('applicable'), 'concern' => @rule.fetch('global'))
       return if low?(global['applicable'])
+
       unless high?(global['applicable'])
         inconclusive('Design rule applicability is uncertain')
         return
@@ -128,7 +144,9 @@ module SlopGuard
           inconclusive("Conflicting or uncertain design evidence: #{candidate['name']}")
         end
       end
-      inconclusive('Whole-context concern has no supported local evidence') if high?(global['concern']) && @result['findings'].empty?
+      return unless high?(global['concern']) && @result['findings'].empty?
+
+      inconclusive('Whole-context concern has no supported local evidence')
     end
 
     def concern(topic, anchor, readings, scenario: nil)

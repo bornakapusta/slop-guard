@@ -53,6 +53,7 @@ RSpec.describe SlopGuard::Evaluator do
   it 'preserves completed findings when a later rule fails' do
     client = client_with do |_state, questions|
       raise SlopGuard::ProviderError, 'Jev unavailable' unless questions.key?('missing')
+
       answers(questions)
     end
     report = described_class.new(client: client).call(snapshot)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module SlopGuard
+  # Persists conservative request reservations before contacting the provider.
   class Budget
     RESERVATION = 64_000 * 0.042 / 1_000_000
     attr_reader :attempts, :usage, :reserved
@@ -25,11 +26,16 @@ module SlopGuard
 
     def reserve!
       raise LimitExceeded, 'Review deadline exceeded' unless remaining.positive?
-      raise LimitExceeded, 'Review request budget exhausted' if attempts >= @max_attempts || reserved + RESERVATION > @review_limit
+      if attempts >= @max_attempts || reserved + RESERVATION > @review_limit
+        raise LimitExceeded,
+              'Review request budget exhausted'
+      end
+
       File.open(@ledger, File::RDWR | File::CREAT, 0o600) do |file|
         file.flock(File::LOCK_EX)
         total = file.each_line.sum { |line| JSON.parse(line).fetch('reserved_usd', 0) }
         raise LimitExceeded, 'Evaluation session budget exhausted' if total + RESERVATION > @session_limit
+
         file.seek(0, IO::SEEK_END)
         file.puts(JSON.generate('at' => Time.now.utc.iso8601, 'reserved_usd' => RESERVATION))
         file.flush
