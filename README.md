@@ -10,6 +10,8 @@ The four rules assess observable behavior tests, relevant failure-case tests, fo
 
 ## Demo: a new error case without a test
 
+Use the [demo runbook](docs/demo-runbook.md) for setup, an offline walkthrough, and the commands for a fresh local or GitHub evaluation.
+
 A change to the sample log parser makes `add_visit(nil)` raise an error:
 
 ```diff
@@ -90,3 +92,13 @@ GitHub webhooks, inline comments, SQLite processing and deployment are not imple
 Pull requests and pushes to `main` run RSpec, non-Metrics RuboCop, dependency auditing and offline fixture validation. Coverage and complexity are informational. These checks test the reviewer implementation; they do not establish review accuracy or feature-use-case coverage.
 
 A separate **Development evaluation** workflow runs Jev manually from `main`, with three development repetitions and the existing $2 reservation guard per run. Setup, local commands, reports and verification limits are in [the CI guide](docs/ci.md) and [the verification checkpoint](docs/verification/ci-checkpoint.md).
+
+## Evaluate accuracy and repeatability
+
+Analyze any saved evaluation without another API call:
+
+```sh
+bundle exec ruby bin/analyze-evaluation tmp/evaluations/RUN/report.json
+```
+
+The report separates label agreement, correct finding detection and repeat consistency, with latency and cost measurements for new runs. In the historical calibration run, G1 was 100% repeatable while detecting 0 of 3 repeated seeded violations. See the [benchmark guide](docs/evaluation-benchmark.md) for longer development runs, metric definitions and human label review.

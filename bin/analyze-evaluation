@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'optparse'
+require_relative '../lib/slop_guard'
+
+options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = 'Usage: bin/analyze-evaluation REPORT.json [--json] (offline; no model calls)'
+  opts.on('--json', 'Output machine-readable metrics') { options[:json] = true }
+end
+begin
+  parser.parse!
+  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.size == 1
+
+  report = JSON.parse(File.read(ARGV.first))
+  split = report.fetch('split')
+  raise SlopGuard::InvalidInput, 'Unknown evaluation split' unless %w[development holdout].include?(split)
+
+  ids = report['case_ids'] || SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')).cases(split).map do |entry|
+    entry.fetch('id')
+  end
+  analysis = SlopGuard::EvaluationAnalysis.new(report, case_ids: ids)
+  puts(options[:json] ? JSON.pretty_generate(analysis.to_h) : analysis.markdown)
+rescue SlopGuard::Error, OptionParser::ParseError, SystemCallError, JSON::ParserError, KeyError, TypeError => e
+  warn e.message
+  exit 2
+end

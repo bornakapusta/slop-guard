@@ -46,8 +46,11 @@ module SlopGuard
     private
 
     def ask(questions)
-      values = client.ask(@snapshot.state, questions.transform_values { |text| rules.question(text) })
+      state = @snapshot.state
+      typed = questions.transform_values { |text| rules.question(text) }
+      values = client.ask(state, typed)
       @result['readings'] << values
+      (@result['question_fingerprints'] ||= []) << SlopGuard.digest([state, typed])
       values
     end
 

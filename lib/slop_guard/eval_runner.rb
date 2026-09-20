@@ -5,9 +5,10 @@ module SlopGuard
   class EvalRunner
     attr_reader :dataset, :rules
 
-    def initialize(dataset:, rules: Rules.new)
+    def initialize(dataset:, rules: Rules.new, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       @dataset = dataset
       @rules = rules
+      @clock = clock
     end
 
     def versions
@@ -58,30 +59,50 @@ module SlopGuard
         end }
     end
 
-    def run(split:, repetitions:, directory:, client_factory:, live: false)
+    def run(split:, repetitions:, directory:, client_factory:, live: false, benchmark: false)
       dataset.validate!
       raise InvalidInput, 'Split must be development or holdout' unless %w[development holdout].include?(split)
-      raise InvalidInput, 'Repetitions must be between 1 and 3' unless (1..3).cover?(repetitions)
+      raise InvalidInput, 'Benchmarks use development cases only' if benchmark && split != 'development'
 
+      maximum = benchmark ? 100 : 3
+      unless repetitions.is_a?(Integer) && (1..maximum).cover?(repetitions)
+        raise InvalidInput, "Repetitions must be between 1 and #{maximum}"
+      end
+
+      # Prepare once so only model judgments vary between repetitions.
+      prepared = dataset.cases(split).map do |entry|
+        [entry.fetch('id'), Snapshot.new(dataset.input(entry.fetch('id'))), dataset.labels(entry.fetch('id'))]
+      end
       FileUtils.mkdir_p(directory)
       result = { 'live' => live, 'split' => split, 'versions' => versions, 'repetitions' => repetitions,
+                 'mode' => benchmark ? 'benchmark' : 'evaluation', 'case_ids' => prepared.map(&:first),
                  'labels_reviewed' => dataset.manifest['labels_reviewed'] == true, 'runs' => [], 'passed' => false }
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      repetitions.times do |repeat|
-        dataset.cases(split).each do |entry|
-          budget = Budget.new(ledger: File.join(directory, 'requests.jsonl'))
-          client = client_factory.call(budget)
-          report = Evaluator.new(client: client, rules: rules).call(Snapshot.new(dataset.input(entry['id'])))
-          run = { 'case' => entry['id'], 'repeat' => repeat + 1, 'report' => report,
-                  'score' => score(report, dataset.labels(entry['id'])), 'attempts' => budget.attempts,
-                  'input_tokens' => budget.usage, 'reserved_usd' => budget.reserved,
-                  'estimated_usd' => budget.usage * 0.042 / 1_000_000 }
-          result['runs'] << run
-          save(directory, result)
+      start = @clock.call
+      catch(:benchmark_failed) do
+        repetitions.times do |repeat|
+          prepared.each do |id, snapshot, labels|
+            budget = Budget.new(ledger: File.join(directory, 'requests.jsonl'))
+            client = client_factory.call(budget)
+            review_start = @clock.call
+            report = Evaluator.new(client: client, rules: rules).call(snapshot)
+            run = { 'case' => id, 'repeat' => repeat + 1, 'report' => report,
+                    'review_seconds' => @clock.call - review_start,
+                    'score' => score(report, labels), 'attempts' => budget.attempts,
+                    'input_tokens' => budget.usage, 'reserved_usd' => budget.reserved,
+                    'estimated_usd' => budget.usage * 0.042 / 1_000_000 }
+            result['runs'] << run
+            if benchmark && report.fetch('status') == 'failed'
+              result['stopped_reason'] = 'Operational failure; inspect the failed review and request ledger'
+              save(directory, result)
+              throw :benchmark_failed
+            end
+            save(directory, result)
+          end
         end
       end
-      result['passed'] = result['runs'].all? { |run| run['score']['passed'] }
-      result['seconds'] = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      result['completed'] = result['runs'].size == prepared.size * repetitions
+      result['passed'] = result['completed'] && result['runs'].all? { |run| run['score']['passed'] }
+      result['seconds'] = @clock.call - start
       valid = result['runs'].reject { |run| run['report']['status'] == 'failed' }
       totals = %w[true_positives false_positives misses correct_abstentions unnecessary_abstentions].to_h do |key|
         [key, valid.sum { |run| run['score'][key] }]
@@ -110,9 +131,11 @@ module SlopGuard
     def freeze!(development_report, output)
       report = JSON.parse(File.read(development_report))
       expected = dataset.cases('development').map { |entry| entry['id'] }.sort
-      unless report['live'] && report['passed'] && report['split'] == 'development' && report['versions'] == versions &&
+      unless report['live'] && report['passed'] && report['labels_reviewed'] == true &&
+             report['mode'] != 'benchmark' && report['split'] == 'development' && report['versions'] == versions &&
              report.fetch('runs').map { |run| run['case'] }.uniq.sort == expected
-        raise InvalidInput, 'A complete passing live development report for these exact versions is required'
+        raise InvalidInput,
+              'A complete passing live development report with reviewed labels for these exact versions is required'
       end
 
       File.write(output, JSON.pretty_generate(versions))
