@@ -4,7 +4,7 @@ An experimental general-purpose code reviewer, implemented in Ruby, that asks Je
 
 The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the CLI supports the supplied evaluation cases and committed changes in local Ruby/RSpec repositories.
 
-**Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). GitHub App delivery is the next phase, gated on successful evaluation.
+**Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). An experimental Ruby GitHub App service is also implemented, with inline review comments and one summary. It is not deployed or live-verified; use it only as an advisory pilot. See [GitHub App setup](docs/github-app.md).
 
 The four rules assess observable behavior tests, relevant failure-case tests, focused responsibilities, and justified abstractions. Read [the adopted guidelines](docs/guidelines.md) and [the implementation plan](docs/plans/2026-09-19-001-feat-slop-guard-reviewer-plan.md).
 
@@ -105,7 +105,7 @@ A concern does not fail the single-review command: exit 0 means the review compl
 
 Follow [the evaluation guide](docs/evaluation.md). The authored labels remain provisional until reviewed; development runs can help assess the questions, while qualification requires agreed outcomes. Tune only development cases, freeze the versions after a passing development run, then evaluate the held-out set three times. A passing mock response does not qualify a rule.
 
-GitHub webhooks, inline comments, SQLite processing and deployment are not implemented yet. The reviewer and its planned GitHub App delivery remain separate from the projects it reviews; no reviewed application code runs inside the reviewer.
+The [GitHub App service](docs/github-app.md) receives signed webhooks, queues work in SQLite, and publishes inline findings plus one updated summary. One Docker container runs the Ruby web server and worker. The reviewer remains separate from the projects it reviews; no reviewed application code runs inside it. Offline delivery tests do not qualify model accuracy.
 
 ## CI and code quality
 

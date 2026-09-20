@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'rbconfig'
+require 'dotenv'
+require_relative '../lib/slop_guard/service'
+
+Dotenv.load(File.join(SlopGuard::ROOT, '.env.app'))
+SlopGuard::Service::Settings.new
+Dir.chdir(SlopGuard::ROOT)
+children = []
+stopping = false
+%w[INT TERM].each { |signal| Signal.trap(signal) { stopping = true } }
+stop_children = lambda do |signal|
+  children.each do |pid|
+    Process.kill(signal, -pid)
+  rescue Errno::ESRCH
+    nil
+  end
+end
+begin
+  children << Process.spawn(RbConfig.ruby, '-S', 'puma', '--port', ENV.fetch('PORT', '3000'),
+                            '--threads', '1:4', '--environment', 'production', 'config.ru', pgroup: true)
+  children << Process.spawn(RbConfig.ruby, 'bin/app-worker', pgroup: true)
+  until stopping
+    break if Process.waitpid(-1, Process::WNOHANG)
+
+    sleep 0.2
+  end
+ensure
+  stop_children.call('TERM')
+  # Provider work has a durable checkpoint. A forced stop never replays paid calls.
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
+  loop do
+    children.reject! do |pid|
+      Process.waitpid(pid, Process::WNOHANG)
+    rescue Errno::ECHILD
+      true
+    end
+    break if children.empty? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+    sleep 0.1
+  end
+  stop_children.call('KILL') unless children.empty?
+end
+exit(stopping ? 0 : 1)
