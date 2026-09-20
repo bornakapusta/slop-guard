@@ -15,7 +15,7 @@ Add GitHub Actions CI for Slop Guard's Ruby code, with required tests, non-metri
 
 This implements the practical baseline selected in the [origin requirements](../brainstorms/2026-09-19-ci-code-quality-requirements.md). Deployment, containers, publishing, hosting and GitHub App implementation remain separate tasks in `docs/plans/2026-09-19-001-feat-slop-guard-reviewer-plan.md`. No new type system, general analysis platform, automatic fixes, holdout tuning or model-quality merge gate is included.
 
-Implementation is underway on `feat/ci-code-quality`. See `docs/verification/ci-checkpoint.md` for current evidence and remaining hosted checks; the verified context below records the earlier planning baseline.
+Implementation is published in PR 1 on `feat/ci-code-quality`. Required checks and enforcement are live-verified; manual evaluation runtime acceptance remains after merge. See `docs/verification/ci-checkpoint.md` for current evidence and remaining hosted checks; the verified context below records the earlier planning baseline.
 
 ## Requirements Trace
 
@@ -126,7 +126,7 @@ flowchart TB
 
 **Verification:** A fresh CI-like suite run produces readable line/branch coverage for the intended source set; no numerical coverage value changes test success. Missing/broken coverage output is explicitly reported, not labeled a clean measurement.
 
-- [ ] **Unit 3: Add required CI and informational complexity results**
+- [x] **Unit 3: Add required CI and informational complexity results**
 
 **Requirements:** R1–R5, R8. **Dependencies:** Units 1–2.
 
@@ -149,6 +149,8 @@ flowchart TB
 
 - [ ] **Unit 4: Add trusted manual development evaluation**
 
+Implementation, local tests, environment policy and PR-ref rejection are verified. Allowed-main dispatch and timeout acceptance remain pending default-branch merge; see the checkpoint.
+
 **Requirements:** R6, R7. **Dependencies:** Unit 1. Configure the main-only evaluation environment within this unit before supplying real credentials or attempting its hosted verification.
 
 **Files:** Create `.github/workflows/evaluate.yml`, `script/evaluation_summary.rb`, and `spec/ci/evaluation_summary_spec.rb`. External configuration: the `jev-evaluation` environment, its branch restriction and environment-scoped secret. Reuse `bin/evaluate`, `lib/slop_guard/eval_runner.rb` and `lib/slop_guard/budget.rb` without changing their judgment or budget policies.
@@ -161,7 +163,7 @@ flowchart TB
 
 **Integration verification:** An allowed main dispatch reaches the existing evaluator and preserves its success/mismatch/setup exit behavior. A non-main dispatch or tag cannot obtain the environment secret even if its workflow condition is changed. Missing secret fails before provider requests. Controlled evaluator failure and step timeout retain available artifacts; runner loss/cancellation is recorded as a limitation. Concurrent dispatches do not overlap active paid evaluations. Do not execute a paid smoke run as part of planning.
 
-- [ ] **Unit 5: Enable enforcement and document operation**
+- [x] **Unit 5: Enable enforcement and document operation**
 
 **Requirements:** R5–R8. **Dependencies:** Units 3–4.
 

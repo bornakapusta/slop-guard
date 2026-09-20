@@ -206,14 +206,3 @@ jobs:
           path: tmp/ci/complexity.json
           retention-days: 14
           if-no-files-found: error
-
-  environment_probe:
-    name: Temporary environment boundary probe
-    environment: jev-evaluation
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    steps:
-      - name: This step must never execute on a PR ref
-        run: |
-          echo '::error::The main-only environment unexpectedly admitted a PR ref.'
-          exit 1
