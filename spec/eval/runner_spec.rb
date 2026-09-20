@@ -17,8 +17,21 @@ RSpec.describe 'the evaluation pipeline' do
       expect(result['passed']).to be(false)
       expect(result['metrics']['operational_failures']).to eq(24)
       expect(result['metrics']['precision']).to be_nil
+      expect(result['metrics']['by_rule']['G1'].keys).to include('unnecessary_abstentions', 'precision', 'recall')
       saved = JSON.parse(File.read(File.join(directory, 'report.json')))
       expect(saved).to eq(result)
+      expect(File.foreach(File.join(directory, 'runs.jsonl')).count).to eq(24)
+    end
+  end
+
+  it 'recovers runs finished after the last checkpoint when loading an interrupted directory' do
+    Dir.mktmpdir do |directory|
+      runs = [{ 'case' => 'a', 'repeat' => 1 }, { 'case' => 'b', 'repeat' => 1 }]
+      File.write(File.join(directory, 'report.json'), JSON.generate('runs' => runs.first(1)))
+      File.write(File.join(directory, 'runs.jsonl'), runs.map { |run| JSON.generate(run) }.join("\n"))
+      expect(SlopGuard::EvalRunner.load(directory)['runs']).to eq(runs)
+      File.write(File.join(directory, 'report.json'), '[]')
+      expect { SlopGuard::EvalRunner.load(directory) }.to raise_error(SlopGuard::InvalidInput, /Malformed/)
     end
   end
 end

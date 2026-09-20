@@ -16,7 +16,8 @@ begin
           'Evaluation did not produce exactly one report; inspect execution logs'
   end
 
-  report = JSON.parse(File.read(paths.first))
+  # Includes runs appended after the last checkpoint, so a timed-out job still reports every finished review.
+  report = SlopGuard::EvalRunner.load(File.dirname(paths.first))
   ledger = File.join(File.dirname(paths.first), 'requests.jsonl')
   raise SlopGuard::InvalidInput, 'Request ledger is missing' unless File.file?(ledger)
 
