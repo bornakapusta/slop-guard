@@ -19,10 +19,9 @@ RSpec.describe 'local commands' do
   end
 
   it 'analyzes saved evidence offline and rejects an invalid benchmark invocation' do
-    client = Object.new
-    client.define_singleton_method(:ask) { |_state, questions| questions.transform_values { 0.5 } }
+    client = stub_client { |_state, questions| questions.transform_values { 0.5 } }
     Dir.mktmpdir do |directory|
-      runner = SlopGuard::EvalRunner.new(dataset: SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')))
+      runner = SlopGuard::EvalRunner.new(dataset: fixture_dataset)
       runner.run(split: 'development', repetitions: 1, directory: directory, client_factory: ->(_) { client })
       path = File.join(directory, 'report.json')
       stdout, stderr, status = run_command('bin/analyze-evaluation', path, '--json')
@@ -39,6 +38,21 @@ RSpec.describe 'local commands' do
     _, stderr, status = run_command('bin/evaluate', '--validate', '--benchmark')
     expect(status.exitstatus).to eq(2)
     expect(stderr).to include('--benchmark requires --live --split development')
+  end
+
+  it 'never reads a credential file unless one is named explicitly' do
+    # An unset variable must not fall back to the checkout's ignored .env; only an explicit file is loaded.
+    _, stderr, status = Open3.capture3({ 'TYPESAFE_API_KEY' => nil, 'SLOP_GUARD_ENV_FILE' => nil }, RbConfig.ruby,
+                                       'bin/review', 'g1-fixed', '--live', chdir: SlopGuard::ROOT)
+    expect(status.exitstatus).to eq(2)
+    expect(stderr.strip).to eq('TYPESAFE_API_KEY is not configured')
+    missing = File.join(Dir.mktmpdir, 'absent.env')
+    _, stderr, status = run_command('bin/review', 'g1-fixed', '--live', '--env-file', missing)
+    expect(status.exitstatus).to eq(2)
+    expect(stderr).to include('Credential file does not exist')
+    _, stderr, status = run_command('bin/evaluate', '--live', '--env-file', missing)
+    expect(status.exitstatus).to eq(2)
+    expect(stderr).to include('Credential file does not exist')
   end
 
   it 'rejects unknown cases, missing credentials and conflicting modes clearly' do

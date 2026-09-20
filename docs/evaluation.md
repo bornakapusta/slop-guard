@@ -13,15 +13,15 @@ The source corpus includes full Ruby code and specs, including tests outside the
 ## Qualification sequence
 
 1. Inspect development diffs and label rationales. Review holdout labels without using them to tune prompts. Resolve ambiguity from the guideline and feature contract. Set `labels_reviewed` to `true` in the manifest only after this review. Development runs may proceed with provisional labels, but the report preserves that status and cannot establish agreed review quality.
-2. Configure `TYPESAFE_API_KEY` in local `.env` and run development evaluation. Keep every failed report. Question wording and thresholds may change against development examples.
+2. Provide `TYPESAFE_API_KEY` in the environment, or keep it in ignored `.env` and pass `--env-file .env`; the file is read only when named. Run development evaluation. Keep every failed report. Question wording and thresholds may change against development examples.
 3. Once development passes, freeze its exact inputs. The lock records model, rules, engine, context profile, dataset, Ruby and gem lockfile fingerprints.
 4. Run all eight held-out cases three times with fresh requests. Inspect raw results, unexpected findings, misses, abstentions, flips, probability ranges, cost and timing. All predetermined outcomes must pass before beginning GitHub integration.
 5. If holdout results inform tuning, move those families into development and author new held-out families before claiming a new pass. Update the fixed demo split contract deliberately if the dataset grows.
 
 ```sh
-bundle exec ruby bin/evaluate --live --split development --repeats 3
+bundle exec ruby bin/evaluate --live --split development --repeats 3 --env-file .env
 bundle exec ruby bin/evaluate --freeze tmp/evaluations/RUN/report.json
-bundle exec ruby bin/evaluate --live --split holdout --repeats 3 --frozen tmp/frozen.json
+bundle exec ruby bin/evaluate --live --split holdout --repeats 3 --frozen tmp/frozen.json --env-file .env
 ```
 
 Each invocation creates a new evaluation directory with `report.json` and a request-reservation ledger. Interrupted sessions retain the last complete case report and conservative cost reservations. There is no automatic resume or request-cache path; a new invocation starts a new explicitly requested session. Do not keep retrying a failed holdout until it happens to pass.

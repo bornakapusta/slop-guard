@@ -90,11 +90,11 @@ This is a bounded Ruby/RSpec reviewer, not a whole-repository audit. Source sele
 
 ## Review one case with Jev
 
-Copy `.env.example` to `.env` and set `TYPESAFE_API_KEY` locally. Do not put credentials in a patch or paste them into a PR. The file is ignored by Git.
+Set `TYPESAFE_API_KEY` in the environment, or copy `.env.example` to ignored `.env` and name it with `--env-file .env` (or `SLOP_GUARD_ENV_FILE=.env`). A credential file is never read unless it is named, so an unset variable fails instead of silently using a stored key; a set variable always wins over the file. Do not put credentials in a patch or paste them into a PR.
 
 ```sh
-bundle exec ruby bin/review g2-violation --live
-bundle exec ruby bin/review g2-violation --live --json
+bundle exec ruby bin/review g2-violation --live --env-file .env
+bundle exec ruby bin/review g2-violation --live --json --env-file .env
 ```
 
 This makes paid requests. Requests use `jev-1.13.0`, bounded contexts, at most 20 attempts and a 120-second review deadline. Cost reservations cap each review at $0.10 and an evaluation session at $2 using the documented input price. Actual billing may differ; unknown usage retains its reservation. Reports are saved under ignored `tmp/`.

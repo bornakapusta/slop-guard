@@ -24,6 +24,9 @@ parser = OptionParser.new do |opts|
     options[:expectations] = v
   end
   opts.on('--rules-dir PATH', 'Explicit trusted directory with g1.yml through g4.yml') { |v| options[:rules] = v }
+  opts.on('--env-file PATH', 'Load TYPESAFE_API_KEY from this ignored file when the environment does not set it') do |v|
+    options[:env_file] = v
+  end
 end
 begin
   parser.parse!
@@ -54,12 +57,19 @@ begin
                               'state_bytes' => JSON.generate(snapshot.state).bytesize,
                               'evidence' => snapshot.state)
   else
-    Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
-    directory = File.join(SlopGuard::ROOT, 'tmp/reviews', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
-    raise SlopGuard::ProviderError, 'TYPESAFE_API_KEY is not configured' if ENV['TYPESAFE_API_KEY'].to_s.strip.empty?
+    # Credentials come from the environment; a file is read only when explicitly named. Environment wins.
+    env_file = options[:env_file] || ENV.fetch('SLOP_GUARD_ENV_FILE', nil)
+    if env_file
+      raise SlopGuard::InvalidInput, "Credential file does not exist: #{env_file}" unless File.file?(env_file)
 
+      Dotenv.load(env_file)
+    end
+    api_key = ENV.fetch('TYPESAFE_API_KEY', '')
+    raise SlopGuard::ProviderError, 'TYPESAFE_API_KEY is not configured' if api_key.strip.empty?
+
+    directory = File.join(SlopGuard::ROOT, 'tmp/reviews', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
     budget = SlopGuard::Budget.new(ledger: File.join(directory, 'requests.jsonl'))
-    client = SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', nil), budget: budget)
+    client = SlopGuard::JevClient.new(api_key: api_key, budget: budget)
     report = SlopGuard::Evaluator.new(client: client, rules: rules).call(snapshot)
     report['source'] = source.metadata if source
     File.write(File.join(directory, 'report.json'), JSON.pretty_generate(report))
@@ -68,7 +78,7 @@ begin
     exit 2 unless report['status'] == 'complete'
   end
 rescue SlopGuard::Error, OptionParser::ParseError => e
-  warn e.message
+  warn SlopGuard.printable(e.message, keep_newlines: true)
   exit 2
 rescue SystemCallError, Psych::Exception => e
   warn "Cannot read repository input or trusted configuration: #{e.class}"
