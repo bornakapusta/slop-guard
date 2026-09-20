@@ -10,6 +10,8 @@ The four rules assess observable behavior tests, relevant failure-case tests, fo
 
 ## Demo: a new error case without a test
 
+Use the [demo runbook](docs/demo-runbook.md) for setup, an offline walkthrough, and the commands for a fresh local or GitHub evaluation.
+
 A change to the sample log parser makes `add_visit(nil)` raise an error:
 
 ```diff
