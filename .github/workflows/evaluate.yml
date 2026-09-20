@@ -1,0 +1,73 @@
+name: Development evaluation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jev-development-evaluation
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Trusted ref
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require a manual main-branch run
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] || [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo '::error::Live development evaluation is restricted to manual runs from main.'
+            exit 2
+          fi
+
+  evaluate:
+    name: Jev development
+    needs: preflight
+    environment: jev-evaluation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+      - name: Install locked dependencies without a restored cache
+        env:
+          BUNDLE_FROZEN: 'true'
+        run: bundle install
+      - name: Evaluate saved development cases three times
+        id: evaluation
+        timeout-minutes: 15
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: |
+          if [ -z "$TYPESAFE_API_KEY" ]; then
+            echo '::error::TYPESAFE_API_KEY is not configured in the jev-evaluation environment.'
+            echo 'exit_code=2' >> "$GITHUB_OUTPUT"
+            exit 2
+          fi
+          if bundle exec ruby bin/evaluate --live --split development --repeats 3; then
+            evaluation_status=0
+          else
+            evaluation_status=$?
+          fi
+          echo "exit_code=$evaluation_status" >> "$GITHUB_OUTPUT"
+          exit "$evaluation_status"
+      - name: Summarize complete or partial evidence
+        if: always()
+        env:
+          EVALUATION_EXIT: ${{ steps.evaluation.outputs.exit_code }}
+        run: bundle exec ruby script/evaluation_summary.rb tmp/evaluations "${EVALUATION_EXIT:-124}" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: development-evaluation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            tmp/evaluations/*/report.json
+            tmp/evaluations/*/requests.jsonl
+          retention-days: 14
+          if-no-files-found: error

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module SlopGuard
+  # Extracts explicit behavior and failure scenarios from the PR description.
   class Expectations
     attr_reader :behaviors, :failures, :gaps
 
@@ -15,7 +16,8 @@ module SlopGuard
         elsif section && line.match?(/^\s*- /)
           text = line.sub(/^\s*- /, '').strip
           explicit = text.match(/\A\[([a-z0-9_-]+)\]\s+(.+)\z/)
-          section << { 'id' => explicit ? explicit[1] : SlopGuard.digest(text)[0, 12], 'text' => explicit ? explicit[2] : text }
+          section << { 'id' => explicit ? explicit[1] : SlopGuard.digest(text)[0, 12],
+                       'text' => explicit ? explicit[2] : text }
         end
       end
       @gaps << 'Missing expected behavior' if behaviors.empty?

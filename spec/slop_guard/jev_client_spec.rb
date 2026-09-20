@@ -61,7 +61,8 @@ RSpec.describe SlopGuard::JevClient do
   it 'bounds retryable failures and honors Retry-After' do
     sleeps = []
     subject = described_class.new(api_key: 'test', budget: budget, sleeper: ->(seconds) { sleeps << seconds })
-    allow(subject).to receive(:post).and_return(response(429, '', '2'), response(529, '', '1'), response(200, JSON.generate(payload)))
+    allow(subject).to receive(:post).and_return(response(429, '', '2'), response(529, '', '1'),
+                                                response(200, JSON.generate(payload)))
     expect(subject.ask('source', questions)['q']).to eq(0.9)
     expect(sleeps).to eq([2.0, 1.0])
     expect(budget.attempts).to eq(3)
@@ -98,7 +99,9 @@ RSpec.describe 'question batching' do
         expect(body.bytesize).to be <= 56 * 1024
         response = Net::HTTPOK.new('1.1', '200', 'OK')
         response.body = JSON.generate('model' => SlopGuard::JevClient::MODEL,
-                                      'answers' => data['questions'].transform_values { { 'type' => 'noul', 'noul' => 0.1 } },
+                                      'answers' => data['questions'].transform_values do
+                                        { 'type' => 'noul', 'noul' => 0.1 }
+                                      end,
                                       'usage' => { 'input_tokens' => 100, 'output_tokens' => 0 })
         response.instance_variable_set(:@read, true)
         response

@@ -15,7 +15,9 @@ parser = OptionParser.new do |opts|
 end
 begin
   parser.parse!
-  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.size == 1 && [options[:inspect], options[:live]].count(true) == 1
+  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.size == 1 && [options[:inspect],
+                                                                       options[:live]].count(true) == 1
+
   dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
   snapshot = SlopGuard::Snapshot.new(dataset.input(ARGV.first))
   if options[:inspect]
@@ -24,8 +26,9 @@ begin
     Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
     directory = File.join(SlopGuard::ROOT, 'tmp/reviews', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
     raise SlopGuard::ProviderError, 'TYPESAFE_API_KEY is not configured' if ENV['TYPESAFE_API_KEY'].to_s.strip.empty?
+
     budget = SlopGuard::Budget.new(ledger: File.join(directory, 'requests.jsonl'))
-    client = SlopGuard::JevClient.new(api_key: ENV['TYPESAFE_API_KEY'], budget: budget)
+    client = SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', nil), budget: budget)
     report = SlopGuard::Evaluator.new(client: client).call(snapshot)
     File.write(File.join(directory, 'report.json'), JSON.pretty_generate(report))
     puts(options[:json] ? JSON.pretty_generate(report) : SlopGuard::Report.markdown(report))

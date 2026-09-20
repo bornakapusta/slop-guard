@@ -11,7 +11,8 @@ end
 RSpec.describe 'shared test findings' do
   it 'renders one explanation with both guideline references while preserving machine attribution' do
     finding = { 'scenario' => 'Reject nil', 'topic' => 'nil', 'anchor' => { 'path' => 'lib/input.rb', 'line' => 3 },
-                'message' => 'The nil assertion is missing.', 'correction' => 'Assert the error.', 'readings' => { 'missing' => 0.95 },
+                'message' => 'The nil assertion is missing.', 'correction' => 'Assert the error.',
+                'readings' => { 'missing' => 0.95 },
                 'thresholds' => { 'high' => 0.85, 'low' => 0.2 } }
     report = { 'status' => 'complete', 'snapshot' => 'abc', 'rules' => %w[G1 G2].to_h do |id|
       [id, { 'outcome' => 'concern', 'findings' => [finding.merge('rule' => id)], 'gaps' => [] }]

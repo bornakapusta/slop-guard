@@ -51,3 +51,11 @@ Metrics include totals and counts per rule. Undefined precision/recall is `null`
 - Reliable detection across all four rules, qualified thresholds and reproducible held-out outcomes.
 - Actual GitHub installation, webhook lifecycle, comment locations and publication recovery.
 - The planned hosted worker's persistence and restart behavior. The current reservation ledger covers local sessions only.
+
+## Manual evaluation in GitHub Actions
+
+After the workflow is merged into `main`, dispatch **Development evaluation** from `main`. It runs the same development command above with three repetitions, using the `jev-evaluation` environment secret. It has no holdout or threshold inputs. Each dispatch starts a fresh budget session; the $2 reservation guard is not a monthly spending cap.
+
+The job summary distinguishes a completed label match, mismatch, interrupted run and unavailable report. It reports provisional-label status, per-rule counts, repeat variability, versions, estimated input cost and request reservations. Download the raw report and ledger within 14 days. Code-quality CI and this workflow are independent; a green CI run is not model qualification. See [CI operation](ci.md).
+
+The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version.

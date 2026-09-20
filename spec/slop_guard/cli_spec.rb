@@ -4,8 +4,8 @@ require 'open3'
 require 'rbconfig'
 
 RSpec.describe 'local commands' do
-  def run_command(*arguments)
-    Open3.capture3({ 'TYPESAFE_API_KEY' => '' }, RbConfig.ruby, *arguments, chdir: SlopGuard::ROOT)
+  def run_command(*)
+    Open3.capture3({ 'TYPESAFE_API_KEY' => '' }, RbConfig.ruby, *, chdir: SlopGuard::ROOT)
   end
 
   it 'inspects evidence as JSON without credentials or label leakage' do

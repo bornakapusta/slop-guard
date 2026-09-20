@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module SlopGuard
+  # Renders escaped advisory findings without implying overall correctness.
   module Report
     def self.markdown(result)
       lines = ["# Slop Guard: #{result.fetch('status')}", '', "Snapshot: `#{result.fetch('snapshot')}`",
@@ -18,8 +19,10 @@ module SlopGuard
             end
             shared_test_concerns[key] = id
           end
-          lines << "- #{escape(finding['message'])} — #{escape(anchor['path'])}:#{anchor['line']} (#{escape(finding['scenario'] || finding['topic'])}). #{escape(finding['correction'])}"
-          lines << "  Review signals: #{escape(JSON.generate(finding['readings']))}; thresholds: #{escape(JSON.generate(finding['thresholds']))}. These are not certainty scores."
+          lines << "- #{escape(finding['message'])} — #{escape(anchor['path'])}:#{anchor['line']} " \
+                   "(#{escape(finding['scenario'] || finding['topic'])}). #{escape(finding['correction'])}"
+          lines << "  Review signals: #{escape(JSON.generate(finding['readings']))}; " \
+                   "thresholds: #{escape(JSON.generate(finding['thresholds']))}. These are not certainty scores."
         end
         rule.fetch('gaps').each { |gap| lines << "- Incomplete: #{escape(gap)}" }
         lines << ''
@@ -28,7 +31,9 @@ module SlopGuard
     end
 
     def self.escape(text)
-      text.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('@', '@‌').gsub(/[\[\]`*_\\]/) { |char| "\\#{char}" }
+      text.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('@', '@‌').gsub(/[\[\]`*_\\]/) do |char|
+        "\\#{char}"
+      end
     end
   end
 end

@@ -59,7 +59,7 @@ Use Ruby 3.4 (this checkout was tested with 3.4.5). Activate the version in `.ru
 ```sh
 bundle install
 bundle exec rspec
-bundle exec rubocop --lint --cache false
+bundle exec rubocop --except Metrics --cache false
 bundle exec ruby bin/evaluate --validate
 bundle exec ruby bin/review g2-violation --inspect
 ```
@@ -84,3 +84,9 @@ A concern does not fail the single-review command: exit 0 means the review compl
 Follow [the evaluation guide](docs/evaluation.md). The authored labels remain provisional until reviewed; development runs can help assess the questions, while qualification requires agreed outcomes. Tune only development cases, freeze the versions after a passing development run, then evaluate the held-out set three times. A passing mock response does not qualify a rule.
 
 GitHub webhooks, inline comments, SQLite processing and deployment are not implemented yet. The reviewer and its planned GitHub App delivery remain separate from the projects it reviews; no reviewed application code runs inside the reviewer.
+
+## CI and code quality
+
+Pull requests and pushes to `main` run RSpec, non-Metrics RuboCop, dependency auditing and offline fixture validation. Coverage and complexity are informational. These checks test the reviewer implementation; they do not establish review accuracy or feature-use-case coverage.
+
+A separate **Development evaluation** workflow runs Jev manually from `main`, with three development repetitions and the existing $2 reservation guard per run. Setup, local commands, reports and verification limits are in [the CI guide](docs/ci.md) and [the verification checkpoint](docs/verification/ci-checkpoint.md).

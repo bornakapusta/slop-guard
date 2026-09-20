@@ -3,10 +3,13 @@
 require 'prism'
 
 module SlopGuard
+  # Enumerates supported Ruby methods and tests without executing reviewed code.
   class Candidates
     attr_reader :items, :gaps
+
     EXAMPLES = %i[it specify example].freeze
-    UNSUPPORTED = %i[eval class_eval module_eval define_method shared_examples shared_examples_for it_behaves_like include_examples shared_context include_context].freeze
+    UNSUPPORTED = %i[eval class_eval module_eval define_method shared_examples shared_examples_for it_behaves_like
+                     include_examples shared_context include_context].freeze
     KNOWN_REQUIRES = %w[rspec simplecov colorize ipaddr stringio open3 tempfile rbconfig json set benchmark].freeze
 
     def initialize(files)
@@ -14,6 +17,7 @@ module SlopGuard
       @gaps = []
       files.each do |path, text|
         next unless path.end_with?('.rb')
+
         result = Prism.parse(text)
         if result.failure?
           gaps << "Ruby parse error: #{path}"
@@ -58,10 +62,12 @@ module SlopGuard
 
     def check_call(node, path, files)
       gaps << "Unsupported Ruby construct #{node.name}: #{path}" if UNSUPPORTED.include?(node.name)
-      if path.start_with?('spec/') && %i[each times map class_exec].include?(node.name) && node.block && contains_example?(node.block)
+      if path.start_with?('spec/') && %i[each times map
+                                         class_exec].include?(node.name) && node.block && contains_example?(node.block)
         gaps << "Potential dynamically generated examples: #{path}"
       end
-      if path.start_with?('spec/') && node.receiver&.slice == 'File' && %i[open read binread readlines foreach new].include?(node.name)
+      if path.start_with?('spec/') && node.receiver&.slice == 'File' && %i[open read binread readlines foreach
+                                                                           new].include?(node.name)
         fixture = node.arguments&.arguments&.first
         if fixture.is_a?(Prism::StringNode)
           gaps << "Missing fixture: #{fixture.unescaped}" unless files.key?(fixture.unescaped)
@@ -70,6 +76,7 @@ module SlopGuard
         end
       end
       return unless %i[require require_relative].include?(node.name)
+
       arg = node.arguments&.arguments&.first
       unless arg.is_a?(Prism::StringNode)
         gaps << "Dynamic require: #{path}"
@@ -90,7 +97,8 @@ module SlopGuard
 
     def add(node, path, kind, name)
       items << { 'id' => SlopGuard.digest([path, kind, name])[0, 16], 'path' => path,
-                 'kind' => kind, 'name' => name, 'line' => node.location.start_line, 'end_line' => node.location.end_line }
+                 'kind' => kind, 'name' => name,
+                 'line' => node.location.start_line, 'end_line' => node.location.end_line }
     end
   end
 end

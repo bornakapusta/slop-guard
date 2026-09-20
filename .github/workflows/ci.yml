@@ -1,0 +1,208 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+        with:
+          bundler-cache: true
+      - name: Run specs with coverage
+        id: specs
+        env:
+          COVERAGE: '1'
+        run: |
+          mkdir -p tmp/ci
+          bundle exec rspec --format progress --format json --out tmp/ci/rspec.json
+      - name: Summarize tests and coverage
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.specs.outcome }}
+        run: |
+          {
+            echo '## Tests and coverage'
+            echo "RSpec step: $TEST_OUTCOME"
+            if [ -f tmp/ci/rspec.json ]; then
+              ruby -rjson -e 'r = JSON.parse(File.read("tmp/ci/rspec.json")); puts r.fetch("summary_line")'
+            else
+              echo 'RSpec report unavailable; inspect the execution logs.'
+            fi
+            if [ -f coverage/coverage.json ]; then
+              ruby -rjson -e 'r = JSON.parse(File.read("coverage/coverage.json")); puts "Coverage totals: #{JSON.generate(r.fetch("total"))}"'
+            else
+              echo '::error::Coverage report unavailable.' >&2
+              exit 1
+            fi
+            echo 'Coverage has no minimum. Exec-based CLI subprocesses are not instrumented.'
+            echo 'Download the tests artifact for HTML coverage and machine-readable results.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: tests-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            tmp/ci/rspec.json
+            coverage/index.html
+            coverage/coverage.json
+          retention-days: 14
+          if-no-files-found: error
+
+  static_analysis:
+    name: Static analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+        with:
+          bundler-cache: true
+      - name: Enforce lint and style
+        id: lint
+        run: |
+          mkdir -p tmp/ci
+          bundle exec rubocop --except Metrics --cache false --format github --format json --out tmp/ci/rubocop.json
+      - name: Summarize static analysis
+        if: always()
+        env:
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+        run: |
+          {
+            echo '## Static analysis'
+            echo "Lint/style step: $LINT_OUTCOME"
+            echo 'All enabled non-Metrics cops are required. Download the static-analysis artifact for details.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: static-analysis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/ci/rubocop.json
+          retention-days: 14
+          if-no-files-found: error
+
+  dependencies:
+    name: Dependencies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+        with:
+          bundler-cache: true
+      - name: Update advisories and audit dependencies
+        id: audit
+        run: |
+          mkdir -p tmp/ci
+          bundle exec bundle-audit check --update --format json --output tmp/ci/dependencies.json
+      - name: Summarize dependency audit
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: |
+          {
+            echo '## Dependency audit'
+            echo "Audit step: $AUDIT_OUTCOME"
+            echo 'Vulnerabilities, insecure sources, advisory-update errors and tool errors fail this check.'
+            echo 'Download the dependencies artifact for advisory details.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: dependencies-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/ci/dependencies.json
+          retention-days: 14
+          if-no-files-found: error
+
+  fixtures:
+    name: Fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+        with:
+          bundler-cache: true
+      - name: Validate fixture contracts offline
+        id: validate
+        run: |
+          mkdir -p tmp/ci
+          bundle exec ruby bin/evaluate --validate > tmp/ci/fixtures.json
+      - name: Summarize fixture validation
+        if: always()
+        env:
+          FIXTURE_OUTCOME: ${{ steps.validate.outcome }}
+        run: |
+          {
+            echo '## Fixture validation'
+            echo "Validation step: $FIXTURE_OUTCOME"
+            echo 'Offline structural validation only; no model requests or model-quality qualification.'
+            echo 'Intentionally incomplete contexts remain valid evaluation cases.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: fixtures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/ci/fixtures.json
+          retention-days: 14
+          if-no-files-found: error
+
+  complexity:
+    name: Complexity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1
+        with:
+          bundler-cache: true
+      - name: Report complexity without a metric gate
+        run: |
+          mkdir -p tmp/ci
+          if bundle exec rubocop --only Metrics --cache false --format json --out tmp/ci/complexity.json; then
+            metrics_status=0
+          else
+            metrics_status=$?
+          fi
+          METRICS_STATUS="$metrics_status" ruby -rjson <<'RUBY' >> "$GITHUB_STEP_SUMMARY"
+          report = JSON.parse(File.read('tmp/ci/complexity.json'))
+          status = Integer(ENV.fetch('METRICS_STATUS'))
+          offenses = report.fetch('files').flat_map { |file| file.fetch('offenses') }
+          valid = [0, 1].include?(status) && report.fetch('summary').fetch('inspected_file_count').positive?
+          valid &&= offenses.all? { |offense| offense.fetch('cop_name').start_with?('Metrics/') }
+          valid &&= status.zero? || !offenses.empty?
+          abort 'Complexity analysis failed; inspect the report and logs.' unless valid
+          puts "## Complexity\n#{offenses.size} informational metric offenses. No complexity merge gate."
+          puts 'Download the complexity artifact for per-file details.'
+          RUBY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: complexity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/ci/complexity.json
+          retention-days: 14
+          if-no-files-found: error
