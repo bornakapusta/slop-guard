@@ -2,7 +2,7 @@
 
 RSpec.describe SlopGuard::Evaluator do
   let(:dataset) { fixture_dataset }
-  let(:snapshot) { SlopGuard::Snapshot.new(dataset.input('g1-violation')) }
+  let(:snapshot) { demo_snapshot(dataset.input('g1-violation')) }
 
   def answers(questions, missing: 0.95, covered: false)
     questions.to_h do |id, _|
@@ -37,9 +37,9 @@ RSpec.describe SlopGuard::Evaluator do
   end
 
   it 'does not call Jev when required evidence is missing' do
-    client = instance_double(SlopGuard::JevClient)
+    client = silent_client
     expect(client).not_to receive(:ask)
-    input = SlopGuard::Snapshot.new(dataset.input('g1-incomplete'))
+    input = demo_snapshot(dataset.input('g1-incomplete'))
     report = described_class.new(client: client).call(input)
     expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['inconclusive'])
   end
@@ -59,9 +59,9 @@ RSpec.describe SlopGuard::Evaluator do
   it 'skips an empty diff without calling Jev' do
     input = dataset.input('g1-fixed')
     input['before'] = input['files']
-    client = instance_double(SlopGuard::JevClient)
+    client = silent_client
     expect(client).not_to receive(:ask)
-    report = described_class.new(client: client).call(SlopGuard::Snapshot.new(input))
+    report = described_class.new(client: client).call(demo_snapshot(input))
     expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['not_applicable'])
   end
 end

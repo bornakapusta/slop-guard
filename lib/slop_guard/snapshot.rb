@@ -5,49 +5,33 @@ require 'diff/lcs'
 module SlopGuard
   # Builds bounded review evidence from saved before and after file trees.
   class Snapshot
-    attr_reader :files, :before, :expectations, :candidates, :gaps, :changed, :identity, :body, :skipped
+    attr_reader :files, :before, :expectations, :candidates, :gaps, :changed, :identity, :body, :skipped, :profile,
+                :source
 
-    def initialize(input, profile: nil)
+    def initialize(input, profile:)
+      @profile = profile
       @files = input.fetch('files')
       @before = input.fetch('before')
       @body = input.fetch('pr_body')
+      @source = input.fetch('source', {})
       @gaps = input.fetch('omitted', []).map { |path| "Omitted file: #{path}" }
       gaps.concat(input.fetch('source_gaps', []))
-      raise InvalidInput, 'PR body exceeds 16 KiB' if body.bytesize > 16_384
+      raise InvalidInput, 'PR body exceeds 16 KiB' if body.bytesize > Limits::BODY_BYTES
 
-      [files, before].each do |tree|
-        raise InvalidInput, 'Invalid file inventory' unless tree.is_a?(Hash)
-
-        tree.each do |path, text|
-          raise InvalidInput, 'Unsafe source path' if path.start_with?('/') || path.split('/').intersect?(['', '..',
-                                                                                                           '.'])
-          unless text.is_a?(String) && text.valid_encoding? && !text.include?("\0")
-            raise InvalidInput,
-                  'Invalid source encoding'
-          end
-
-          gaps << "File exceeds 16 KiB: #{path}" if text.bytesize > 16_384
-        end
-      end
-      gaps << 'More than 100 files' if files.size > 100
-      @identity = SlopGuard.digest(profile ? [input, profile] : input)
-      profile ||= YAML.safe_load_file(File.join(ROOT, 'config/demo.yml'))
-      permitted = ->(path) { profile.fetch('file_patterns').any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) } }
-      @skipped = ((files.keys | before.keys).reject { |path| permitted.call(path) } +
-                  input.fetch('skipped_paths', [])).uniq.sort
-      @files = files.select { |path, _| permitted.call(path) }
-      @before = before.select { |path, _| permitted.call(path) }
+      @identity = SlopGuard.digest([input, profile.to_h])
+      validate_trees!
+      apply_profile(input.fetch('skipped_paths', []))
       @changed = changes
-      gaps << 'More than 50 changed files' if changed.size > 50
+      gaps << "More than #{Limits::CHANGED_FILES} changed files" if changed.size > Limits::CHANGED_FILES
       @expectations = Expectations.new(body)
-      @candidates = Candidates.new(files)
+      @candidates = Candidates.new(files, profile: profile)
       gaps.concat(candidates.gaps)
-      gaps << 'RSpec setup is missing' unless files.key?('spec/spec_helper.rb')
+      profile.required_files.each { |path| gaps << "#{path} is missing" unless files.key?(path) }
     end
 
     def changed_candidates(kind)
       candidates.items.select do |candidate|
-        candidate['kind'] == kind && !candidate['path'].start_with?('spec/') &&
+        candidate['kind'] == kind && !profile.test_path?(candidate['path']) &&
           changed.fetch(candidate['path'], []).any? { |line| line.between?(candidate['line'], candidate['end_line']) }
       end
     end
@@ -68,13 +52,42 @@ module SlopGuard
         line = changed.fetch(candidate['path'], []).grep(candidate['line']..candidate['end_line']).first
         return { 'path' => candidate['path'], 'line' => line } if line
       end
-      path, lines = changed.find do |file, value|
-        !file.start_with?('spec/') && (file.end_with?('.rb') || file.start_with?('bin/', 'exe/')) && !value.empty?
-      end
+      path, lines = changed.find { |file, value| profile.anchorable?(file) && !value.empty? }
       path ? { 'path' => path, 'line' => lines.first } : nil
     end
 
     private
+
+    def validate_trees!
+      [files, before].each do |tree|
+        raise InvalidInput, 'Invalid file inventory' unless tree.is_a?(Hash)
+
+        tree.each do |path, text|
+          raise InvalidInput, 'Unsafe source path' if path.start_with?('/') || path.split('/').intersect?(['', '..',
+                                                                                                           '.'])
+          unless text.is_a?(String) && text.valid_encoding? && !text.include?("\0")
+            raise InvalidInput,
+                  'Invalid source encoding'
+          end
+        end
+      end
+    end
+
+    # Unsupported paths are listed, never sent. Oversized files are dropped with a gap, matching the Git adapter.
+    def apply_profile(already_skipped)
+      @skipped = ((files.keys | before.keys).reject { |path| profile.permitted?(path) } + already_skipped).uniq.sort
+      @files = files.select { |path, _| profile.permitted?(path) }
+      @before = before.select { |path, _| profile.permitted?(path) }
+      oversized = (files.keys | before.keys).select do |path|
+        [files[path], before[path]].compact.any? { |text| text.bytesize > Limits::FILE_BYTES }
+      end
+      oversized.each do |path|
+        gaps << "File exceeds 16 KiB: #{path}"
+        files.delete(path)
+        before.delete(path)
+      end
+      gaps << "More than #{Limits::FILE_COUNT} files" if files.size > Limits::FILE_COUNT
+    end
 
     def numbered(tree)
       tree.transform_values { |text| text.lines.each_with_index.map { |line, i| "#{i + 1}: #{line}" }.join }

@@ -13,6 +13,7 @@ end
 require 'tmpdir'
 require 'fileutils'
 require_relative '../lib/slop_guard'
+require_relative '../lib/slop_guard/eval'
 Dir[File.join(__dir__, 'support/**/*.rb')].each { |file| require file }
 RSpec.configure do |config|
   config.order = :random

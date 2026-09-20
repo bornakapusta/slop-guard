@@ -13,15 +13,29 @@ module SlopGuard
   VERSION = '0.1.0'
   class Error < StandardError; end
   class InvalidInput < Error; end
+  # The reviewed input is too large for this reviewer. A subclass of InvalidInput: the caller must shrink the
+  # input, and retrying later will not help, unlike a budget or deadline LimitExceeded.
+  class InputTooLarge < InvalidInput; end
   class ProviderError < Error; end
   class LimitExceeded < Error; end
+
+  # Evidence bounds shared by every source adapter and by Snapshot. Prices and request bounds live on JevClient.
+  module Limits
+    FILE_BYTES = 16_384
+    FILE_COUNT = 100
+    BUNDLE_BYTES = 1_048_576
+    BODY_BYTES = 16_384
+    CHANGED_FILES = 50
+    TEST_CANDIDATES = 100
+    SCENARIOS = 12
+  end
 
   def self.digest(value)
     Digest::SHA256.hexdigest(JSON.generate(value))
   end
 
-  UNPRINTABLE = /[\u0000-\u001F\u007F-\u009F\u2028\u2029]/
-  UNPRINTABLE_EXCEPT_NEWLINE = /[\u0000-\u0009\u000B-\u001F\u007F-\u009F\u2028\u2029]/
+  UNPRINTABLE = /[\u0000-\u001F\u007F-\u009F  ]/
+  UNPRINTABLE_EXCEPT_NEWLINE = /[\u0000-\u0009\u000B-\u001F\u007F-\u009F  ]/
 
   # Untrusted text (repository paths, fixture names, provider bodies) reaches reports and the terminal. Control
   # characters, C1 controls and Unicode line separators are shown as escapes so they cannot forge report structure
@@ -32,7 +46,7 @@ module SlopGuard
   end
 end
 
-%w[dataset git_source expectations candidates snapshot rules budget jev_client evaluator report eval_runner
-   evaluation_analysis].each do |name|
+# The review engine only. The evaluation harness is `slop_guard/eval`; the GitHub App is `slop_guard/service`.
+%w[profile expectations candidates snapshot rules budget jev_client evaluator report git_source cli].each do |name|
   require_relative "slop_guard/#{name}"
 end

@@ -42,7 +42,7 @@ RSpec.describe SlopGuard::GitSource do
   end
 
   def source(base: 'main', head: 'feature')
-    described_class.new(repository: @repository, base: base, head: head)
+    described_class.new(repository: @repository, base: base, head: head, profile: ruby_profile)
   end
 
   it 'uses the merge base and excludes base-only, staged, unstaged and untracked changes' do
@@ -95,7 +95,7 @@ RSpec.describe SlopGuard::GitSource do
     expect(snapshot.skipped).to include('.env', 'README.md')
     expect(snapshot.state.to_json).not_to include('never-send-this')
     expect(snapshot.gaps).to include('Non-regular file was not inspected: lib/link.rb')
-    client = instance_double(SlopGuard::JevClient)
+    client = silent_client
     expect(client).not_to receive(:ask)
     result = SlopGuard::Evaluator.new(client: client).call(snapshot)
     expect(result['status']).to eq('incomplete')
@@ -193,7 +193,8 @@ RSpec.describe SlopGuard::GitSource do
       ENV.delete('GIT_DIR')
       FileUtils.remove_entry(other)
     end
-    inside = described_class.new(repository: File.join(@repository, 'lib'), base: 'main', head: 'feature')
+    inside = described_class.new(repository: File.join(@repository, 'lib'), base: 'main', head: 'feature',
+                                 profile: ruby_profile)
     expect { inside.input(pr_body: body) }.to raise_error(SlopGuard::InvalidInput, /repository root/)
   end
 
@@ -219,7 +220,7 @@ RSpec.describe SlopGuard::GitSource do
     101.times { |index| write("lib/file_#{index}.rb", '') }
     git('add', '.')
     git('commit', '-m', 'Too many files')
-    expect { source.input(pr_body: body) }.to raise_error(SlopGuard::LimitExceeded, /100 supported files/)
+    expect { source.input(pr_body: body) }.to raise_error(SlopGuard::InputTooLarge, /100 supported files/)
   end
 
   it 'runs the CLI inspection without credentials and identifies committed revisions and rule profile' do
@@ -233,7 +234,7 @@ RSpec.describe SlopGuard::GitSource do
     expect(output['gaps']).to eq([])
     expect(output['source']['head']).to eq(git('rev-parse', 'HEAD'))
     expect(output['evidence']['changed_lines']['lib/calculator.rb']).to include(3)
-    expect(output['rules_revision']).to eq(SlopGuard::Rules.new(repository: true).revision)
+    expect(output['rules_revision']).to eq(SlopGuard::Rules.new(ruby_profile.rules_dir).revision)
     expect(output['rules_revision']).not_to eq(SlopGuard::Rules.new.revision)
     _, stderr, status = Open3.capture3(*command, '--live')
     expect(status.exitstatus).to eq(2)
@@ -243,9 +244,9 @@ RSpec.describe SlopGuard::GitSource do
   it 'reviews a real Git snapshot offline using a stubbed model through the existing evaluator' do
     adapter = source
     snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
-    client = instance_double(SlopGuard::JevClient)
+    client = silent_client
     allow(client).to receive(:ask) { |_state, questions| questions.transform_values { 0.5 } }
-    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.new(repository: true)).call(snapshot)
+    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.new(ruby_profile.rules_dir)).call(snapshot)
     expect(client).to have_received(:ask).at_least(:once)
     expect(result['rules']['G1']['outcome']).to eq('inconclusive')
     expect(result['rules']['G1']['readings']).not_to be_empty
@@ -258,7 +259,7 @@ RSpec.describe SlopGuard::GitSource do
     adapter = source(base: 'HEAD~1')
     snapshot = SlopGuard::Snapshot.new(adapter.input(pr_body: body), profile: adapter.profile)
     expect(snapshot.changed).to eq({})
-    client = instance_double(SlopGuard::JevClient)
+    client = silent_client
     expect(client).not_to receive(:ask)
     result = SlopGuard::Evaluator.new(client: client).call(snapshot)
     expect(result['status']).to eq('incomplete')

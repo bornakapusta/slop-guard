@@ -11,7 +11,7 @@ RSpec.describe SlopGuard::Dataset do
 
   it 'keeps every ordinary case within the state budget without omitting tests' do
     dataset.cases.reject { |entry| entry['id'].end_with?('incomplete') }.each do |entry|
-      snapshot = SlopGuard::Snapshot.new(dataset.input(entry['id']))
+      snapshot = demo_snapshot(dataset.input(entry['id']))
       expect(snapshot.gaps).to eq([]), entry['id']
       expect(JSON.generate(snapshot.state).bytesize).to be < 27 * 1024
     end

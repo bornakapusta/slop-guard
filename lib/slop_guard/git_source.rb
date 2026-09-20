@@ -18,11 +18,11 @@ module SlopGuard
 
     attr_reader :profile, :metadata
 
-    def initialize(repository:, base:, head: 'HEAD')
+    def initialize(repository:, base:, profile:, head: 'HEAD')
       @repository = File.realpath(repository)
       @base_ref = base
       @head_ref = head
-      @profile = YAML.safe_load_file(File.join(ROOT, 'config/repository.yml'))
+      @profile = profile
       @metadata = {}
       @environment = scrubbed_environment
     rescue Errno::ENOENT, Errno::ENOTDIR
@@ -30,7 +30,7 @@ module SlopGuard
     end
 
     def input(pr_body:)
-      raise InvalidInput, 'Expected behavior text exceeds 16 KiB' if pr_body.bytesize > 16_384
+      raise InputTooLarge, 'Expected behavior text exceeds 16 KiB' if pr_body.bytesize > Limits::BODY_BYTES
       raise InvalidInput, 'Expected behavior text must be UTF-8' unless pr_body.valid_encoding?
 
       verify_root!
@@ -78,7 +78,7 @@ module SlopGuard
           gaps << "Submodule was not inspected: #{path}"
           next
         end
-        unless permitted?(path)
+        unless profile.permitted?(path)
           skipped << path
           next
         end
@@ -86,14 +86,16 @@ module SlopGuard
           gaps << "Non-regular file was not inspected: #{path}"
           next
         end
-        if size.to_i > 16_384
+        if size.to_i > Limits::FILE_BYTES
           gaps << "File exceeds 16 KiB: #{path}"
           next
         end
 
         [path, oid]
       end
-      raise LimitExceeded, 'Repository exceeds 100 supported files per revision' if selected.size > 100
+      if selected.size > Limits::FILE_COUNT
+        raise InputTooLarge, "Repository exceeds #{Limits::FILE_COUNT} supported files per revision"
+      end
 
       Tree.new(files: blobs(selected), gaps: gaps, skipped: skipped)
     end
@@ -103,10 +105,6 @@ module SlopGuard
                 !path.split('/').intersect?(['', '.', '..'])
 
       raise InvalidInput, 'Invalid Git tree path'
-    end
-
-    def permitted?(path)
-      profile.fetch('file_patterns').any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
     end
 
     # One process per revision. Sizes were already bounded from ls-tree, so the stream is at most
@@ -133,7 +131,7 @@ module SlopGuard
         raise InvalidInput, "Source must be UTF-8 text: #{path}" unless body.valid_encoding? && !body.include?("\0")
 
         bytes += length
-        raise LimitExceeded, 'Source bundle exceeds 1 MiB' if bytes > 1_048_576
+        raise InputTooLarge, 'Source bundle exceeds 1 MiB' if bytes > Limits::BUNDLE_BYTES
 
         [path, body]
       end

@@ -25,7 +25,7 @@ RSpec.describe SlopGuard::Rules do
 
   it 'substitutes only the general Ruby G3 definition in repository mode' do
     default = described_class.new
-    repository = described_class.new(repository: true)
+    repository = described_class.new(ruby_profile.rules_dir)
     expect(repository.definitions.slice('G1', 'G2', 'G4')).to eq(default.definitions.slice('G1', 'G2', 'G4'))
     expect(repository.definitions['G3']).not_to eq(default.definitions['G3'])
     expect(repository.definitions['G3']).not_to have_key('any_positive')

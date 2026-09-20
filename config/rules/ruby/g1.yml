@@ -1,0 +1,8 @@
+name: Observable behavior tests
+version: 1
+high: 0.85
+low: 0.20
+applicable: Does this PR change observable behavior that requires an identified test scenario?
+missing: Does the complete supplied test corpus lack a test that exercises production behavior and asserts this scenario's promised result? Existing tests count; a configured mock value alone does not.
+message: The inspected tests do not demonstrate this changed behavior.
+correction: Add a production-path assertion of the expected result, or identify the existing test that provides it.

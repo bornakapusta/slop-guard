@@ -18,6 +18,10 @@ module SlopGuard
       @sleeper = sleeper
     end
 
+    def model
+      MODEL
+    end
+
     def ask(state, questions)
       state_bytes = JSON.generate(state).bytesize
       batches = []

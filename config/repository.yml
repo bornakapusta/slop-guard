@@ -1,10 +1,11 @@
 version: 1
+rules_dir: config/rules/ruby
 file_patterns:
   - lib/**/*.rb
   - app/**/*.rb
   - bin/*
   - exe/*
-  - '*.rb'
+  - "*.rb"
   - spec/**/*.rb
   - spec/fixtures/**/*.log
   - spec/fixtures/**/*.txt

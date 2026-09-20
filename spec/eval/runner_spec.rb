@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../script/evaluation_summary'
-
 RSpec.describe 'the evaluation pipeline' do
   it 'executes the real engine repeatedly, records operational failures and never claims replay is live' do
     dataset = fixture_dataset

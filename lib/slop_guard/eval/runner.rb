@@ -5,8 +5,10 @@ module SlopGuard
   class EvalRunner
     attr_reader :dataset, :rules
 
-    def initialize(dataset:, rules: Rules.new, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+    def initialize(dataset:, profile: Profile.load('demo'), rules: Rules.new(profile.rules_dir),
+                   clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       @dataset = dataset
+      @profile = profile
       @rules = rules
       @clock = clock
     end
@@ -19,7 +21,7 @@ module SlopGuard
       { 'model' => JevClient::MODEL, 'rules' => rules.revision, 'engine' => SlopGuard.digest(sources),
         'dataset' => SlopGuard.digest(artifacts),
         'lockfile' => Digest::SHA256.file(File.join(ROOT, 'Gemfile.lock')).hexdigest,
-        'ruby' => RUBY_VERSION, 'profile' => Digest::SHA256.file(File.join(ROOT, 'config/demo.yml')).hexdigest }
+        'ruby' => RUBY_VERSION, 'profile' => SlopGuard.digest(@profile.to_h) }
     end
 
     def score(report, labels)
@@ -71,7 +73,8 @@ module SlopGuard
 
       # Prepare once so only model judgments vary between repetitions.
       prepared = dataset.cases(split).map do |entry|
-        [entry.fetch('id'), Snapshot.new(dataset.input(entry.fetch('id'))), dataset.labels(entry.fetch('id'))]
+        id = entry.fetch('id')
+        [id, Snapshot.new(dataset.input(id), profile: @profile), dataset.labels(id)]
       end
       FileUtils.mkdir_p(directory)
       result = { 'live' => live, 'split' => split, 'versions' => versions, 'repetitions' => repetitions,

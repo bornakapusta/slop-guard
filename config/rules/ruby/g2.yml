@@ -1,0 +1,8 @@
+name: Relevant failure cases
+version: 1
+high: 0.85
+low: 0.20
+applicable: Does this PR change input validation or an established error contract with a relevant failure scenario?
+missing: Does the complete supplied test corpus lack an assertion for this documented failure outcome? Do not demand unrelated hypothetical failures or reject documented tolerant behavior.
+message: The inspected tests do not assert this documented failure outcome.
+correction: Exercise the relevant invalid input through production code and assert its documented outcome.
