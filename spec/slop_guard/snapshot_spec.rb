@@ -88,6 +88,15 @@ RSpec.describe 'the trusted demo profile' do
   end
 end
 
+RSpec.describe 'dependency gaps' do
+  it 'reports a require_relative target that is not in the inventory and a require outside the known list' do
+    input = fixture_dataset.input('g1-fixed')
+    input['files']['lib/extra.rb'] = "require_relative 'absent'\nrequire 'nokogiri'\n"
+    gaps = demo_snapshot(input).gaps
+    expect(gaps).to include('Missing dependency: lib/absent.rb', 'Uninspected dependency: nokogiri')
+  end
+end
+
 RSpec.describe 'fixture dependency coverage' do
   it 'does not mistake unavailable fixture content for a complete test corpus' do
     dataset = fixture_dataset

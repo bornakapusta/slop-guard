@@ -9,6 +9,15 @@ RSpec.describe SlopGuard::Expectations do
     expect(parsed.gaps).to eq([])
   end
 
+  it 'bounds the scenario count, assigns digest identities to unnamed bullets and stops at unrelated headings' do
+    many = "## Expected behavior\n#{(1..13).map { |n| "- Scenario #{n}." }.join("\n")}\n"
+    expect(described_class.new(many).gaps).to include('Too many scenarios')
+    parsed = described_class.new("## Expected behavior\n- Count visitors.\n## Notes\n- Not a scenario.\n")
+    expect(parsed.behaviors.size).to eq(1)
+    expect(parsed.behaviors.first['id']).to match(/\A\h{12}\z/)
+    expect(parsed.failures).to be_empty
+  end
+
   it 'makes missing and duplicate scenarios explicit' do
     expect(described_class.new('').gaps).to include('Missing expected behavior')
     parsed = described_class.new("## Expected behavior\n- [same] One\n- [same] Two")

@@ -28,6 +28,19 @@ RSpec.describe SlopGuard::Budget do
     end
   end
 
+  it 'allows a reservation that exactly reaches the review limit and records token usage' do
+    Dir.mktmpdir do |directory|
+      budget = described_class.new(ledger: File.join(directory, 'ledger'),
+                                   review_limit: described_class::RESERVATION * 2)
+      2.times { budget.reserve! }
+      expect(budget.attempts).to eq(2)
+      expect { budget.reserve! }.to raise_error(SlopGuard::LimitExceeded, /request budget/)
+      budget.record_usage(40)
+      budget.record_usage(2)
+      expect(budget.usage).to eq(42)
+    end
+  end
+
   it 'enforces time and cost before allowing network work' do
     Dir.mktmpdir do |directory|
       clock = 0
