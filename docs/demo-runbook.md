@@ -31,7 +31,7 @@ If dependencies are missing, run `mise exec ruby@3.4.5 -- bundle install`. Valid
    mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-fixed --inspect
    ```
 
-3. Open [the recorded calibration result](verification/threshold-calibration.md) and [its benchmark analysis](verification/evaluation-benchmark.md). Identify these as historical live evidence using experimental thresholds. Inspection itself does not ask Jev for a judgment or execute the sample project's tests.
+3. Explain that any previously recorded live results are historical evidence from experimental thresholds, not current qualification. Inspection itself does not ask Jev for a judgment or execute the sample project's tests.
 
 Explain the distinction between outcome agreement, correctly located findings, and repeat consistency. A consistently missed violation can produce perfect repeat consistency.
 

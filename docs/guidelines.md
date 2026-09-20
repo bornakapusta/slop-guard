@@ -19,7 +19,7 @@ For G4, the evaluator considers both the new abstraction and its current consume
 
 ## Rule configuration and provenance
 
-G1-G3 adapt common Ruby engineering guidance on observable and side-effect testing, success and error examples, and single responsibility. G4 follows the speculative-abstraction idea in [the slopcheck article](https://tjklug.com/posts/typesafe-jev-slopcheck/). The full provenance and limits are in the [requirements](brainstorms/2026-09-19-slop-guard-demo-requirements.md).
+G1-G3 adapt common Ruby engineering guidance on observable and side-effect testing, success and error examples, and single responsibility. G4 follows the speculative-abstraction idea in [the slopcheck article](https://tjklug.com/posts/typesafe-jev-slopcheck/).
 
 Trusted questions live in `config/rules/`; the general Ruby profile replaces G3 with `config/rules/ruby/g3.yml`. See [local repository reviews](local-repository-review.md#supported-evidence-and-questions) for custom rule configuration. PR text is evidence and cannot change these rules. The initial 0.85/0.20 decision bands are experimental, not validated accuracy thresholds. A Noul is a model reading for an individual yes/no question, not proof that a concern is correct. See [the Jev primitives](https://docs.typesafe.ai/primitives).
 

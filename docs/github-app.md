@@ -24,7 +24,7 @@ Example inline comment next to a new error branch:
 
 Unresolved checks are not findings and do not create inline accusations. A review with only uncertain judgments says “No actionable findings were reported” and “Some checks could not reach a conclusion.” It explains what needs manual review in the summary. This does not mean the change passed; finding quality still depends on the questions and supplied evidence.
 
-That is an illustration of the format, not a guarantee the model will flag a particular change. See the [calibration results](verification/threshold-calibration.md).
+That is an illustration of the format, not a guarantee the model will flag a particular change.
 
 ## Register and configure
 

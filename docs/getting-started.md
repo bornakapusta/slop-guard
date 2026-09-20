@@ -41,7 +41,7 @@ Each invocation makes a fresh review. It prints the report path on stderr and sa
 
 The model is `jev-1.13.0`. Requests have bounded contexts, at most 20 attempts, and a 120-second review deadline. Conservative cost reservations cap a review at $0.10 and an evaluation session at $2 using the configured input-price estimate. Actual billing can differ. Each CLI invocation has a new ledger; these are not account-wide or monthly spending limits. The hosted App uses a shared persistent ledger with a separate operational lifecycle, documented in [App operations](github-app.md#retries-costs-and-operations).
 
-The checked-in high/low thresholds are 0.85/0.20. The recorded G2 example used an experimental high threshold of 0.60; a new run with defaults need not reproduce that finding. See [calibration evidence](verification/threshold-calibration.md).
+The checked-in high/low thresholds are 0.85/0.20. The recorded G2 example used an experimental high threshold of 0.60; a new run with defaults need not reproduce that finding.
 
 ## Read the result
 

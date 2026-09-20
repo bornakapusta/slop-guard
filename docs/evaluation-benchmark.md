@@ -61,4 +61,4 @@ The current labels are provisional. Before treating agreement as human-oracle ac
 
 The manual GitHub workflow still runs 3 ordinary repetitions. Its summary includes these metrics for new reports. No LangSmith account or additional provider is required; multi-model comparison remains a separate extension.
 
-See [the historical example](verification/evaluation-benchmark.md) for a concrete report and [qualification procedure](evaluation.md) for the development/holdout gates.
+See the [qualification procedure](evaluation.md) for the development/holdout gates.
