@@ -37,11 +37,11 @@ Explain the distinction between outcome agreement, correctly located findings, a
 
 ## Request fresh local judgments
 
-For live requests, configure `TYPESAFE_API_KEY` in ignored `.env` using `.env.example`. Keep the value out of terminal output and presentation material.
+For live requests, set `TYPESAFE_API_KEY` in the environment or keep it in ignored `.env` (from `.env.example`) and pass `--env-file .env`; the file is read only when named. Keep the value out of terminal output and presentation material.
 
 ```sh
-mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-violation --live
-mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-fixed --live
+mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-violation --live --env-file .env
+mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-fixed --live --env-file .env
 ```
 
 Each command makes paid requests with a $0.10 reservation limit, at most 20 attempts, and a 120-second review deadline. Reports and reservation ledgers are saved under `tmp/reviews/`. Exit 0 means the review completed; exit 2 means invalid input, incomplete evidence, or an operational failure.

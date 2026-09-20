@@ -4,11 +4,10 @@ require_relative '../../script/evaluation_summary'
 
 RSpec.describe 'the evaluation pipeline' do
   it 'executes the real engine repeatedly, records operational failures and never claims replay is live' do
-    dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+    dataset = fixture_dataset
     runner = SlopGuard::EvalRunner.new(dataset: dataset)
     requests = 0
-    client = Object.new
-    client.define_singleton_method(:ask) do |_state, _questions|
+    client = stub_client do |_state, _questions|
       requests += 1
       raise SlopGuard::ProviderError, 'Controlled offline provider failure'
     end
@@ -27,7 +26,7 @@ RSpec.describe 'the evaluation pipeline' do
 end
 
 RSpec.describe 'benchmark execution' do
-  let(:dataset) { SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')) }
+  let(:dataset) { fixture_dataset }
   let(:runner) { SlopGuard::EvalRunner.new(dataset: dataset) }
 
   it 'freezes inputs once, records review latency and fingerprints the exact questions' do
@@ -36,8 +35,7 @@ RSpec.describe 'benchmark execution' do
     expect(dataset).to receive(:input).with('g1-violation').twice.and_call_original
     tick = 0.0
     timed = SlopGuard::EvalRunner.new(dataset: dataset, clock: -> { tick += 0.125 })
-    client = Object.new
-    client.define_singleton_method(:ask) { |_state, questions| questions.transform_values { 0.5 } }
+    client = stub_client { |_state, questions| questions.transform_values { 0.5 } }
     Dir.mktmpdir do |directory|
       result = timed.run(split: 'development', repetitions: 3, directory: directory,
                          client_factory: ->(_) { client })
@@ -58,8 +56,7 @@ RSpec.describe 'benchmark execution' do
   end
 
   it 'stops a 100-repeat development benchmark on an operational failure and retains partial evidence' do
-    client = Object.new
-    client.define_singleton_method(:ask) { |*| raise SlopGuard::LimitExceeded, 'Evaluation session budget exhausted' }
+    client = stub_client { |*| raise SlopGuard::LimitExceeded, 'Evaluation session budget exhausted' }
     Dir.mktmpdir do |directory|
       result = runner.run(split: 'development', repetitions: 100, benchmark: true, directory: directory,
                           client_factory: ->(_) { client })

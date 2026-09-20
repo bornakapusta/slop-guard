@@ -21,7 +21,7 @@ module SlopGuard
         [id, rule]
       end
       @revision = SlopGuard.digest(definitions)
-    rescue KeyError, NoMethodError, TypeError, ArgumentError, Psych::Exception
+    rescue KeyError, NoMethodError, TypeError, ArgumentError, Psych::Exception, SystemCallError
       raise InvalidInput, 'Invalid rule configuration; expected g1.yml through g4.yml with valid thresholds'
     end
 

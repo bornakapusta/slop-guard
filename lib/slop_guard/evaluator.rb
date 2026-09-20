@@ -35,8 +35,10 @@ module SlopGuard
       gaps = @results.values.any? { |value| !value['gaps'].empty? }
       status = if errors
                  'failed'
+               elsif gaps
+                 'incomplete'
                else
-                 (gaps ? 'incomplete' : 'complete')
+                 'complete'
                end
       { 'snapshot' => snapshot.identity, 'version' => VERSION, 'model' => JevClient::MODEL,
         'rules_revision' => rules.revision, 'status' => status,
@@ -129,18 +131,21 @@ module SlopGuard
         ref = "Candidate #{candidate['id']}: #{candidate['name']} at #{candidate['path']}:#{candidate['line']}."
         questions = @rule.fetch('candidate').transform_values { |text| "#{ref} #{text}" }
         values = ask(questions)
-        yes = @rule.fetch('positive').all? { |key| high?(values.fetch(key)) }
+        # `any_positive` is used only by the saved log-parser G3 definition (config/rules/g3.yml); it stays so the
+        # benchmark rule revision is preserved. Do not generalise it further without evaluation evidence.
         alternatives = @rule.fetch('any_positive', [])
-        yes &&= alternatives.empty? || alternatives.any? { |key| high?(values.fetch(key)) }
-        no = @rule.fetch('negative').all? { |key| low?(values.fetch(key)) }
-        exempt = @rule.fetch('negative').any? { |key| high?(values.fetch(key)) }
-        absent = @rule.fetch('positive').any? { |key| low?(values.fetch(key)) }
-        absent ||= !alternatives.empty? && alternatives.all? { |key| low?(values.fetch(key)) }
-        if high?(global['concern']) && yes && no
+        positives_high = @rule.fetch('positive').all? { |key| high?(values.fetch(key)) } &&
+                         (alternatives.empty? || alternatives.any? { |key| high?(values.fetch(key)) })
+        negatives_low = @rule.fetch('negative').all? { |key| low?(values.fetch(key)) }
+        any_negative_high = @rule.fetch('negative').any? { |key| high?(values.fetch(key)) }
+        any_positive_low = @rule.fetch('positive').any? { |key| low?(values.fetch(key)) } ||
+                           (!alternatives.empty? && alternatives.all? { |key| low?(values.fetch(key)) })
+        ruled_out = any_negative_high || any_positive_low
+        if high?(global['concern']) && positives_high && negatives_low
           concern(candidate['name'], @snapshot.anchor(candidate), values.merge('global' => global['concern']))
-        elsif low?(global['concern']) && (exempt || absent)
+        elsif low?(global['concern']) && ruled_out
           no_concern
-        elsif high?(global['concern']) && (exempt || absent)
+        elsif high?(global['concern']) && ruled_out
           # Another candidate may explain the global concern; reconcile after the loop.
           next
         else

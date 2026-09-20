@@ -6,6 +6,22 @@ RSpec.describe SlopGuard::Report do
     expect(text).not_to include('<script>', '@everyone', '[link]')
     expect(text).to include('&lt;script&gt;')
   end
+
+  it 'shows control characters and line separators as visible escapes so evidence cannot forge report structure' do
+    text = described_class.escape("fixture\n## Injected\r- fake\e[31m\u2028tail")
+    expect(text).to eq('fixture\n## Injected\r- fake\e\[31m\u2028tail')
+    expect(text.lines.size).to eq(1)
+    gap = "Missing fixture: spec/x\n## Forged heading"
+    report = { 'status' => 'incomplete', 'snapshot' => 'abc',
+               'rules' => { 'G1' => { 'outcome' => 'inconclusive', 'findings' => [], 'gaps' => [gap] } } }
+    markdown = described_class.markdown(report)
+    expect(markdown.lines.grep(/^## /).map(&:strip)).to eq(['## G1: inconclusive'])
+  end
+
+  it 'keeps deliberate newlines but escapes other control characters in terminal messages' do
+    message = SlopGuard.printable("Usage: x\n  --flag\e[2J", keep_newlines: true)
+    expect(message).to eq("Usage: x\n  --flag\\e[2J")
+  end
 end
 
 RSpec.describe 'shared test findings' do

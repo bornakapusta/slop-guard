@@ -3,7 +3,7 @@
 require_relative '../../script/calibrate_thresholds'
 
 RSpec.describe SlopGuard::ThresholdCalibration do
-  let(:dataset) { SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')) }
+  let(:dataset) { fixture_dataset }
   let(:versions) { SlopGuard::EvalRunner.new(dataset: dataset).versions }
 
   it 'rejects holdout reports before reading cases or labels' do

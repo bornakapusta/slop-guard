@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe SlopGuard::Snapshot do
-  let(:dataset) { SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')) }
+  let(:dataset) { fixture_dataset }
 
   it 'keeps an existing behavior assertion outside the diff' do
     snapshot = described_class.new(dataset.input('g1-legitimate'))
@@ -62,7 +62,7 @@ end
 
 RSpec.describe 'fixture dependency coverage' do
   it 'does not mistake unavailable fixture content for a complete test corpus' do
-    dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+    dataset = fixture_dataset
     input = dataset.input('g1-fixed')
     input['files'].delete('spec/fixtures/webserver.log')
     expect(SlopGuard::Snapshot.new(input).gaps.join).to include('Missing fixture: spec/fixtures/webserver.log')

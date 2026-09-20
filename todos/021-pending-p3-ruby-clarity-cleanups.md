@@ -81,3 +81,12 @@ Several small readability issues that RuboCop does not catch but a reader will t
 - Drafted solution options
 
 
+
+### 2026-09-20 - Partially done
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- Done: U+200C moved to `Report::MENTION_BREAK` with a comment; evaluator status if/elsif; design booleans renamed (`positives_high`, `negatives_low`, `any_negative_high`, `any_positive_low`, `ruled_out`) with a comment on `any_positive`; `ENDPOINT.freeze`; `dataset.rb` ternary assignment to if/else; `bin/review` single key check via an `api_key` local.
+- Remaining (Phase 5 with 023): `candidates.rb` constants and helpers; `snapshot.rb` `production_ruby_path?`; naming items.
+

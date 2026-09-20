@@ -20,6 +20,9 @@ parser = OptionParser.new do |opts|
   opts.on('--freeze REPORT', 'Create a version lock from a passing live development report') do |value|
     options[:freeze] = value
   end
+  opts.on('--env-file PATH', 'Load TYPESAFE_API_KEY from this ignored file when the environment does not set it') do |v|
+    options[:env_file] = v
+  end
 end
 begin
   parser.parse!
@@ -54,8 +57,14 @@ begin
 
       runner.verify_frozen!(options[:frozen])
     end
-    Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
-    factory = ->(budget) { SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', nil), budget: budget) }
+    # Credentials come from the environment; a file is read only when explicitly named. Environment wins.
+    env_file = options[:env_file] || ENV.fetch('SLOP_GUARD_ENV_FILE', nil)
+    if env_file
+      raise SlopGuard::InvalidInput, "Credential file does not exist: #{env_file}" unless File.file?(env_file)
+
+      Dotenv.load(env_file)
+    end
+    factory = ->(budget) { SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', ''), budget: budget) }
     directory = File.join(SlopGuard::ROOT, 'tmp/evaluations',
                           "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
     result = runner.run(split: options[:split], repetitions: options[:repeats], directory: directory,
@@ -67,6 +76,6 @@ begin
     raise SlopGuard::InvalidInput, parser.to_s
   end
 rescue SlopGuard::Error, OptionParser::ParseError, Errno::ENOENT, JSON::ParserError => e
-  warn e.message
+  warn SlopGuard.printable(e.message, keep_newlines: true)
   exit 2
 end

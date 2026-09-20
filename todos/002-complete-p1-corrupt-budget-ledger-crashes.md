@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "002"
 tags: [code-review, quality, reliability]
@@ -85,4 +85,13 @@ Budget#reserve! parses every ledger line with JSON.parse and nothing rescues JSO
 - Finding surfaced by review agents and verified against source (file:line references above)
 - Drafted solution options
 
+
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- `Budget#ledger_total` parses each line, requires an object with a numeric `reserved_usd`, and maps `JSON::ParserError`/`TypeError` to `InvalidInput "Request ledger is corrupt: <path>"` inside the flock, so no reservation is written.
+- `spec/slop_guard/budget_spec.rb` covers a garbage line, a non-object line and a non-numeric amount, and asserts `JevClient#post` is never called and `attempts` stays 0.
 

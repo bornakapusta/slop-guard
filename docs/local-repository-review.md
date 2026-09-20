@@ -17,7 +17,7 @@ bundle exec ruby bin/review --repo /absolute/path/to/project \
 
 Inspection prints JSON with numbered source, changed lines, test candidates, skipped paths, context bytes, evidence gaps, rule revision and Git commit IDs. Inspect mode exits 0 when evidence can be constructed, even when it reports gaps; exit 2 means invalid input or exceeded limits. No AI verdict is produced by inspection.
 
-4. To request a model judgment, configure `TYPESAFE_API_KEY` in Slop Guard's ignored `.env`, then replace `--inspect` with `--live`. Add `--json` for JSON instead of Markdown. The report location is printed on stderr and JSON is saved under Slop Guard's ignored `tmp/reviews/` directory. Reports include the exact Git revisions and rule revision. A completed review exits 0 even when concerns are found; incomplete evidence and operational failures exit 2.
+4. To request a model judgment, set `TYPESAFE_API_KEY` in the environment or keep it in Slop Guard's ignored `.env` and add `--env-file .env`, then replace `--inspect` with `--live`. The file is never read unless named. Add `--json` for JSON instead of Markdown. The report location is printed on stderr and JSON is saved under Slop Guard's ignored `tmp/reviews/` directory. Reports include the exact Git revisions and rule revision. A completed review exits 0 even when concerns are found; incomplete evidence and operational failures exit 2.
 
 ## Supported evidence and questions
 
