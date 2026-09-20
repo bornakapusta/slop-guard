@@ -1,7 +1,7 @@
 ---
 title: Class-design cleanup — constructors, per-call objects, value objects, shared validation
 type: refactor
-status: active
+status: completed
 date: 2026-09-20
 ---
 
