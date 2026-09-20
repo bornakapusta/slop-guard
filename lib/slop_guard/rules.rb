@@ -11,11 +11,6 @@ module SlopGuard
 
     attr_reader :definitions, :revision, :files
 
-    # Wraps already-validated definitions, e.g. a single rule during threshold replay.
-    def self.from_definitions(definitions)
-      allocate.tap { |rules| rules.send(:assign, definitions, []) }
-    end
-
     # Every `*.yml` directly inside the directory is a rule; its ID is the upper-cased file name.
     def initialize(directory = File.join(ROOT, 'config/rules'))
       files = Dir[File.join(directory, '*.yml')]

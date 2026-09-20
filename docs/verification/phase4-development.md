@@ -49,10 +49,11 @@ This report does not establish held-out qualification or human approval of provi
 
 ## Offline threshold replay of this run
 
-`script/calibrate_thresholds.rb` replayed the saved readings from commit `d8948ff` (the engine at run time) over
-the documented grid. Selection requires complete replay, zero false positives and preserved correct abstentions.
-Full output: `phase4-threshold-replay.json`. Advisory only: the checked-in thresholds were not changed, and any
-change needs fresh repeated development evaluations per `docs/evaluation.md`.
+An offline threshold-replay tool (since removed from the repository) replayed the saved readings from commit
+`d8948ff` (the engine at run time) over a grid of high 0.50–0.95 and low 0.05–0.45 in 0.05 steps. Selection
+required complete replay, zero false positives and preserved correct abstentions. The raw replay output is no
+longer checked in; the table below is the recorded summary. Advisory only: the checked-in thresholds were not
+changed, and any change needs fresh repeated development evaluations per `docs/evaluation.md`.
 
 | Rule | Current high / low | Detected / unnecessary abstentions | Best replay high / low | Detected / false positives / unnecessary abstentions | Exact rule matches |
 |---|---|---|---|---|---|

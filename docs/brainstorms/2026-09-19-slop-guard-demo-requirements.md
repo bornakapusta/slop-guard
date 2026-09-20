@@ -7,23 +7,23 @@ topic: slop-guard-demo
 
 ## Problem Frame
 
-Slop Guard is a general-purpose code reviewer. This document scopes its first demonstration; the log parser is the sample project used to evaluate that milestone.
+Slop Guard is a general-purpose code reviewer. This document scopes its first demonstration; a small bundled Ruby program is the sample project used to evaluate that milestone.
 
 Developers need review feedback tied to explicit engineering guidelines, with enough evidence to understand and correct a concern. Generic suggestions or confident findings without the relevant context undermine trust.
 
-The first milestone is a repeatable GitHub demonstration using the existing Ruby log-parser project. The audience should understand the feature, see a guideline violation identified on a PR, and see the review update after the fix. This is an evaluation of a small reviewer, not a claim that it can establish complete correctness or compliance.
+The first milestone is a repeatable GitHub demonstration using an existing small Ruby sample project. The audience should understand the feature, see a guideline violation identified on a PR, and see the review update after the fix. This is an evaluation of a small reviewer, not a claim that it can establish complete correctness or compliance.
 
 Slop Guard lives in its own repository. A Ruby GitHub App receives PR events, gathers review evidence, asks Jev focused questions, and publishes advisory feedback. This follows the slopcheck article's division of responsibility: code enumerates evidence and controls decisions; Jev supplies bounded judgments. Project-guideline traceability and feature-to-test coverage are our extensions.
 
 ## Agreed Demo Guidelines
 
-The user selected all four guidelines below. They are explicit adaptations for log-parser, not a claim to reproduce another organization's complete standards.
+The user selected all four guidelines below. They are explicit adaptations for the sample project, not a claim to reproduce another organization's complete standards.
 
 | ID | Guideline | Application and boundary | Source basis |
 |---|---|---|---|
-| G1 | Tests verify observable feature behavior. | Tests exercise the relevant production behavior and assert promised results. A test confirming only a configured mock value is insufficient. Existing tests may satisfy a new PR's requirements. | Adapted from `api-main`'s `docs/adapter-pattern.md`, Testing Patterns and Testing Side Effects; feature coverage is an extension requested in this brainstorm. |
-| G2 | Changed behavior includes relevant failure cases. | When a feature changes input validation or error behavior, tests cover the relevant documented failure cases. Unrelated hypothetical failures do not justify a finding. | Adapted from success and error-response examples in `api-main`'s `docs/adapter-pattern.md`, Testing HTTP Adapters with WebMock. |
-| G3 | Keep responsibilities focused. | Changes preserve clear purposes for parsing, counting, and presentation. Identify the specific responsibility being mixed and its consequence; do not demand a new class merely to satisfy a preference. | Adapted from the single-responsibility principle in `api-main`'s `docs/adapter-pattern.md`, Architecture Overview. |
+| G1 | Tests verify observable feature behavior. | Tests exercise the relevant production behavior and assert promised results. A test confirming only a configured mock value is insufficient. Existing tests may satisfy a new PR's requirements. | Adapted from the reference codebase's adapter documentation on testing patterns and testing side effects; feature coverage is an extension requested in this brainstorm. |
+| G2 | Changed behavior includes relevant failure cases. | When a feature changes input validation or error behavior, tests cover the relevant documented failure cases. Unrelated hypothetical failures do not justify a finding. | Adapted from the success and error-response examples in the reference codebase's adapter documentation. |
+| G3 | Keep responsibilities focused. | Changes preserve clear purposes for parsing, counting, and presentation. Identify the specific responsibility being mixed and its consequence; do not demand a new class merely to satisfy a preference. | Adapted from the single-responsibility guidance in the reference codebase's adapter documentation. |
 | G4 | Avoid speculative abstractions. | Added factories, interfaces, strategies, or wrappers need a demonstrated purpose. A single caller alone is not proof of a violation: consider existing callers, testability, framework requirements, and explicit project constraints. | The slopcheck article's speculative-abstraction check, with explicit context and exception handling. |
 
 Ruby formatting and mechanically enforceable lint rules remain the responsibility of existing lint tools. They are not additional Jev review rules.
@@ -32,7 +32,7 @@ Ruby formatting and mechanically enforceable lint rules remain the responsibilit
 
 **Review scope and evidence**
 
-- R1. Review opened, reopened, and updated PRs in the installed log-parser demo repository. Re-evaluate when commits or the PR's described expected behavior change. Review one identified head commit against its identified base; attach the result to that head commit.
+- R1. Review opened, reopened, and updated PRs in the installed sample-project demo repository. Re-evaluate when commits or the PR's described expected behavior change. Review one identified head commit against its identified base; attach the result to that head commit.
 - R2. Review the effects of the PR against G1-G4. Gather the diff, relevant complete Ruby source and tests, the project guidelines, and PR purpose/expected behavior. Do not turn a PR review into an unsolicited audit of unchanged code.
 - R3. Demo PR descriptions include a short Before/After description and explicit expected behavior. Use those expectations and established project behavior to evaluate tests. Do not invent acceptance criteria from the implementation alone. Missing or contradictory expectations make affected checks inconclusive; independent checks can still run.
 - R4. Count existing relevant tests as evidence. Distinguish missing tests from tests outside the inspected context. When context is missing, unsupported, truncated, or otherwise inadequate, report the affected checks as inconclusive rather than claiming a violation or a pass.
@@ -57,7 +57,7 @@ Ruby formatting and mechanically enforceable lint rules remain the responsibilit
 
 - For each guideline, the agreed violating example produces the expected concern, the legitimate lookalike avoids that concern, and the corrected example no longer produces it. Findings reference the correct guideline and evidence.
 - Separate held-out positive and negative examples for each guideline meet their predetermined expected outcomes before calling that guideline demo-ready. Repeat evaluation three times to expose verdict instability. Failures remain recorded and require revising the rule or narrowing its claim, not relabeling the example to fit the model.
-- A real log-parser PR demonstrates opening, reviewing, fixing, and re-reviewing, with at least one accurate inline finding and an updated summary. An all-clear result is scoped to the inspected evidence.
+- A real sample-project PR demonstrates opening, reviewing, fixing, and re-reviewing, with at least one accurate inline finding and an updated summary. An all-clear result is scoped to the inspected evidence.
 - Duplicate delivery, a newer commit arriving during review, missing test context, and a model failure demonstrate the defined behavior without duplicate current findings, stale replacement, or false clearance.
 - Tests and lint establish the demo application's baseline independently. The bot never claims that inspecting test code proves test execution passed.
 
@@ -68,7 +68,7 @@ Ruby formatting and mechanically enforceable lint rules remain the responsibilit
 - No guarantee of exhaustive feature coverage. G1 and G2 assess identifiable expected scenarios using the inspected evidence.
 - No automatic conversion of arbitrary prose guidelines into trusted rules. The four demo rules are maintained deliberately.
 - No production deployment claims or broad multi-repository onboarding in this milestone. The bot remains separate from the application so it can be extended later.
-- No copying Rails, database, multi-platform, or adapter-factory requirements from `api-main` into the standalone parser.
+- No copying Rails, database, multi-platform, or adapter-factory requirements from the reference codebase into the standalone sample project.
 
 ## Key Decisions
 
@@ -80,11 +80,11 @@ Ruby formatting and mechanically enforceable lint rules remain the responsibilit
 
 ## Dependencies and Source Evidence
 
-- At inspection, the local `slop-guard` directory was empty and was not a Git checkout. The local `log-parser-master` directory also lacked Git metadata. GitHub repository identities and App installation are not verified.
-- Log-parser already contains a CLI, parsing/counting/presentation classes, RSpec examples, and a Gemfile pinned to Ruby 2.6.5. Its tests and runtime were inspected as source but were not run in this brainstorm. Establishing a working baseline is a prerequisite for demonstration.
+- At inspection, the local `slop-guard` directory was empty and was not a Git checkout. The local sample-project directory also lacked Git metadata. GitHub repository identities and App installation are not verified.
+- The sample project already contains a CLI, parsing/counting/presentation classes, RSpec examples, and a Gemfile pinned to Ruby 2.6.5. Its tests and runtime were inspected as source but were not run in this brainstorm. Establishing a working baseline is a prerequisite for demonstration.
 - A usable Jev account/API key, GitHub App credentials, and a reachable webhook host are required; availability is unverified. Ruby can use the documented HTTP API; no Ruby SDK is assumed.
-- `api-main`'s `README.md` links its primary standards to `smartpension/engineering_docs`, which was not retrieved. Only local `docs/adapter-pattern.md`, `.github/PULL_REQUEST_TEMPLATE.md`, and `.rubocop.yml` were inspected as relevant source material. The Before/After template inspires the demo PR description, with expected behavior added for this demo.
-- Source provenance is a drafting reference, not a runtime dependency on the local `api-main` checkout. Publish the adopted log-parser guidelines with the demo so findings can point to a stable, accessible rule.
+- The reference codebase's README links its primary standards to a separate organization-wide engineering documentation repository, which was not retrieved. Only its local adapter documentation, pull request template, and RuboCop configuration were inspected as relevant source material. The Before/After template inspires the demo PR description, with expected behavior added for this demo.
+- Source provenance is a drafting reference, not a runtime dependency on the local reference-codebase checkout. Publish the adopted guidelines with the demo so findings can point to a stable, accessible rule.
 - [Slopcheck article](https://tjklug.com/posts/typesafe-jev-slopcheck/): diff candidates, predefined questions, threshold composition, evidence locations, and coverage gaps. It does not provide a verified GitHub App implementation or complete feature-coverage evaluator.
 - [TypeSafe primitives](https://docs.typesafe.ai/primitives), [confidence](https://docs.typesafe.ai/confidence), and [known limitations](https://docs.typesafe.ai/model-jaggedness/jev-1.13): independent questions, calibrated probability intent, literal wording, numeric limitations, and susceptibility to adversarial input. Typed output does not ensure correct judgments.
 - [GitHub Apps](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps): installation permissions, webhooks, and authenticated publication.
@@ -101,7 +101,7 @@ None. Product scope is defined; the following are implementation and feasibility
 - [Affects R2, R4, R6][Needs research] Define a bounded Ruby context-selection approach, candidate extraction, existing-test discovery, and GitHub line mapping. Investigate whether this evidence supports the four rules; unsupported cases must remain explicit.
 - [Affects R5, R11, R12][Needs research] Write concrete question criteria and representative patches for each guideline. Measure whether design judgment and feature-coverage questions work reliably before expanding the live bot.
 - [Affects R10, R12][Technical] Pin the model version and choose measured thresholds, context/cost limits, retry budgets, and review timeouts. Verify current Jev limits and answer shapes.
-- [Affects R11, R13][Technical] Establish the log-parser runtime and test baseline, isolate controlled demo changes, and identify required compatibility work. Preserve unrelated application behavior.
+- [Affects R11, R13][Technical] Establish the sample project's runtime and test baseline, isolate controlled demo changes, and identify required compatibility work. Preserve unrelated application behavior.
 
 ## Next Steps
 

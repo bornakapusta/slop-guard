@@ -22,15 +22,9 @@ New ordinary evaluations collect the same measurements, with the existing defaul
 bundle exec ruby bin/evaluate --live --split development --repeats 3
 ```
 
-For exploratory repeatability work, explicitly enable benchmark mode:
+Runs are limited to 1–3 repetitions; held-out qualification requires 3.
 
-```sh
-bundle exec ruby bin/evaluate --live --split development --benchmark --repeats 10
-```
-
-Benchmark mode accepts 1–100 repetitions, uses development cases only and stops after the first review with an operational failure. Ordinary runs remain limited to 1–3 repetitions; held-out qualification still requires 3. Benchmark reports cannot be frozen as qualification evidence.
-
-The $2 reservation guard, per-review limits and request deadlines remain unchanged. A long run can exhaust that conservative budget before finishing; the report will show partial inventory and retain completed reviews. A new invocation starts a new budget session. Do not keep rerunning to get a favorable result. No larger budget is configured by benchmark mode.
+The $2 reservation guard, per-review limits and request deadlines apply to every run. A run can exhaust that conservative budget before finishing; the report will show partial inventory and retain completed reviews. A new invocation starts a new budget session. Do not keep rerunning to get a favorable result.
 
 Inputs and labels are loaded before repetition begins. No reviewed source is executed. Labels stay outside Jev's evidence. Each completed review is atomically saved, including monotonic wall-clock duration and question fingerprints. Provider failures remain separate from semantic mismatches. Model, rule, source, dataset, Ruby and lockfile versions remain in the raw report.
 
@@ -44,12 +38,12 @@ Inputs and labels are loaded before repetition begins. No reviewed source is exe
 | Exact review match | All expected outcomes and findings match, with no extra findings. Observed provider failures count as non-matches in this rate. Missing reviews are reported in inventory rather than silently assumed successful. |
 | Confusion counts | JSON rows are expected outcomes and columns are actual outcomes. Operational failures are excluded and counted separately. |
 | Repeat agreement | Fraction of pairs of distinct observed repetitions that agree within a case, averaged equally across cases with at least 2 valid observations. `[concern, concern, inconclusive]` gives 1/3. A consistently wrong rule can score 100%. |
-| Reading variance | Sample variance (`n-1` denominator) of each question's readings for one case. New reports group by the exact evidence/question fingerprint. Missing conditional questions are omitted, never filled with zeros; fewer than 2 samples gives `null`. This is not a rubric quality score or a calibration measurement. |
-| Review latency | Mean and nearest-rank p50/p95 of the monotonic duration of the entire evaluator call, including multiple provider requests, retries and evaluator processing. Input preparation and report writes are excluded. Historical reports without per-review timing show unavailable values. |
+| Reading variance | Sample variance (`n-1` denominator) of each question's readings for one case, grouped by the exact evidence/question fingerprint. Missing conditional questions are omitted, never filled with zeros; fewer than 2 samples gives `null`. This is not a rubric quality score or a calibration measurement. |
+| Review latency | Mean and nearest-rank p50/p95 of the monotonic duration of the entire evaluator call, including multiple provider requests, retries and evaluator processing. Input preparation and report writes are excluded. |
 | Cost | Sum of reported input tokens and their stored input-cost estimates; mean estimated cost per observed review. This is not a provider invoice or cost per API call. Request attempts include retries. |
 | Reservations | Sum of reservations on saved review rows. An interruption during an unsaved review can leave additional reservations in `requests.jsonl`; that ledger remains authoritative. The CI summary separately reads the full ledger. |
 
-Historical reports lack question fingerprints. Their variance keys start with `legacy-` and identify batch position plus question ID; interpret them only where those positions have the same meaning across repeats. The original raw report is never rewritten. The analysis records its version and source-report digest.
+Variance keys identify the rule, the exact evidence/question fingerprint and the question ID. The original raw report is never rewritten. The analysis records its version and source-report digest.
 
 Partial reports describe only the completed observations and can be biased toward cases reached before interruption. Do not compare a partial subset with a complete benchmark as if both sampled the same examples. Small per-case sample counts and a small fixture corpus do not establish general accuracy.
 
@@ -63,7 +57,7 @@ The current labels are provisional. Before treating agreement as human-oracle ac
 4. Resolve ambiguous labels, record the rationale, and add independent feature families as the corpus grows. More repetitions cannot substitute for this breadth.
 5. Review held-out labels without using held-out model results to tune questions. Set `labels_reviewed` only after the required human review, then collect fresh same-version evidence.
 
-`--freeze` rejects provisional labels and exploratory benchmark reports. No label, question or threshold was changed by adding these measurements. Source instrumentation changes the engine fingerprint, so old reports remain historical evidence.
+`--freeze` rejects provisional labels. No label, question or threshold was changed by adding these measurements. Source instrumentation changes the engine fingerprint, so old reports remain historical evidence.
 
 The manual GitHub workflow still runs 3 ordinary repetitions. Its summary includes these metrics for new reports. No LangSmith account or additional provider is required; multi-model comparison remains a separate extension.
 

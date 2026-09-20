@@ -1,6 +1,6 @@
 # Slop Guard demo runbook
 
-Slop Guard is a general-purpose code reviewer implemented in Ruby. This demo uses saved changes to a Ruby log parser to show evidence selection, advisory review, and evaluation reporting. The CLI accepts saved cases and [local Git comparisons](local-repository-review.md). The [Ruby GitHub App](github-app.md) implements inline comments and a summary; live installation and delivery remain unverified.
+Slop Guard is a general-purpose code reviewer implemented in Ruby. This demo uses saved changes to a bundled sample Ruby project to show evidence selection, advisory review, and evaluation reporting. The CLI accepts saved cases and [local Git comparisons](local-repository-review.md). The [Ruby GitHub App](github-app.md) implements inline comments and a summary; live installation and delivery remain unverified.
 
 ## Prepare locally
 

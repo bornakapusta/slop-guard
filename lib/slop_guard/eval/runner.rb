@@ -81,28 +81,21 @@ module SlopGuard
         end }
     end
 
-    def run(split:, repetitions:, directory:, client_factory:, live: false, benchmark: false)
-      prepared = prepare(split, repetitions, benchmark)
+    def run(split:, repetitions:, directory:, client_factory:, live: false)
+      prepared = prepare(split, repetitions)
       FileUtils.mkdir_p(directory)
       result = { 'live' => live, 'split' => split, 'versions' => versions, 'repetitions' => repetitions,
-                 'mode' => benchmark ? 'benchmark' : 'evaluation', 'case_ids' => prepared.map(&:first),
+                 'case_ids' => prepared.map(&:first),
                  'labels_reviewed' => dataset.manifest['labels_reviewed'] == true, 'runs' => [], 'passed' => false }
       start = @clock.call
-      catch(:benchmark_failed) do
-        repetitions.times do |repeat|
-          prepared.each do |id, snapshot, labels|
-            run = review_case(id, snapshot, labels, repeat + 1, directory, client_factory)
-            result['runs'] << run
-            append(directory, run)
-            next unless benchmark && run['report'].fetch('status') == 'failed'
-
-            result['stopped_reason'] = 'Operational failure; inspect the failed review and request ledger'
-            save(directory, result)
-            throw :benchmark_failed
-          end
-          # One checkpoint per repetition; runs.jsonl carries anything finished since.
-          save(directory, result)
+      repetitions.times do |repeat|
+        prepared.each do |id, snapshot, labels|
+          run = review_case(id, snapshot, labels, repeat + 1, directory, client_factory)
+          result['runs'] << run
+          append(directory, run)
         end
+        # One checkpoint per repetition; runs.jsonl carries anything finished since.
+        save(directory, result)
       end
       finalize(result, prepared.size * repetitions, start)
       save(directory, result)
@@ -113,7 +106,7 @@ module SlopGuard
       report = JSON.parse(File.read(development_report))
       expected = dataset.cases('development').map { |entry| entry['id'] }.sort
       unless report['live'] && report['passed'] && report['labels_reviewed'] == true &&
-             report['mode'] != 'benchmark' && report['split'] == 'development' && report['versions'] == versions &&
+             report['split'] == 'development' && report['versions'] == versions &&
              report.fetch('runs').map { |run| run['case'] }.uniq.sort == expected
         raise InvalidInput,
               'A complete passing live development report with reviewed labels for these exact versions is required'
@@ -129,14 +122,11 @@ module SlopGuard
     private
 
     # Prepare once so only model judgments vary between repetitions.
-    def prepare(split, repetitions, benchmark)
+    def prepare(split, repetitions)
       dataset.validate!
       raise InvalidInput, 'Split must be development or holdout' unless %w[development holdout].include?(split)
-      raise InvalidInput, 'Benchmarks use development cases only' if benchmark && split != 'development'
-
-      maximum = benchmark ? 100 : 3
-      unless repetitions.is_a?(Integer) && (1..maximum).cover?(repetitions)
-        raise InvalidInput, "Repetitions must be between 1 and #{maximum}"
+      unless repetitions.is_a?(Integer) && (1..3).cover?(repetitions)
+        raise InvalidInput, 'Repetitions must be between 1 and 3'
       end
 
       dataset.cases(split).map do |entry|

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The log parser is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
+Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The bundled sample Ruby project under `eval/` is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
 
 - `lib/slop_guard.rb` loads the engine only: `profile.rb` (trusted file patterns, rules directory and Ruby/RSpec conventions), evidence extraction (`snapshot.rb`, `candidates.rb`, `expectations.rb`), `rules.rb`, `evaluator.rb`, `jev_client.rb`, `budget.rb`, `report.rb`, `git_source.rb` (bounded, read-only local Git snapshots) and `cli.rb` (the `bin/review` command and its exit codes).
 - `lib/slop_guard/eval/`: the evaluation harness (dataset, runner, analysis, CI summary, threshold replay), loaded with `require 'slop_guard/eval'`. Product code never depends on it.
@@ -49,7 +49,7 @@ Keep `TYPESAFE_API_KEY` in ignored `.env`, using `.env.example` as a template. N
 
 ## Continuous Integration
 
-See `docs/ci.md` for the required Tests, Static analysis, Dependencies and Fixtures checks. Coverage and complexity have no numeric gates. PR checks run without application secrets. Paid development evaluation is a separate manual main-only workflow using the `jev-evaluation` environment; it does not qualify the model or block merges.
+See `docs/ci.md` for the required Tests, Static analysis, Dependencies and Fixtures checks. Coverage has no numeric gate; RuboCop Metrics are inspected locally only. PR checks run without application secrets. Paid development evaluation is a separate manual main-only workflow using the `jev-evaluation` environment; it does not qualify the model or block merges.
 
 Evaluation benchmarks must separate outcome agreement from finding correctness and repeat consistency. See `docs/evaluation-benchmark.md`. Keep label review status truthful, report independent-case counts, and preserve the existing budget guards.
 

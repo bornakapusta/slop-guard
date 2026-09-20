@@ -199,7 +199,7 @@ module SlopGuard
       # :present when every positive question is high and every negative low; :ruled_out when a negative is high
       # or a positive is low; :uncertain otherwise.
       def classify_design(values)
-        # `any_positive` is used only by the saved log-parser G3 definition (config/rules/g3.yml); it stays so the
+        # `any_positive` is used only by the saved sample-project G3 definition (config/rules/g3.yml); it stays so the
         # benchmark rule revision is preserved. Do not generalise it further without evaluation evidence.
         alternatives = @rule.fetch('any_positive', [])
         positives_high = @rule.fetch('positive').all? { |key| high?(values.fetch(key)) } &&

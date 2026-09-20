@@ -12,7 +12,7 @@ bundle install
 
 ## Inspect an example offline
 
-The README uses simplified payment API examples to explain the checks. The runnable cases below are separate log-parser fixtures; they are not recorded reviews of those README examples.
+The README uses simplified payment API examples to explain the checks. The runnable cases below are saved sample-project fixtures bundled under `eval/`; they are not recorded reviews of those README examples.
 
 ```sh
 bundle exec ruby bin/review g2-violation --inspect

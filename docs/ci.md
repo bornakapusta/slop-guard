@@ -10,9 +10,8 @@ Pull requests to `main` and pushes to `main` run on Ubuntu 24.04 with the pinned
 | Static analysis | `bundle exec rubocop --except Metrics --cache false` | All enabled non-Metrics cops must pass |
 | Dependencies | `bundle exec bundle-audit check --update` | Vulnerabilities and update/tool errors fail |
 | Fixtures | `bundle exec ruby bin/evaluate --validate` | Structural validation only; deliberate incomplete contexts are valid |
-| Complexity | `bundle exec rubocop --only Metrics --cache false` | Offenses are informational; execution/syntax errors fail the optional job |
 
-The local Metrics command exits 1 for findings. CI accepts that only when a completed JSON report contains exclusively Metrics offenses. Complexity is not a required check.
+RuboCop Metrics cops are not run in CI. Inspect them locally with `bundle exec rubocop --only Metrics --cache false`; findings are informational.
 
 SimpleCov starts before application code, reports lines and branches, and includes unloaded `lib/`, `script/` and `bin/` sources. Exec-based CLI subprocesses are not instrumented; their entry points remain in the denominator. Coverage has no minimum or drop threshold and does not establish feature-use-case adequacy.
 
@@ -20,7 +19,7 @@ Each job writes a summary and uploads allowlisted reports for 14 days. Tests inc
 
 ## Main enforcement
 
-The main ruleset requires pull requests and the observed GitHub Actions checks `Tests`, `Static analysis`, `Dependencies`, and `Fixtures`, with strict up-to-date checks, no mandatory reviewer count, and no bypass actors. Complexity and paid evaluation are excluded. These are GitHub settings, not properties guaranteed by workflow YAML. See the [checkpoint](verification/ci-checkpoint.md) for actual verification status.
+The main ruleset requires pull requests and the observed GitHub Actions checks `Tests`, `Static analysis`, `Dependencies`, and `Fixtures`, with strict up-to-date checks, no mandatory reviewer count, and no bypass actors. Paid evaluation is excluded. These are GitHub settings, not properties guaranteed by workflow YAML. See the [checkpoint](verification/ci-checkpoint.md) for actual verification status.
 
 ## Paid development evaluation
 
