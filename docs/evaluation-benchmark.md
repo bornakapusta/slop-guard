@@ -2,6 +2,8 @@
 
 This adapts the fixed-input repeated-judgment experiment in [LangChain's Jev evaluation](https://www.langchain.com/blog/jev-agent-evals-langsmith) to Slop Guard's Ruby harness. The first version measures Jev alone. The existing 16 development cases are the fixed examples; each contains saved source, tests, a change and expected outcomes. Repeating them gives more observations of those same cases, not more independent examples.
 
+The README's consistency goal means applying stable questions and reporting rules. Repeat agreement measures whether fresh model judgments actually produce the same outcomes; it does not measure correctness. Speed and cost measurements here describe Slop Guard's evaluator across its provider requests, not a comparison with another review bot or a full GitHub delivery cycle.
+
 ## Run and inspect
 
 Analyze an existing report without credentials or provider calls:

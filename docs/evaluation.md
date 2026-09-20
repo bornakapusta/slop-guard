@@ -8,14 +8,14 @@ The local engine, HTTP contract and harness can be tested without credentials. *
 
 Each `input.json` names a baseline and maps changed paths to a preimage SHA-256 plus replacement content. `change.diff` is the human-readable view; JSON is the executable input contract. The loader verifies preimages and never invokes Git or a shell to apply a patch. `labels.json` contains all four expected rule outcomes, intended concerns, allowed anchors and rationale. Labels and split metadata do not enter the model state.
 
-The source corpus includes full Ruby code and specs, including tests outside the diff and enclosing setup. Numbered evidence and syntax candidates fit bounded requests; larger question sets are batched with the complete state repeated. Dynamic test generation, unresolved requires, omitted files and unsupported shared examples produce coverage gaps. This is a constrained Ruby demo, not a complete Ruby program analysis.
+The source corpus includes full Ruby code and specs, including tests outside the diff and enclosing setup. The evaluator asks related questions together for each behavior or failure scenario. Design rules first ask about the whole context, then ask about individual candidates. A review therefore makes multiple sequential provider requests; oversized question sets are split further with the complete state repeated. Syntax candidates locate evidence; they do not decide whether a guideline is violated. Dynamic test generation, unresolved requires, omitted files and unsupported shared examples produce coverage gaps. This is a constrained Ruby demo, not a complete Ruby program analysis.
 
 ## Qualification sequence
 
 1. Inspect development diffs and label rationales. Review holdout labels without using them to tune prompts. Resolve ambiguity from the guideline and feature contract. Set `labels_reviewed` to `true` in the manifest only after this review. Development runs may proceed with provisional labels, but the report preserves that status and cannot establish agreed review quality.
 2. Provide `TYPESAFE_API_KEY` in the environment, or keep it in ignored `.env` and pass `--env-file .env`; the file is read only when named. Run development evaluation. Keep every failed report. Question wording and thresholds may change against development examples.
 3. Once development passes, freeze its exact inputs. The lock records model, rules, engine, context profile, dataset, Ruby and gem lockfile fingerprints.
-4. Run all eight held-out cases three times with fresh requests. Inspect raw results, unexpected findings, misses, abstentions, flips, probability ranges, cost and timing. All predetermined outcomes must pass before beginning GitHub integration.
+4. Run all eight held-out cases three times with fresh requests. Inspect raw results, unexpected findings, misses, abstentions, flips, probability ranges, cost and timing. All predetermined outcomes must pass before claiming qualified review behavior. The implemented GitHub App remains an experimental advisory pilot; its delivery tests do not satisfy this quality gate.
 5. If holdout results inform tuning, move those families into development and author new held-out families before claiming a new pass. Update the fixed demo split contract deliberately if the dataset grows.
 
 ```sh
@@ -50,7 +50,7 @@ Metrics include totals and counts per rule. Undefined precision/recall is `null`
 
 - Reliable detection across all four rules, qualified thresholds and reproducible held-out outcomes.
 - Actual GitHub installation, webhook lifecycle, comment locations and publication recovery.
-- The planned hosted worker's persistence and restart behavior. The current reservation ledger covers local sessions only.
+- Hosted persistence and recovery under real deployment failures. The implemented SQLite worker has offline recovery tests and a persistent budget ledger; those checks do not establish live operational reliability. See [App operations](github-app.md).
 
 ## Manual evaluation in GitHub Actions
 

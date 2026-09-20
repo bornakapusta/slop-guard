@@ -1,126 +1,124 @@
 # Slop Guard
 
-An experimental general-purpose code reviewer, implemented in Ruby, that asks Jev focused questions about code changes. Ruby selects evidence and decides which advisory findings to report.
+**Bring your engineering guidelines into every code review.**
 
-The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the CLI supports the supplied evaluation cases and committed changes in local Ruby/RSpec repositories.
+Slop Guard is a code-review bot that checks whether a change follows defined engineering guidelines. It looks for missing behavior tests, untested failure cases, mixed responsibilities, and unnecessary abstractions, then provides feedback on the relevant code.
 
-**Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). An experimental Ruby GitHub App service is also implemented, with inline review comments and one summary. It is not deployed or live-verified; use it only as an advisory pilot. See [GitHub App setup](docs/github-app.md).
+## Why use it?
 
-The four rules assess observable behavior tests, relevant failure-case tests, focused responsibilities, and justified abstractions. Read [the adopted guidelines](docs/guidelines.md) and [the implementation plan](docs/plans/2026-09-19-001-feat-slop-guard-reviewer-plan.md).
+**A passing build can still leave important review questions unanswered.** A test may run the changed code without checking the new behavior. A new class may add complexity without solving a current problem. These are easy to miss when a PR looks complete.
 
-## Demo: a new error case without a test
+Slop Guard checks changes against your engineering guidelines and brings those concerns into the review. Each finding points to the relevant code, explains which guideline is at risk, and suggests a correction.
 
-Use the [demo runbook](docs/demo-runbook.md) for setup, an offline walkthrough, and the commands for a fresh local or GitHub evaluation.
+## How is it different from an LLM review bot?
 
-A change to the sample log parser makes `add_visit(nil)` raise an error:
+An open-ended LLM reviewer reads a change and writes a review. Slop Guard follows a different division of work: **code identifies what to inspect, Jev judges it, and explicit rules decide what to report.**
+
+Slop Guard identifies candidate code and tests, then asks Jev focused questions such as **“Does this test assert the behavior the PR promises?”** Jev returns numeric judgments. Slop Guard combines those answers using configured thresholds and creates comments from predefined messages, tied to validated source locations. Uncertain answers or missing evidence are reported as inconclusive.
+
+This design supports three priorities:
+
+- **Speed:** Jev answers focused questions without generating review text, and related questions can be answered together.
+- **Cost:** Jev charges for input tokens with no output-token charge. Slop Guard builds the review comments itself.
+- **Consistency:** The same questions, thresholds, and reporting rules apply to each change. You can test those checks against known examples before changing them.
+
+Slop Guard currently makes multiple requests per review and has not benchmarked speed or cost against other bots. Consistent rules make the process repeatable; model judgments can still vary or be wrong.
+
+This follows the article's [“Code enumerates, Jev judges” approach](https://tjklug.com/posts/typesafe-jev-slopcheck/), using [Jev's structured decision model](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
+
+## Example: a passing test that misses the feature
+
+A payment API already supports cancellation. A PR adds a requirement: **record when the payment was cancelled**, so support can trace what happened.
 
 ```diff
- def add_visit(ip_address)
-+  raise ArgumentError, "IP is required" if ip_address.nil?
-+
-   @visits_count += 1
+ class CancelPayment
+   def call(payment)
+     payment.state = 'cancelled'
++    payment.cancelled_at = Time.current
+     Command.save(payment)
+   end
+ end
 ```
 
-The PR promises this failure behavior, but the existing tests only exercise valid input. Slop Guard's G2 rule checks whether any supplied test calls the relevant production code and asserts the promised failure outcome.
-
-In three fresh development runs with experimental G2 thresholds (`high: 0.60`, `low: 0.20`), the reviewer reported this finding. The excerpt omits numeric readings and the other rules:
-
-```text
-G2: concern
-lib/path_tracker/page.rb:17
-The inspected tests do not assert this documented failure outcome.
-Exercise the relevant invalid input through production code and assert its documented outcome.
-```
-
-The corrected example adds the missing assertion:
+The new test runs the service and checks that it saves the payment:
 
 ```ruby
-RSpec.describe PathTracker::Page do
-  it 'rejects missing IP' do
-    expect { described_class.new('/home').add_visit(nil) }
-      .to raise_error(ArgumentError, 'IP is required')
+it 'records the cancellation time' do
+  allow(Command).to receive(:save)
+
+  CancelPayment.new.call(payment)
+
+  expect(Command).to have_received(:save).with(payment)
+end
+```
+
+**Delete the new line and the test still passes.** It checks that the same object was saved, but never checks its cancellation time. The feature is unprotected even though the test runs the real service.
+
+Slop Guard checks two things: does the test run the real cancellation code, and does it assert the required timestamp? Here, the test runs the code but never checks the timestamp—the combination its rules are designed to flag.
+
+An illustrative finding using the bot's configured wording:
+
+> The inspected tests do not demonstrate this changed behavior.
+>
+> Add a production-path assertion of the expected result, or identify the existing test that provides it.
+
+The test should check the values passed to persistence. With a payment whose `cancelled_at` starts as `nil`:
+
+```ruby
+it 'records the cancellation time' do
+  freeze_time do
+    allow(Command).to receive(:save)
+
+    CancelPayment.new.call(payment)
+
+    expect(Command).to have_received(:save).with(
+      have_attributes(state: 'cancelled', cancelled_at: Time.current)
+    )
   end
 end
 ```
 
-G2 returned `no_concern` for the corrected example in all three runs. That result concerns the inspected evidence; Slop Guard does not execute the project's tests.
+Now removing the timestamp assignment makes the test fail.
 
-After local setup, inspect both saved examples without an API call:
+## Example: an abstraction without a present need
 
-```sh
-bundle exec ruby bin/review g2-violation --inspect
-bundle exec ruby bin/review g2-fixed --inspect
+Another PR proposes a gateway to “support more cancellation flows later.” The application already has a payment adapter that isolates the external provider:
+
+```diff
+ class CancelPayment
+   def call(payment)
+-    Adapter.payments.cancel(payment_id: payment.external_id)
++    PaymentCancellationGateway.new.cancel(payment)
+   end
+ end
++
++class PaymentCancellationGateway
++  def cancel(payment)
++    Adapter.payments.cancel(payment_id: payment.external_id)
++  end
++end
 ```
 
-These commands print the review evidence. To request a fresh judgment, use `--live` as shown below. The checked-in thresholds are still `high: 0.85`, `low: 0.20`; they produced `inconclusive` for this violation in the first evaluation, so the live command is not guaranteed to reproduce the experimental finding. See the [violation patch](eval/development/g2-violation/change.diff), [corrected patch](eval/development/g2-fixed/change.diff), and [calibration report](docs/verification/threshold-calibration.md).
+The new class forwards the same call. In this example, it has one caller, adds no validation or error handling, and serves no current requirement beyond the existing adapter. A reader now has to open another class to understand the same operation.
 
-## Run locally
+Slop Guard's abstraction check asks whether the extra layer has a demonstrated purpose, including dependency isolation and framework requirements. An illustrative finding:
 
-Use Ruby 3.4 (this checkout was tested with 3.4.5). Activate the version in `.ruby-version` with your Ruby manager first; `ruby -v` and `bundle exec ruby -v` must agree. Update to a maintained patched 3.4 release before deployment.
+> The new abstraction has no demonstrated purpose in the supplied context.
+>
+> Use the existing concrete component, or explain and demonstrate the present constraint served by this layer.
 
-```sh
-bundle install
-bundle exec rspec
-bundle exec rubocop --except Metrics --cache false
-bundle exec ruby bin/evaluate --validate
-bundle exec ruby bin/review g2-violation --inspect
-```
+The suggested simplification is to keep calling `Adapter.payments` directly. The adapter itself has a purpose: separating the service from the payment provider. A second layer may become useful when there is actual shared behavior or another concrete constraint.
 
-Validation and inspection make no model requests. The supplied 24 cases include 16 development examples and 8 held-out examples. Every case has a readable `change.diff`, an `input.json` structured patch, and separate expected `labels.json`.
+Both examples are simplified API scenarios illustrating the checks, not recorded Jev results.
 
-## Review another local repository
+## Get started
 
-Run from the Slop Guard checkout with Ruby 3.4 activated. The target must be a local Git repository with the base and head commits available. This reviews committed changes from their merge base; staged, unstaged and untracked files are excluded.
+- [Try a local review](docs/getting-started.md)
+- [Review your own repository](docs/local-repository-review.md)
+- [Install and host the GitHub App](docs/github-app.md)
 
-Write a change description with `## Expected behavior` and `## Failure cases` sections. Use [the example](docs/examples/review-expectations.md) as a starting point and replace its scenarios with the behavior your change promises.
+For details, see the [review guidelines](docs/guidelines.md), [evaluation guide](docs/evaluation.md), [benchmarks](docs/evaluation-benchmark.md), and [CI documentation](docs/ci.md).
 
-```sh
-# Offline: inspect exactly which committed source and tests will be sent.
-bundle exec ruby bin/review --repo /path/to/project \
-  --base main --head HEAD --expectations /path/to/change.md --inspect
+**Status:** experimental and advisory. Current support is limited to small Ruby/RSpec projects. Review accuracy and live GitHub delivery still need validation; see the [recorded evaluation results](docs/verification/threshold-calibration.md).
 
-# Paid: send that evidence to Jev using Slop Guard's local API key.
-bundle exec ruby bin/review --repo /path/to/project \
-  --base main --head HEAD --expectations /path/to/change.md --live
-```
-
-Repository mode defaults to the `ruby` profile (`config/repository.yml`, rules in `config/rules/ruby/`), whose G3 asks general responsibility questions; saved cases default to the `demo` profile (`config/demo.yml`, rules in `config/rules/`), which keeps the original log-parser questions. Choose explicitly with `--profile ruby|demo`, or point `--rules-dir` at another trusted directory. `--show-rules` prints the resolved profile and definitions. Reports record the base, head, merge-base and rule revision. No GitHub token, webhook server or installation in the target repo is needed.
-
-Only the changed files, the test files and whatever they reach through `require_relative` are sent in full; other permitted files are listed by path. `--inspect` reports `state_bytes` and whether the evidence fits the live request limit.
-
-This is a bounded Ruby/RSpec reviewer, not a whole-repository audit. Source selection, custom rules, size limits and offline test behavior are explained in [local repository reviews](docs/local-repository-review.md).
-
-## Review one case with Jev
-
-Set `TYPESAFE_API_KEY` in the environment, or copy `.env.example` to ignored `.env` and name it with `--env-file .env` (or `SLOP_GUARD_ENV_FILE=.env`). A credential file is never read unless it is named, so an unset variable fails instead of silently using a stored key; a set variable always wins over the file. Do not put credentials in a patch or paste them into a PR.
-
-```sh
-bundle exec ruby bin/review g2-violation --live --env-file .env
-bundle exec ruby bin/review g2-violation --live --json --env-file .env
-```
-
-This makes paid requests. Requests use `jev-1.13.0`, bounded contexts, at most 20 attempts and a 120-second review deadline. Cost reservations cap each review at $0.10 and an evaluation session at $2 using the documented input price. Actual billing may differ; unknown usage retains its reservation. Reports are saved under ignored `tmp/`.
-
-A concern does not fail the single-review command: exit 0 means the review completed, not that the code is correct. Exit 1 means the review completed with incomplete evidence (the report is still written), exit 2 means invalid input or usage, and exit 3 means a provider, budget or deadline failure. With `--json`, errors are printed as a JSON object. `--output DIR` (or `SLOP_GUARD_OUTPUT_DIR`) chooses where reports and ledgers go. Evaluation exits 1 for mismatched expected outcomes and 2 for setup errors. The report layout and exit codes are documented in [the report schema](docs/report-schema.md). Keep `.env` readable only by you (`chmod 600 .env`).
-
-## Evaluate quality before GitHub
-
-Follow [the evaluation guide](docs/evaluation.md). The authored labels remain provisional until reviewed; development runs can help assess the questions, while qualification requires agreed outcomes. Tune only development cases, freeze the versions after a passing development run, then evaluate the held-out set three times. A passing mock response does not qualify a rule.
-
-The [GitHub App service](docs/github-app.md) receives signed webhooks, queues work in SQLite, and publishes inline findings plus one updated summary. One Docker container runs the Ruby web server and worker. The reviewer remains separate from the projects it reviews; no reviewed application code runs inside it. Offline delivery tests do not qualify model accuracy.
-
-## CI and code quality
-
-Pull requests and pushes to `main` run RSpec, non-Metrics RuboCop, dependency auditing and offline fixture validation. Coverage and complexity are informational. These checks test the reviewer implementation; they do not establish review accuracy or feature-use-case coverage.
-
-A separate **Development evaluation** workflow runs Jev manually from `main`, with three development repetitions and the existing $2 reservation guard per run. Setup, local commands, reports and verification limits are in [the CI guide](docs/ci.md) and [the verification checkpoint](docs/verification/ci-checkpoint.md).
-
-## Evaluate accuracy and repeatability
-
-Analyze any saved evaluation without another API call:
-
-```sh
-bundle exec ruby bin/analyze-evaluation tmp/evaluations/RUN/report.json
-```
-
-The report separates label agreement, correct finding detection and repeat consistency, with latency and cost measurements for new runs. In the historical calibration run, G1 was 100% repeatable while detecting 0 of 3 repeated seeded violations. See the [benchmark guide](docs/evaluation-benchmark.md) for longer development runs, metric definitions and human label review.
+Inspired by TJ Klug's [slopcheck](https://tjklug.com/posts/typesafe-jev-slopcheck/) approach to combining focused model judgments with decisions made in code.
