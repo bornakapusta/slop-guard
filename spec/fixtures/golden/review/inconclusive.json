@@ -1,0 +1,142 @@
+{
+  "report_version": 1,
+  "snapshot": "76defbd8de0c63f49c89caa8b4be7c305242e9443203a277f3cabba4d1c7df11",
+  "version": "0.1.0",
+  "model": "stub-model",
+  "rules_revision": "89dea7e917d39f79a861e1b39606e8c77109bc3993e6c9328d3cb5fe67ce7e6a",
+  "status": "incomplete",
+  "rules": {
+    "G1": {
+      "outcome": "inconclusive",
+      "findings": [],
+      "gaps": [
+        "Conflicting or uncertain coverage evidence: behavior"
+      ],
+      "readings": [
+        {
+          "behavior/clear": 0.95,
+          "behavior/applicable": 0.95,
+          "behavior/missing": 0.95,
+          "behavior/exercise_21ea66ff1c856e33": 0.95,
+          "behavior/assert_21ea66ff1c856e33": 0.95,
+          "behavior/exercise_cd5817f78612d1c0": 0.95,
+          "behavior/assert_cd5817f78612d1c0": 0.95,
+          "behavior/exercise_c7df82b4a45bff63": 0.95,
+          "behavior/assert_c7df82b4a45bff63": 0.95,
+          "behavior/exercise_37ffcf4cbfa55045": 0.95,
+          "behavior/assert_37ffcf4cbfa55045": 0.95,
+          "behavior/exercise_56408cfbc74ae9a3": 0.95,
+          "behavior/assert_56408cfbc74ae9a3": 0.95,
+          "behavior/exercise_14519cee56f6f643": 0.95,
+          "behavior/assert_14519cee56f6f643": 0.95,
+          "behavior/exercise_d2761e46b9627a77": 0.95,
+          "behavior/assert_d2761e46b9627a77": 0.95,
+          "behavior/exercise_5e628ed07af609ee": 0.95,
+          "behavior/assert_5e628ed07af609ee": 0.95,
+          "behavior/exercise_c09814986c302d06": 0.95,
+          "behavior/assert_c09814986c302d06": 0.95,
+          "behavior/exercise_3f44e8d9cc53db3a": 0.95,
+          "behavior/assert_3f44e8d9cc53db3a": 0.95,
+          "behavior/exercise_57b2cdf2b75ece9c": 0.95,
+          "behavior/assert_57b2cdf2b75ece9c": 0.95,
+          "behavior/exercise_9cf686bb967e92e6": 0.95,
+          "behavior/assert_9cf686bb967e92e6": 0.95,
+          "behavior/exercise_3bd1871c324a7466": 0.95,
+          "behavior/assert_3bd1871c324a7466": 0.95,
+          "behavior/exercise_fd71d20b7412479f": 0.95,
+          "behavior/assert_fd71d20b7412479f": 0.95,
+          "behavior/exercise_967b11a1c70886ea": 0.95,
+          "behavior/assert_967b11a1c70886ea": 0.95,
+          "behavior/exercise_95c59cec48717c68": 0.95,
+          "behavior/assert_95c59cec48717c68": 0.95,
+          "behavior/exercise_c54d9a35cf809f2c": 0.95,
+          "behavior/assert_c54d9a35cf809f2c": 0.95,
+          "behavior/exercise_de37397d6bcb2d08": 0.95,
+          "behavior/assert_de37397d6bcb2d08": 0.95,
+          "behavior/exercise_83f0d0ed6746fe4c": 0.95,
+          "behavior/assert_83f0d0ed6746fe4c": 0.95,
+          "behavior/exercise_1859cb3c8adf7295": 0.95,
+          "behavior/assert_1859cb3c8adf7295": 0.95,
+          "behavior/exercise_ae28e4c7ee9d588d": 0.95,
+          "behavior/assert_ae28e4c7ee9d588d": 0.95,
+          "behavior/exercise_393fd49a8083664c": 0.95,
+          "behavior/assert_393fd49a8083664c": 0.95,
+          "behavior/exercise_fe581e5ac7419866": 0.95,
+          "behavior/assert_fe581e5ac7419866": 0.95,
+          "behavior/exercise_fde7146806d4c7d0": 0.95,
+          "behavior/assert_fde7146806d4c7d0": 0.95,
+          "behavior/exercise_fcf5dc02bdb64746": 0.95,
+          "behavior/assert_fcf5dc02bdb64746": 0.95,
+          "behavior/exercise_25f16e2f081e250b": 0.95,
+          "behavior/assert_25f16e2f081e250b": 0.95,
+          "behavior/exercise_2428ae94e8620cf4": 0.95,
+          "behavior/assert_2428ae94e8620cf4": 0.95,
+          "behavior/exercise_36cfc7f493410633": 0.95,
+          "behavior/assert_36cfc7f493410633": 0.95,
+          "behavior/exercise_9ed608501a55fcf2": 0.95,
+          "behavior/assert_9ed608501a55fcf2": 0.95,
+          "behavior/exercise_64f0de85764cbfe9": 0.95,
+          "behavior/assert_64f0de85764cbfe9": 0.95,
+          "behavior/exercise_009ff3c69de9adaa": 0.95,
+          "behavior/assert_009ff3c69de9adaa": 0.95,
+          "behavior/exercise_1b58313391244b85": 0.95,
+          "behavior/assert_1b58313391244b85": 0.95,
+          "behavior/exercise_ab50e35b846a4b7d": 0.95,
+          "behavior/assert_ab50e35b846a4b7d": 0.95,
+          "behavior/exercise_1e728e1876d8f99f": 0.95,
+          "behavior/assert_1e728e1876d8f99f": 0.95,
+          "behavior/exercise_fac1cac59392d248": 0.95,
+          "behavior/assert_fac1cac59392d248": 0.95,
+          "behavior/exercise_886011b50f0ea86b": 0.95,
+          "behavior/assert_886011b50f0ea86b": 0.95
+        }
+      ],
+      "question_fingerprints": [
+        "53564826be677568ea010b12238d2c93584e59d86fda53b3159ab398c89a7715"
+      ]
+    },
+    "G2": {
+      "outcome": "not_applicable",
+      "findings": [],
+      "gaps": [],
+      "readings": [
+        {
+          "applicable": 0.05
+        }
+      ],
+      "question_fingerprints": [
+        "570482d9f56662927c01388dd73c26fd8c1ce46f9e1e779533949b6bc6c2625c"
+      ]
+    },
+    "G3": {
+      "outcome": "not_applicable",
+      "findings": [],
+      "gaps": [],
+      "readings": [
+        {
+          "applicable": 0.05,
+          "concern": 0.05
+        }
+      ],
+      "question_fingerprints": [
+        "302ac06c4e0c29fa2143d9621be8aadbe9c3abd5ab9923ea037ec50b5ed62fcb"
+      ]
+    },
+    "G4": {
+      "outcome": "not_applicable",
+      "findings": [],
+      "gaps": [],
+      "readings": [
+        {
+          "applicable": 0.05,
+          "concern": 0.05
+        }
+      ],
+      "question_fingerprints": [
+        "efc035521965c8008b1d358753fa908e7ef47b3f94fbf9c69f66405ba7a24274"
+      ]
+    }
+  },
+  "skipped_paths": [],
+  "source": {}
+}

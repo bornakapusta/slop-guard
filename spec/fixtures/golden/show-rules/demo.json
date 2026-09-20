@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "name": "demo",
+    "file_patterns": [
+      "lib/**/*.rb",
+      "bin/**/*.rb",
+      "spec/**/*.rb",
+      "spec/fixtures/*.log",
+      "spec/fixtures/*.txt",
+      ".rspec"
+    ],
+    "rules_dir": "config/rules"
+  },
+  "rules_revision": "89dea7e917d39f79a861e1b39606e8c77109bc3993e6c9328d3cb5fe67ce7e6a",
+  "rules_files": [
+    "config/rules/g1.yml",
+    "config/rules/g2.yml",
+    "config/rules/g3.yml",
+    "config/rules/g4.yml"
+  ],
+  "definitions": {
+    "G1": {
+      "name": "Observable behavior tests",
+      "version": 1,
+      "kind": "tests",
+      "scenarios": "behaviors",
+      "high": 0.85,
+      "low": 0.2,
+      "applicable": "Does this PR change observable behavior that requires an identified test scenario?",
+      "missing": "Does the complete supplied test corpus lack a test that exercises production behavior and asserts this scenario's promised result? Existing tests count; a configured mock value alone does not.",
+      "message": "The inspected tests do not demonstrate this changed behavior.",
+      "correction": "Add a production-path assertion of the expected result, or identify the existing test that provides it."
+    },
+    "G2": {
+      "name": "Relevant failure cases",
+      "version": 1,
+      "kind": "tests",
+      "scenarios": "failures",
+      "high": 0.85,
+      "low": 0.2,
+      "applicable": "Does this PR change input validation or an established error contract with a relevant failure scenario?",
+      "missing": "Does the complete supplied test corpus lack an assertion for this documented failure outcome? Do not demand unrelated hypothetical failures or reject documented tolerant behavior.",
+      "message": "The inspected tests do not assert this documented failure outcome.",
+      "correction": "Exercise the relevant invalid input through production code and assert its documented outcome."
+    },
+    "G3": {
+      "name": "Focused responsibilities",
+      "version": 1,
+      "kind": "design",
+      "candidate_kind": "method",
+      "high": 0.85,
+      "low": 0.2,
+      "applicable": "Does this PR change production methods involved in parsing, visit counting, or result presentation?",
+      "global": "Does a change mix parsing, counting, or presentation responsibilities with a concrete adverse consequence, beyond legitimate CLI orchestration?",
+      "candidate": {
+        "parsing_counting": "Does the changed candidate implement both log parsing and visit accounting beyond calling their public interfaces?",
+        "parsing_presentation": "Does the changed candidate implement both log parsing and output formatting beyond calling their public interfaces?",
+        "counting_presentation": "Does the changed candidate implement both visit accounting and output formatting beyond calling their public interfaces?",
+        "consequence": "Does the change concretely couple an existing computation to an unrelated output format or side effect?",
+        "justified": "Is this combination justified by the existing component boundary or a CLI orchestration role?"
+      },
+      "positive": [
+        "consequence"
+      ],
+      "any_positive": [
+        "parsing_counting",
+        "parsing_presentation",
+        "counting_presentation"
+      ],
+      "negative": [
+        "justified"
+      ],
+      "message": "The changed method couples computation and presentation responsibilities.",
+      "correction": "Keep computation in its existing component and place formatting in the presenter; do not add a class without a demonstrated need."
+    },
+    "G4": {
+      "name": "Justified abstractions",
+      "version": 1,
+      "kind": "design",
+      "candidate_kind": "class",
+      "high": 0.85,
+      "low": 0.2,
+      "applicable": "Does the PR introduce or expand a factory, strategy, registry, interface, or wrapper layer?",
+      "global": "Does a newly introduced abstraction have no demonstrated present purpose after considering all callers, testing isolation, framework requirements and explicit project constraints?",
+      "candidate": {
+        "abstraction": "Is this candidate part of a newly introduced indirection or abstraction layer rather than a concrete component?",
+        "consumers": "Does the supplied source demonstrate multiple current production implementations or independent production consumers with distinct needs for this layer? Repeated test invocations do not establish that variation.",
+        "constraint": "Does this layer serve a stated present constraint, including dependency injection, isolation or a framework contract?"
+      },
+      "positive": [
+        "abstraction"
+      ],
+      "negative": [
+        "consumers",
+        "constraint"
+      ],
+      "message": "The new abstraction has no demonstrated purpose in the supplied context.",
+      "correction": "Use the existing concrete component, or explain and demonstrate the present constraint served by this layer."
+    }
+  }
+}
