@@ -30,6 +30,8 @@ module SlopGuard
       end
 
       def inline(findings, changed)
+        return 'No inline comments: this review produced no actionable findings.' if findings.empty?
+
         marker = "<!-- slop-guard:review:#{@run_id} -->"
         path = "#{@client.repo_path}/pulls/#{@pr}/reviews"
         matches = @client.list(path).select { |review| owned?(review) && review['body'].to_s.include?(marker) }
@@ -47,6 +49,7 @@ module SlopGuard
         end
 
         existing = @client.list("#{@client.repo_path}/pulls/#{@pr}/comments").select { |comment| owned?(comment) }
+        updated = 0
         comments = findings.filter_map do |finding|
           anchor = finding.fetch('anchor')
           next unless changed.fetch(anchor['path'], []).include?(anchor['line'])
@@ -62,12 +65,17 @@ module SlopGuard
           if previous
             @current.call
             @client.patch("#{@client.repo_path}/pulls/comments/#{previous.fetch('id')}", body: body)
+            updated += 1
             next
           end
           { path: anchor['path'], line: anchor['line'], side: 'RIGHT', body: body }
         end
         comments = comments.uniq { |comment| comment[:body] }.first(MAX_INLINE)
-        return 'Findings are in the summary or existing inline threads.' if comments.empty?
+        if comments.empty?
+          return "#{updated} existing inline comment(s) updated. All findings are listed below." if updated.positive?
+
+          return 'No findings could be placed on changed lines. Review their code references below.'
+        end
 
         @current.call
         @store.intend(key)
@@ -83,14 +91,20 @@ module SlopGuard
           @store.clear_intent(key) if definitive_rejection?(e)
           raise
         end
-        "Up to #{MAX_INLINE} inline findings delivered; all findings are listed below."
+        "#{comments.size} new inline comment(s) posted; #{updated} existing comment(s) updated. " \
+          'All findings are listed below.'
       end
 
       def inline_body(finding, marker)
-        [marker, "**Slop Guard · #{Report.escape(finding['rule'])}** (advisory)", '',
-         Report.escape(finding['message']), '', Report.escape(finding['correction']), '',
-         "Context: #{Report.escape(finding['scenario'] || finding['topic'])}", '',
+        [marker, "**Slop Guard · #{Report.escape(Report.check_name(finding['rule']))}** (advisory)", '',
+         "**Code:** #{Report.location(finding.fetch('anchor'), source_url: source_url)}", '',
+         "**Context:** #{Report.escape(finding['scenario'] || finding['topic'])}", '',
+         Report.escape(finding['message']), '', "**Suggested change:** #{Report.escape(finding['correction'])}", '',
          "Last reviewed commit: `#{@head}`. Test execution is not established."].join("\n")
+      end
+
+      def source_url
+        "https://github.com/#{@client.repo_path.delete_prefix('/repos/')}/blob/#{@head}"
       end
 
       def summary(report, inline_status)
@@ -124,7 +138,8 @@ module SlopGuard
 
       def summary_body(report, inline_status)
         body = "#{SUMMARY_MARKER}\n<!-- slop-guard:run:#{@run_id} -->\n" \
-               "Reviewed commit: `#{@head}`\n\n#{inline_status}\n\n#{Report.markdown(report)}"
+               "#{Report.markdown(report, source_url: source_url)}\n\n" \
+               "#{inline_status}\n\nReviewed commit: `#{@head}`"
         if report['status'] != 'complete'
           previous = @store.previous_complete(@pr, excluding: @run_id)
           if previous
