@@ -56,6 +56,19 @@ RSpec.describe SlopGuard::Evaluator do
     expect(report.dig('rules', 'G3', 'outcome')).to eq('inconclusive')
   end
 
+  it 'does not spend reservations on later rules after a provider failure' do
+    asks = 0
+    client = stub_client do |_state, _questions|
+      asks += 1
+      raise SlopGuard::ProviderError, 'Jev returned HTTP 401'
+    end
+    report = described_class.new(client: client).call(snapshot)
+    expect(asks).to eq(1)
+    expect(report['status']).to eq('failed')
+    expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['inconclusive'])
+    expect(report.dig('rules', 'G4', 'gaps').first).to include('Not attempted', 'HTTP 401')
+  end
+
   it 'skips an empty diff without calling Jev' do
     input = dataset.input('g1-fixed')
     input['before'] = input['files']

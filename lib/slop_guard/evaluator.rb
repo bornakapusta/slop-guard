@@ -11,10 +11,18 @@ module SlopGuard
     end
 
     # Safe to call repeatedly and concurrently: every review keeps its state in its own RuleRun objects.
+    # After a provider or budget failure the remaining rules are not attempted: they would spend reservations on a
+    # provider that just failed, and the review is already `failed`.
     def call(snapshot)
+      failure = nil
       results = rules.definitions.to_h do |id, rule|
-        run = RuleRun.new(id: id, rule: rule, snapshot: snapshot, rules: rules, client: client)
-        [id, run.call]
+        if failure
+          [id, RuleRun.skipped(failure)]
+        else
+          result = RuleRun.new(id: id, rule: rule, snapshot: snapshot, rules: rules, client: client).call
+          failure = result['error']
+          [id, result]
+        end
       end
       errors = results.values.any? { |value| value['error'] }
       gaps = results.values.any? { |value| !value['gaps'].empty? }
@@ -32,6 +40,12 @@ module SlopGuard
 
     # One rule applied to one snapshot. Holds the per-rule result so Evaluator itself stays stateless.
     class RuleRun
+      def self.skipped(reason)
+        message = "Not attempted after an earlier provider failure: #{reason}"
+        { 'outcome' => 'inconclusive', 'findings' => [], 'gaps' => [message], 'readings' => [],
+          'question_fingerprints' => [], 'error' => message }
+      end
+
       def initialize(id:, rule:, snapshot:, rules:, client:)
         @id = id
         @rule = rule

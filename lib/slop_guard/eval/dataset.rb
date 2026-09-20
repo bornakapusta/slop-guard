@@ -88,19 +88,25 @@ module SlopGuard
 
         data = input(entry.fetch('id'))
         label = labels(entry.fetch('id'))
-        raise InvalidInput, 'Every rule needs a label' unless label.fetch('outcomes').keys.sort == %w[G1 G2 G3 G4]
+        unless label.is_a?(Hash) && label['outcomes'].is_a?(Hash) && label['findings'].is_a?(Array)
+          raise InvalidInput, 'Labels must map outcomes and list findings'
+        end
+        raise InvalidInput, 'Every rule needs a label' unless label.fetch('outcomes').keys.sort == Rules::IDS
         raise InvalidInput, 'Unknown expected outcome' unless label['outcomes'].values.all? do |value|
           %w[concern no_concern not_applicable inconclusive].include?(value)
         end
         raise InvalidInput, 'Label rationale required' if label.fetch('rationale').strip.empty?
 
         label.fetch('findings').each do |finding|
+          raise InvalidInput, 'Each finding needs anchors' unless finding.is_a?(Hash) && finding['anchors'].is_a?(Array)
           unless label['outcomes'][finding.fetch('rule')] == 'concern'
             raise InvalidInput,
                   'Finding rule must have concern outcome'
           end
 
           finding.fetch('anchors').each do |anchor|
+            raise InvalidInput, 'Invalid expected anchor' unless anchor.is_a?(Hash)
+
             body = data.fetch('files')[anchor.fetch('path')]
             line = anchor.fetch('line')
             valid = body && line.is_a?(Integer) && line.between?(1, body.lines.size)
@@ -109,7 +115,7 @@ module SlopGuard
         end
       end
       true
-    rescue KeyError, NoMethodError
+    rescue KeyError, TypeError
       raise InvalidInput, 'Invalid dataset manifest or labels'
     end
 

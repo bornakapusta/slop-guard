@@ -7,39 +7,57 @@ module SlopGuard
   class JevClient
     MODEL = 'jev-1.13.0'
     ENDPOINT = URI('https://api.typesafe.ai/v1/systemone').freeze
+    USD_PER_INPUT_TOKEN = 0.042 / 1_000_000
+    MAX_STATE_BYTES = 28 * 1024
+    MAX_REQUEST_BYTES = 56 * 1024
+    MAX_RESPONSE_BYTES = 128 * 1024
     RETRYABLE = [429, 500, 502, 503, 504, 529].freeze
+    OPEN_TIMEOUT = 5
+    WRITE_TIMEOUT = 10
+    READ_TIMEOUT = 30
+    MAX_BACKOFF = 30.0
+
     attr_reader :budget
 
-    def initialize(api_key:, budget:, sleeper: ->(seconds) { sleep(seconds) })
+    # `http` is an optional started-or-startable Net::HTTP-like connection, injected by specs.
+    def initialize(api_key:, budget:, sleeper: ->(seconds) { sleep(seconds) }, random: Random.new, http: nil)
       raise ProviderError, 'TYPESAFE_API_KEY is not configured' if api_key.to_s.strip.empty?
 
       @api_key = api_key
       @budget = budget
       @sleeper = sleeper
+      @random = random
+      @http = http
     end
 
     def model
       MODEL
     end
 
+    # Splits questions into requests under MAX_REQUEST_BYTES. The state is encoded once; the envelope size is
+    # tracked with a running byte count rather than re-serialising every accumulated question.
     def ask(state, questions)
-      state_bytes = JSON.generate(state).bytesize
+      encoded_state = JSON.generate(state)
+      questions.each_value do |question|
+        next if encoded_state.bytesize + JSON.generate(question).bytesize <= MAX_STATE_BYTES
+
+        raise LimitExceeded, 'Model context byte limit exceeded; evidence was not truncated'
+      end
+      envelope = JSON.generate('model' => MODEL, 'state' => state, 'questions' => {}).bytesize
       batches = []
       current = {}
+      size = envelope
       questions.each do |id, question|
-        if state_bytes + JSON.generate(question).bytesize > 28 * 1024
-          raise LimitExceeded, 'Model context byte limit exceeded; evidence was not truncated'
-        end
-
-        combined = current.merge(id => question)
-        if JSON.generate('model' => MODEL, 'state' => state, 'questions' => combined).bytesize > 56 * 1024
+        entry = JSON.generate(id => question).bytesize - 1 # braces become one separating comma
+        if size + entry > MAX_REQUEST_BYTES
           raise LimitExceeded, 'A question cannot fit the request byte limit' if current.empty?
 
           batches << current
-          current = { id => question }
-        else
-          current = combined
+          current = {}
+          size = envelope
         end
+        current[id] = question
+        size += entry
       end
       batches << current unless current.empty?
       batches.each_with_object({}) { |batch, answers| answers.merge!(ask_batch(state, batch)) }
@@ -49,16 +67,21 @@ module SlopGuard
 
     def ask_batch(state, questions)
       encoded = JSON.generate('model' => MODEL, 'state' => state, 'questions' => questions)
+      raise LimitExceeded, 'A question cannot fit the request byte limit' if encoded.bytesize > MAX_REQUEST_BYTES
+
+      attempt = 0
       loop do
         budget.reserve!
         begin
           response = post(encoded)
         rescue Timeout::Error, IOError, SystemCallError, OpenSSL::SSL::SSLError
+          close_connection
           raise ProviderError, 'Jev transport failed; request usage is unknown'
         end
         code = response.code.to_i
         if RETRYABLE.include?(code)
-          wait = retry_delay(response['Retry-After'])
+          attempt += 1
+          wait = retry_delay(response['Retry-After'], attempt)
           raise LimitExceeded, 'Retry would exceed review deadline' if wait >= budget.remaining
 
           @sleeper.call(wait)
@@ -75,66 +98,96 @@ module SlopGuard
       request['Authorization'] = "Bearer #{@api_key}"
       request['Content-Type'] = 'application/json'
       request.body = body
-      http = Net::HTTP.new(ENDPOINT.host, ENDPOINT.port)
-      http.use_ssl = true
-      http.open_timeout = [5, budget.remaining].min
-      http.read_timeout = [30, budget.remaining].min
-      http.write_timeout = [10, budget.remaining].min
-      http.max_retries = 0
+      http = connection
+      http.write_timeout = clamp(WRITE_TIMEOUT)
+      http.read_timeout = clamp(READ_TIMEOUT)
       response = nil
-      Timeout.timeout(budget.remaining, LimitExceeded, 'Review deadline exceeded') do
-        http.request(request) do |incoming|
-          response = incoming
-          data = +''
-          incoming.read_body do |chunk|
-            data << chunk
-            raise ProviderError, 'Jev response exceeds 128 KiB' if data.bytesize > 131_072
-            raise LimitExceeded, 'Review deadline exceeded' unless budget.remaining.positive?
-          end
-          incoming.body = data
-        end
+      http.request(request) do |incoming|
+        response = incoming
+        read_body(incoming)
       end
       response
+    rescue ProviderError, LimitExceeded
+      # A body abandoned mid-stream leaves the socket unusable for the next request.
+      close_connection
+      raise
     end
 
+    def read_body(incoming)
+      data = +''
+      incoming.read_body do |chunk|
+        data << chunk
+        raise ProviderError, 'Jev response exceeds 128 KiB' if data.bytesize > MAX_RESPONSE_BYTES
+        raise LimitExceeded, 'Review deadline exceeded' unless budget.remaining.positive?
+      end
+      incoming.body = data
+    end
+
+    def connection
+      @http ||= Net::HTTP.new(ENDPOINT.host, ENDPOINT.port).tap do |http|
+        http.use_ssl = true
+        http.max_retries = 0
+      end
+      unless @http.started?
+        @http.open_timeout = clamp(OPEN_TIMEOUT)
+        @http.start
+      end
+      @http
+    end
+
+    def close_connection
+      @http&.finish if @http&.started?
+    rescue IOError, SystemCallError
+      nil
+    ensure
+      @http = nil
+    end
+
+    # Never below a millisecond: Net::HTTP treats a non-positive timeout as "wait forever".
+    def clamp(seconds)
+      [seconds, budget.remaining].min.clamp(0.001, seconds)
+    end
+
+    # Honours Retry-After exactly; otherwise exponential backoff with jitter so concurrent clients spread out.
+    def retry_delay(header, attempt)
+      unless header.nil?
+        seconds = Float(header, exception: false) || (Time.httpdate(header) - Time.now)
+        return [seconds, 0.0].max
+      end
+      base = [2.0**(attempt - 1), MAX_BACKOFF].min
+      base * (0.5 + (@random.rand * 0.5))
+    rescue ArgumentError
+      1.0
+    end
+
+    # Explicit shape checks, so a provider surprise is reported as a provider error rather than a NoMethodError.
     def validate(body, questions)
       data = JSON.parse(body)
-      raise ProviderError, 'Jev returned an unexpected model' unless data.fetch('model') == MODEL
+      raise ProviderError, 'Jev returned a malformed response' unless data.is_a?(Hash)
+      raise ProviderError, 'Jev returned an unexpected model' unless data['model'] == MODEL
 
-      answers = data.fetch('answers')
-      unless answers.is_a?(Hash) && answers.keys.sort == questions.keys.sort
-        raise ProviderError,
-              'Jev answer IDs do not match questions'
-      end
+      answers = data['answers']
+      usage = data['usage']
+      raise ProviderError, 'Jev returned a malformed response' unless answers.is_a?(Hash) && usage.is_a?(Hash)
+      raise ProviderError, 'Jev answer IDs do not match questions' unless answers.keys.sort == questions.keys.sort
 
-      values = answers.to_h do |id, answer|
-        value = answer.fetch('noul')
-        unless answer.fetch('type') == 'noul' && value.is_a?(Numeric) && value.finite? && value.between?(0, 1)
-          raise ProviderError, 'Jev returned an invalid probability'
-        end
+      values = answers.to_h { |id, answer| [id, probability(answer)] }
+      input, output = usage.values_at('input_tokens', 'output_tokens')
+      raise ProviderError, 'Jev returned invalid usage' unless [input, output].all? { |n| n.is_a?(Integer) && n >= 0 }
 
-        [id, value]
-      end
-      usage = data.fetch('usage')
-      %w[input_tokens output_tokens].each do |key|
-        raise ProviderError, 'Jev returned invalid usage' unless usage[key].is_a?(Integer) && usage[key] >= 0
-      end
-      budget.record_usage(usage['input_tokens'])
+      budget.record_usage(input)
       raise LimitExceeded, 'Review deadline exceeded' unless budget.remaining.positive?
 
       values
-    rescue JSON::ParserError, KeyError, NoMethodError, TypeError
+    rescue JSON::ParserError
       raise ProviderError, 'Jev returned a malformed response'
     end
 
-    def retry_delay(header)
-      return 1.0 if header.nil?
+    def probability(answer)
+      value = answer['noul'] if answer.is_a?(Hash) && answer['type'] == 'noul'
+      return value if value.is_a?(Numeric) && value.finite? && value.between?(0, 1)
 
-      seconds = Float(header, exception: false)
-      seconds ||= Time.httpdate(header) - Time.now
-      [seconds, 0.0].max
-    rescue ArgumentError
-      1.0
+      raise ProviderError, 'Jev returned an invalid probability'
     end
   end
 end

@@ -7,11 +7,13 @@ module SlopGuard
     RULES = %w[G1 G2 G3 G4].freeze
 
     def initialize(report, case_ids:)
+      raise InvalidInput, 'Malformed evaluation report' unless report.is_a?(Hash) && report['runs'].is_a?(Array)
+
       @report = report
       @case_ids = case_ids
       @runs = report.fetch('runs')
       validate!
-    rescue KeyError, TypeError, NoMethodError
+    rescue KeyError, TypeError
       raise InvalidInput, 'Malformed evaluation report'
     end
 
@@ -113,6 +115,8 @@ module SlopGuard
         runs.each do |run|
           run.fetch('report').fetch('rules').each do |id, rule|
             rule.fetch('readings').each_with_index do |values, batch|
+              # Reports written since 2026-09-20 always carry fingerprints. The committed docs/verification
+              # reports predate them and are still analysed offline, so batch position stands in for those.
               identity = if rule.key?('question_fingerprints')
                            rule.fetch('question_fingerprints').fetch(batch)
                          else
@@ -190,6 +194,11 @@ module SlopGuard
       end
 
       @runs.each do |run|
+        unless run.is_a?(Hash) && run['score'].is_a?(Hash) && run['report'].is_a?(Hash) &&
+               run['score']['by_rule'].is_a?(Hash) && run['report']['rules'].is_a?(Hash)
+          raise InvalidInput, 'Invalid review record'
+        end
+
         score = run.fetch('score')
         unless [true, false].include?(score.fetch('passed')) &&
                %w[complete incomplete failed].include?(run.fetch('report').fetch('status'))
@@ -198,7 +207,7 @@ module SlopGuard
 
         %w[actual_outcomes expected_outcomes].each do |key|
           outcomes = score.fetch(key)
-          unless outcomes.keys.sort == RULES && (outcomes.values - OUTCOMES).empty?
+          unless outcomes.is_a?(Hash) && outcomes.keys.sort == RULES && (outcomes.values - OUTCOMES).empty?
             raise InvalidInput, 'Invalid rule outcome inventory'
           end
         end
@@ -223,6 +232,10 @@ module SlopGuard
         end
 
         rules.each_value do |rule|
+          unless rule.is_a?(Hash) && rule['readings'].is_a?(Array) && rule['readings'].all?(Hash)
+            raise InvalidInput, 'Invalid readings'
+          end
+
           if rule.key?('question_fingerprints')
             fingerprints = rule.fetch('question_fingerprints')
             unless fingerprints.is_a?(Array) && fingerprints.size == rule.fetch('readings').size &&
