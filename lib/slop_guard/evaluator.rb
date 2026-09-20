@@ -144,9 +144,8 @@ module SlopGuard
         end
         covered = pairs.any? { |exercise, assertion| high?(exercise) && high?(assertion) }
         all_absent = pairs.all? { |exercise, assertion| low?(exercise) || low?(assertion) }
-        own = values.select do |key, _|
-          key.start_with?("#{sid}/")
-        end.transform_keys { |key| key.delete_prefix("#{sid}/") }
+        prefix = "#{sid}/"
+        own = values.filter_map { |key, value| [key.delete_prefix(prefix), value] if key.start_with?(prefix) }.to_h
         if high?(reading.call('missing')) && all_absent
           concern(sid, @snapshot.anchor(scenario: scenario['text']), own, scenario: scenario['text'])
         elsif low?(reading.call('missing')) && covered

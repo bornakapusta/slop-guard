@@ -18,7 +18,7 @@ module SlopGuard
 
     # Every `*.yml` directly inside the directory is a rule; its ID is the upper-cased file name.
     def initialize(directory = File.join(ROOT, 'config/rules'))
-      files = Dir[File.join(directory, '*.yml')].sort
+      files = Dir[File.join(directory, '*.yml')]
       raise InvalidInput, 'No rule files found' if files.empty?
 
       definitions = files.to_h do |path|

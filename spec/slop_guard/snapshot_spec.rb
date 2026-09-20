@@ -64,7 +64,7 @@ RSpec.describe SlopGuard::Snapshot do
     method = snapshot.changed_candidates('method').first
     short = method['name'].split('#').last
     expect(snapshot.anchor(scenario: "Calling #{short} returns the count")['line'])
-      .to eq(snapshot.changed[method['path']].find { |line| line.between?(method['line'], method['end_line']) })
+      .to eq(snapshot.changed[method['path']].grep(method['line']..method['end_line']).first)
     fallback = snapshot.anchor(scenario: 'Nothing here names a method')
     expect(fallback).to eq(snapshot.anchor)
   end
