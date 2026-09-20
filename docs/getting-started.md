@@ -25,16 +25,16 @@ The readable patches are [the violation](../eval/development/g2-violation/change
 
 ## Request a review from Jev
 
-Copy `.env.example` to `.env` and set `TYPESAFE_API_KEY` locally. The file is ignored by Git. The CLI reads Slop Guard's credentials, not an environment file in the reviewed project.
+Set `TYPESAFE_API_KEY` in the environment, or copy `.env.example` to ignored `.env` and pass `--env-file .env`. A credential file is never read unless it is named, and a set environment variable always wins. The CLI reads Slop Guard's credentials, not an environment file in the reviewed project.
 
 ```sh
-bundle exec ruby bin/review g2-violation --live
+bundle exec ruby bin/review g2-violation --live --env-file .env
 ```
 
 This sends the selected source, tests, and change description to Jev and incurs provider usage. It does not execute the target project's code or tests. Use `--json` for a machine-readable response:
 
 ```sh
-bundle exec ruby bin/review g2-violation --live --json
+bundle exec ruby bin/review g2-violation --live --json --env-file .env
 ```
 
 Each invocation makes a fresh review. It prints the report path on stderr and saves JSON under ignored `tmp/reviews/`.
@@ -54,7 +54,7 @@ The checked-in high/low thresholds are 0.85/0.20. The recorded G2 example used a
 
 A rule can retain a concern alongside unresolved evidence gaps. Read the gaps and overall status as well as the outcome. Reported model readings and decision thresholds are not review-accuracy percentages.
 
-For `bin/review`, exit 0 means the review completed, even if it found concerns. Exit 2 means incomplete evidence, invalid input, or an operational failure. For `--inspect`, exit 0 only means evidence was constructed; inspect the reported gaps. Evaluation commands use exit 1 for expected-outcome mismatches and exit 2 for setup errors.
+For `bin/review`, exit 0 means the review completed, even if it found concerns. Exit 1 means it completed with incomplete evidence and still wrote the report, exit 2 means invalid input or usage, and exit 3 means a provider, budget or deadline failure. For `--inspect`, exit 0 only means evidence was constructed; inspect the reported gaps. Evaluation commands use exit 1 for expected-outcome mismatches and exit 2 for setup errors. See [the report schema](report-schema.md) for the full table.
 
 ## Review your own repository
 
