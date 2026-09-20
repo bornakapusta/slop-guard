@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "006"
 tags: [code-review, quality]
@@ -66,4 +66,12 @@ Dataset#labels calls `entry.fetch('labels')` on nil when the id is unknown, rais
 - Finding surfaced by review agents and verified against source (file:line references above)
 - Drafted solution options
 
+
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- `Dataset#entry_for(id)` raises `InvalidInput 'Unknown case ID'`; `input` and `labels` both use it. Spec added in `spec/eval/fixture_contract_spec.rb`.
 

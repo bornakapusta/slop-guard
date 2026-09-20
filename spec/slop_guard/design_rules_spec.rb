@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe 'design decisions' do
-  let(:dataset) { SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')) }
+  let(:dataset) { fixture_dataset }
 
   def review(id, global:, candidate:)
-    client = Object.new
-    client.define_singleton_method(:ask) do |_state, questions|
+    client = stub_client do |_state, questions|
       if questions.key?('concern')
         global
       elsif questions.key?('abstraction') || questions.key?('counting_presentation')

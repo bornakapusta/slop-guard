@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "005"
 tags: [code-review, security, budget, agent-native]
@@ -87,4 +87,14 @@ bin/review and bin/evaluate call Dotenv.load in live mode whenever TYPESAFE_API_
 - Finding surfaced by review agents and verified against source (file:line references above)
 - Drafted solution options
 
+
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- Option 1 chosen. `bin/review` and `bin/evaluate` load a credential file only via `--env-file PATH` or `SLOP_GUARD_ENV_FILE`; a named file that does not exist raises `InvalidInput`. Environment always wins (Dotenv never overrides).
+- `cli_spec` runs `--live` with the variable unset and no file named and asserts exit 2 with the "not configured" message; missing `--env-file` errors for both bins.
+- README, docs/evaluation.md, docs/local-repository-review.md, docs/demo-runbook.md and .env.example document precedence and the flag.
 

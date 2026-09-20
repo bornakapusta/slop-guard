@@ -69,3 +69,13 @@ Report.escape neutralises Markdown punctuation but not `\n`, `\r` or ANSI escape
 - Drafted solution options
 
 
+
+### 2026-09-20 - Report half done
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- `SlopGuard.printable(text, keep_newlines:)` renders C0/C1 controls and U+2028/U+2029 as visible escapes. `Report.escape` applies it last; all three bins pass error messages through it keeping deliberate newlines.
+- Specs: a forged heading via gap text no longer produces a heading; a terminal message keeps its newline but escapes ESC.
+- Remaining (Phase 2): reject control characters in Git tree paths at `git_source.rb:55-58`.
+

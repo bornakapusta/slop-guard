@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe SlopGuard::EvalRunner do
-  let(:dataset) { SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')) }
+  let(:dataset) { fixture_dataset }
   let(:runner) { described_class.new(dataset: dataset) }
   let(:labels) { dataset.labels('g1-violation') }
 

@@ -13,6 +13,7 @@ end
 require 'tmpdir'
 require 'fileutils'
 require_relative '../lib/slop_guard'
+Dir[File.join(__dir__, 'support/**/*.rb')].each { |file| require file }
 RSpec.configure do |config|
   config.order = :random
   config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }

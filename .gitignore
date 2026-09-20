@@ -16,3 +16,6 @@ coverage/
 # Local workspace and macOS metadata
 .context/
 .DS_Store
+
+# Claude Code worktrees
+.claude/worktrees/

@@ -79,3 +79,13 @@ The suite is behaviour-named, never hits the provider, and git_source_spec prove
 - Drafted solution options
 
 
+
+### 2026-09-20 - 019a done
+
+**By:** Claude Code (Phase 1, branch `fix/review-phase-1`)
+
+**Actions:**
+- `spec/support/stub_client.rb`: `stub_client { |state, questions| }` returns an `instance_double(SlopGuard::JevClient)`; `fixture_dataset` helper. All `Object.new`/`define_singleton_method`/`double('client')` stubs and nine `Dataset.new(ROOT/eval)` sites migrated.
+- `spec/slop_guard/rules_spec.rb` added: default load and revision, repository-mode G3 substitution, custom directory, inverted/equal/out-of-range thresholds, unknown candidate refs, empty lists, optional `any_positive`, blank text, missing key/file, malformed YAML.
+- Remaining: 019b GitSource specs (Phase 2); 019c (Phase 5).
+

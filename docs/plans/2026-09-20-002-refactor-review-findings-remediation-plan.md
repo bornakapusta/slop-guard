@@ -25,14 +25,16 @@ Fingerprint map:
 
 ## Phase 1 — Confirmed crashes and escaping (no prompt change)
 
-- [ ] 002 `Budget#reserve!` rescue `JSON::ParserError`/`KeyError`/`TypeError` → `InvalidInput 'Request ledger is corrupt'`; spec asserts no request sent (stub client). `lib/slop_guard/budget.rb:36`
-- [ ] 006 `Dataset#entry_for(id)` shared by `input`/`labels`, raises `InvalidInput`. `lib/slop_guard/dataset.rb:40-70`
-- [ ] 028 (report half) `Report.escape`: escape `[\u0000-\u001F\u007F\u0080-\u009F  ]` BEFORE the U+200C insertion; write U+200C as `"@‌"` with comment. Sanitise `warn` in `bin/review:71`, `bin/evaluate:70`, summary script. `lib/slop_guard/report.rb:33-37`
-- [ ] 005 `.env` opt-in: load only with `--env-file PATH` or `SLOP_GUARD_ENV_FILE`; missing file errors; document precedence env > file. `bin/review:57`, `bin/evaluate:57`, README, `docs/evaluation.md:16`
-- [ ] 021 (evaluator/report/jev/dataset parts) nested ternary → if/elsif; rename design booleans + comment that `any_positive` stays for `config/rules/g3.yml:14`; `ENDPOINT.freeze`; `dataset.rb:54` if/else; drop duplicate key check `bin/review:59`. Defer candidates.rb split to 023.
-- [ ] 019a Write `spec/slop_guard/rules_spec.rb` now (pins behaviour before 007/008): thresholds, unknown candidate ref, empty negative, `any_positive` optional, `repository:` swaps only G3, custom dir. Add `spec/support/stub_client.rb` (`instance_double(SlopGuard::JevClient)` + block) and `fixture_dataset` helper; migrate the three stubbing styles.
+- [x] 002 `Budget#reserve!` rescue `JSON::ParserError`/`KeyError`/`TypeError` → `InvalidInput 'Request ledger is corrupt'`; spec asserts no request sent (stub client). `lib/slop_guard/budget.rb:36`
+- [x] 006 `Dataset#entry_for(id)` shared by `input`/`labels`, raises `InvalidInput`. `lib/slop_guard/dataset.rb:40-70`
+- [x] 028 (report half) `Report.escape`: escape `[\u0000-\u001F\u007F\u0080-\u009F\u2028\u2029]` BEFORE the U+200C insertion; write U+200C as `"@\u200C"` with comment. Sanitise `warn` in `bin/review:71`, `bin/evaluate:70`, summary script. `lib/slop_guard/report.rb:33-37`
+- [x] 005 `.env` opt-in: load only with `--env-file PATH` or `SLOP_GUARD_ENV_FILE`; missing file errors; document precedence env > file. `bin/review:57`, `bin/evaluate:57`, README, `docs/evaluation.md:16`
+- [x] 021 (evaluator/report/jev/dataset parts) nested ternary → if/elsif; rename design booleans + comment that `any_positive` stays for `config/rules/g3.yml:14`; `ENDPOINT.freeze`; `dataset.rb:54` if/else; drop duplicate key check `bin/review:59`. Defer candidates.rb split to 023.
+- [x] 019a Write `spec/slop_guard/rules_spec.rb` now (pins behaviour before 007/008): thresholds, unknown candidate ref, empty negative, `any_positive` optional, `repository:` swaps only G3, custom dir. Add `spec/support/stub_client.rb` (`instance_double(SlopGuard::JevClient)` + block) and `fixture_dataset` helper; migrate the three stubbing styles.
 
 Exit: rspec, rubocop non-Metrics green. No paid run.
+
+Done 2026-09-20 on branch `fix/review-phase-1` (worktree). 96 examples pass; lint clean. Also: `Rules` now maps missing rule files (`SystemCallError`) to `InvalidInput`; `.claude/worktrees/` gitignored. Tool note: the editing tool converts `\uXXXX` escape text into the literal character; check `grep -rlP '[\x{2028}\x{2029}\x{200B}-\x{200D}]'` after edits.
 
 ## Phase 2 — GitSource hardening (one PR, one pipe rewrite)
 
