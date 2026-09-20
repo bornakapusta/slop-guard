@@ -38,10 +38,7 @@ module SlopGuard
     end
 
     def input(id)
-      entry = cases.find { |item| item.fetch('id') == id }
-      raise InvalidInput, 'Unknown case ID' unless entry
-
-      record = read_json(entry.fetch('input'))
+      record = read_json(entry_for(id).fetch('input'))
       before = read_json(record.fetch('baseline')).fetch('files')
       after = before.dup
       record.fetch('changes').each do |path, change|
@@ -51,7 +48,11 @@ module SlopGuard
                 "Patch preimage mismatch: #{path}"
         end
 
-        change.fetch('after').nil? ? after.delete(path) : after[path] = change['after']
+        if change.fetch('after').nil?
+          after.delete(path)
+        else
+          after[path] = change['after']
+        end
       end
       omitted = record.fetch('omitted', [])
       omitted.each do |path|
@@ -65,8 +66,7 @@ module SlopGuard
     end
 
     def labels(id)
-      entry = cases.find { |item| item.fetch('id') == id }
-      read_json(entry.fetch('labels'))
+      read_json(entry_for(id).fetch('labels'))
     end
 
     def validate!
@@ -114,6 +114,10 @@ module SlopGuard
     end
 
     private
+
+    def entry_for(id)
+      cases.find { |item| item.fetch('id') == id } || raise(InvalidInput, 'Unknown case ID')
+    end
 
     def validate_source_path!(path)
       return if path.is_a?(String) && !path.start_with?('/') && !path.split('/').intersect?(['', '.', '..'])

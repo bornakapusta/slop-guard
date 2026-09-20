@@ -6,7 +6,7 @@ module SlopGuard
   # Sends bounded typed requests and validates the provider response contract.
   class JevClient
     MODEL = 'jev-1.13.0'
-    ENDPOINT = URI('https://api.typesafe.ai/v1/systemone')
+    ENDPOINT = URI('https://api.typesafe.ai/v1/systemone').freeze
     RETRYABLE = [429, 500, 502, 503, 504, 529].freeze
     attr_reader :budget
 

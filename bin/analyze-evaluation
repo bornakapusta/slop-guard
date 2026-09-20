@@ -24,6 +24,6 @@ begin
   analysis = SlopGuard::EvaluationAnalysis.new(report, case_ids: ids)
   puts(options[:json] ? JSON.pretty_generate(analysis.to_h) : analysis.markdown)
 rescue SlopGuard::Error, OptionParser::ParseError, SystemCallError, JSON::ParserError, KeyError, TypeError => e
-  warn e.message
+  warn SlopGuard.printable(e.message, keep_newlines: true)
   exit 2
 end

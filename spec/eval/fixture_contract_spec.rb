@@ -17,6 +17,11 @@ RSpec.describe SlopGuard::Dataset do
     end
   end
 
+  it 'reports an unknown case ID the same way for review input and labels' do
+    expect { dataset.input('no-such-case') }.to raise_error(SlopGuard::InvalidInput, 'Unknown case ID')
+    expect { dataset.labels('no-such-case') }.to raise_error(SlopGuard::InvalidInput, 'Unknown case ID')
+  end
+
   it 'does not put labels or split metadata into review input' do
     input = dataset.input('g1-violation')
     expect(input.keys.sort).to eq(%w[before files omitted pr_body])

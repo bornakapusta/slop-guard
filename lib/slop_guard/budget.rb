@@ -33,7 +33,7 @@ module SlopGuard
 
       File.open(@ledger, File::RDWR | File::CREAT, 0o600) do |file|
         file.flock(File::LOCK_EX)
-        total = file.each_line.sum { |line| JSON.parse(line).fetch('reserved_usd', 0) }
+        total = ledger_total(file)
         raise LimitExceeded, 'Evaluation session budget exhausted' if total + RESERVATION > @session_limit
 
         file.seek(0, IO::SEEK_END)
@@ -47,6 +47,23 @@ module SlopGuard
 
     def record_usage(tokens)
       @usage += tokens
+    end
+
+    private
+
+    # Fails closed: an unreadable ledger means the session total is unknown, so no request may be reserved.
+    def ledger_total(file)
+      file.each_line.sum do |line|
+        entry = JSON.parse(line)
+        raise TypeError, 'ledger entry is not an object' unless entry.is_a?(Hash)
+
+        amount = entry.fetch('reserved_usd', 0)
+        raise TypeError, 'reservation is not numeric' unless amount.is_a?(Numeric)
+
+        amount
+      end
+    rescue JSON::ParserError, TypeError
+      raise InvalidInput, "Request ledger is corrupt: #{@ledger}"
     end
   end
 end

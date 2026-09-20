@@ -11,6 +11,23 @@ RSpec.describe SlopGuard::Budget do
     end
   end
 
+  it 'fails closed on a corrupt ledger instead of contacting the provider' do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, 'ledger.jsonl')
+      File.write(path, "{\"reserved_usd\":0.001}\ngarbage\n")
+      budget = described_class.new(ledger: path)
+      expect { budget.reserve! }.to raise_error(SlopGuard::InvalidInput, /ledger is corrupt/)
+      File.write(path, "[1,2]\n")
+      expect { budget.reserve! }.to raise_error(SlopGuard::InvalidInput, /ledger is corrupt/)
+      File.write(path, "{\"reserved_usd\":\"lots\"}\n")
+      client = SlopGuard::JevClient.new(api_key: 'test', budget: budget, sleeper: ->(_) {})
+      expect(client).not_to receive(:post)
+      question = { 'q' => { 'type' => 'noul', 'instructions' => 'x' } }
+      expect { client.ask('state', question) }.to raise_error(SlopGuard::InvalidInput, /ledger is corrupt/)
+      expect(budget.attempts).to eq(0)
+    end
+  end
+
   it 'enforces time and cost before allowing network work' do
     Dir.mktmpdir do |directory|
       clock = 0

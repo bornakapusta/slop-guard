@@ -3,6 +3,9 @@
 module SlopGuard
   # Renders escaped advisory findings without implying overall correctness.
   module Report
+    # U+200C ZERO WIDTH NON-JOINER: inserted after "@" so GitHub does not resolve @mentions from untrusted evidence.
+    MENTION_BREAK = [0x200C].pack('U').freeze
+
     def self.markdown(result)
       lines = ["# Slop Guard: #{result.fetch('status')}", '', "Snapshot: `#{result.fetch('snapshot')}`",
                'Advisory review of inspected evidence. Test execution and overall correctness are not established.', '']
@@ -31,9 +34,10 @@ module SlopGuard
     end
 
     def self.escape(text)
-      text.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('@', '@‌').gsub(/[\[\]`*_\\]/) do |char|
-        "\\#{char}"
-      end
+      escaped = text.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('@', "@#{MENTION_BREAK}")
+      escaped = escaped.gsub(/[\[\]`*_\\]/) { |char| "\\#{char}" }
+      # Last, so the visible escapes it produces are not themselves re-escaped.
+      SlopGuard.printable(escaped)
     end
   end
 end
