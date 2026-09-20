@@ -1,0 +1,21 @@
+services:
+  slop-guard:
+    build: .
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 20s
+    ports:
+      - '127.0.0.1:3000:3000'
+    env_file: .env.app
+    environment:
+      GITHUB_PRIVATE_KEY_PATH: /run/secrets/github_app_key
+      SLOP_GUARD_DATA_DIR: /data
+    volumes:
+      - app-data:/data
+    secrets:
+      - github_app_key
+secrets:
+  github_app_key:
+    file: ${GITHUB_PRIVATE_KEY_FILE:?Set GITHUB_PRIVATE_KEY_FILE to the App PEM file outside the repository}
+volumes:
+  app-data:

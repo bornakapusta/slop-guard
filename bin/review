@@ -8,20 +8,51 @@ require_relative '../lib/slop_guard'
 
 options = { inspect: false, live: false, json: false }
 parser = OptionParser.new do |opts|
-  opts.banner = 'Usage: bin/review CASE_ID [--inspect | --live]'
-  opts.on('--inspect', 'Print the evidence without calling Jev') { options[:inspect] = true }
+  opts.banner = "Usage: bin/review CASE_ID [--inspect | --live]\n       " \
+                'bin/review --repo PATH --base REF [--head REF] --expectations FILE [--inspect | --live]'
+  opts.on('--inspect', 'Print evidence offline without contacting Jev') { options[:inspect] = true }
   opts.on('--json', 'Print a machine-readable report') { options[:json] = true }
-  opts.on('--live', 'Review this intentionally supplied demo case using Jev') { options[:live] = true }
+  opts.on('--live', 'Send the selected evidence to Jev for a paid review') { options[:live] = true }
+  opts.on('--repo PATH', 'Read a local Git repository without checking out or running its code') do |v|
+    options[:repo] = v
+  end
+  opts.on('--base REF', 'Compare from the merge base with this local revision') { |v| options[:base] = v }
+  opts.on('--head REF', 'Committed revision to review (default HEAD; excludes working-tree changes)') do |v|
+    options[:head] = v
+  end
+  opts.on('--expectations FILE', 'Markdown with Expected behavior and Failure cases sections') do |v|
+    options[:expectations] = v
+  end
+  opts.on('--rules-dir PATH', 'Explicit trusted directory with g1.yml through g4.yml') { |v| options[:rules] = v }
 end
 begin
   parser.parse!
-  raise SlopGuard::InvalidInput, parser.to_s unless ARGV.size == 1 && [options[:inspect],
-                                                                       options[:live]].count(true) == 1
+  raise SlopGuard::InvalidInput, parser.to_s unless [options[:inspect], options[:live]].count(true) == 1
 
-  dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
-  snapshot = SlopGuard::Snapshot.new(dataset.input(ARGV.first))
+  if options[:repo]
+    raise SlopGuard::InvalidInput, parser.to_s unless ARGV.empty? && options[:base] && options[:expectations]
+
+    body = File.binread(options[:expectations], 16_385).force_encoding(Encoding::UTF_8)
+    source = SlopGuard::GitSource.new(repository: options[:repo], base: options[:base], head: options[:head] || 'HEAD')
+    snapshot = SlopGuard::Snapshot.new(source.input(pr_body: body), profile: source.profile)
+    rules = SlopGuard::Rules.new(options.fetch(:rules, File.join(SlopGuard::ROOT, 'config/rules')),
+                                 repository: !options.key?(:rules))
+  else
+    unless ARGV.size == 1 && options.values_at(:base, :head, :expectations, :rules).all?(&:nil?)
+      raise SlopGuard::InvalidInput, parser.to_s
+    end
+
+    dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+    snapshot = SlopGuard::Snapshot.new(dataset.input(ARGV.first))
+    rules = SlopGuard::Rules.new
+  end
   if options[:inspect]
-    puts JSON.pretty_generate('snapshot' => snapshot.identity, 'gaps' => snapshot.gaps, 'evidence' => snapshot.state)
+    puts JSON.pretty_generate('snapshot' => snapshot.identity, 'gaps' => snapshot.gaps,
+                              'expectation_gaps' => snapshot.expectations.gaps,
+                              'skipped_paths' => snapshot.skipped, 'source' => source&.metadata,
+                              'rules_revision' => rules.revision,
+                              'state_bytes' => JSON.generate(snapshot.state).bytesize,
+                              'evidence' => snapshot.state)
   else
     Dotenv.load(File.join(SlopGuard::ROOT, '.env'))
     directory = File.join(SlopGuard::ROOT, 'tmp/reviews', "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
@@ -29,12 +60,17 @@ begin
 
     budget = SlopGuard::Budget.new(ledger: File.join(directory, 'requests.jsonl'))
     client = SlopGuard::JevClient.new(api_key: ENV.fetch('TYPESAFE_API_KEY', nil), budget: budget)
-    report = SlopGuard::Evaluator.new(client: client).call(snapshot)
+    report = SlopGuard::Evaluator.new(client: client, rules: rules).call(snapshot)
+    report['source'] = source.metadata if source
     File.write(File.join(directory, 'report.json'), JSON.pretty_generate(report))
+    warn "Report saved to #{File.join(directory, 'report.json')}"
     puts(options[:json] ? JSON.pretty_generate(report) : SlopGuard::Report.markdown(report))
     exit 2 unless report['status'] == 'complete'
   end
 rescue SlopGuard::Error, OptionParser::ParseError => e
   warn e.message
+  exit 2
+rescue SystemCallError, Psych::Exception => e
+  warn "Cannot read repository input or trusted configuration: #{e.class}"
   exit 2
 end

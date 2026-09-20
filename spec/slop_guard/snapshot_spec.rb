@@ -53,7 +53,7 @@ end
 RSpec.describe 'the trusted demo profile' do
   it 'excludes unrelated files from model state and explicitly reports them' do
     source = { 'README.md' => 'ordinary documentation', '.env' => 'not-for-the-model' }
-    snapshot = SlopGuard::Snapshot.new('before' => {}, 'files' => source, 'pr_body' => '', 'omitted' => [])
+    snapshot = SlopGuard::Snapshot.new({ 'before' => {}, 'files' => source, 'pr_body' => '', 'omitted' => [] })
     expect(JSON.generate(snapshot.state)).not_to include('not-for-the-model')
     expect(snapshot.skipped).to contain_exactly('README.md', '.env')
     expect(snapshot.changed).to be_empty

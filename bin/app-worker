@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require_relative '../lib/slop_guard/service'
+
+config = SlopGuard::Service::Settings.new
+File.open(File.join(config.data_dir, 'worker.lock'), File::RDWR | File::CREAT, 0o600) do |lock|
+  abort 'Another Slop Guard worker holds this data directory' unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+  store = SlopGuard::Service::Store.new(File.join(config.data_dir, 'app.sqlite3'),
+                                        identity: [config.app_id, config.installation_id, config.repository_id])
+  store.recover
+  client = SlopGuard::Service::GitHubClient.new(config)
+  worker = SlopGuard::Service::Worker.new(settings: config, store: store, client: client)
+  stopping = false
+  %w[INT TERM].each { |signal| Signal.trap(signal) { stopping = true } }
+  $stdout.sync = true
+  until stopping
+    sleep(1) unless worker.tick
+  end
+ensure
+  store&.close
+end

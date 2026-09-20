@@ -1,0 +1,14 @@
+name: Focused responsibilities
+version: 1
+high: 0.85
+low: 0.20
+applicable: Does this change modify production methods with inspectable responsibilities?
+global: Does a changed method combine unrelated responsibilities with a concrete adverse consequence, beyond justified orchestration?
+candidate:
+  unrelated: Does this method implement responsibilities that change for independent reasons, rather than merely coordinating existing components?
+  consequence: Does that combination concretely couple core behavior to unrelated formatting, persistence, transport or another side effect?
+  justified: Is the combination justified by this component's existing role, a framework contract or explicit project requirements?
+positive: [unrelated, consequence]
+negative: [justified]
+message: The changed method combines unrelated responsibilities with a concrete adverse consequence.
+correction: Keep the responsibilities in their existing appropriate components, or explain the present constraint that requires combining them; do not add a class without a demonstrated need.

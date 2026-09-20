@@ -2,9 +2,9 @@
 
 An experimental general-purpose code reviewer, implemented in Ruby, that asks Jev focused questions about code changes. Ruby selects evidence and decides which advisory findings to report.
 
-The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the current CLI and evidence extraction support the supplied Ruby evaluation cases.
+The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the CLI supports the supplied evaluation cases and committed changes in local Ruby/RSpec repositories.
 
-**Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). GitHub App delivery is the next phase, gated on successful evaluation.
+**Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). An experimental Ruby GitHub App service is also implemented, with inline review comments and one summary. It is not deployed or live-verified; use it only as an advisory pilot. See [GitHub App setup](docs/github-app.md).
 
 The four rules assess observable behavior tests, relevant failure-case tests, focused responsibilities, and justified abstractions. Read [the adopted guidelines](docs/guidelines.md) and [the implementation plan](docs/plans/2026-09-19-001-feat-slop-guard-reviewer-plan.md).
 
@@ -68,6 +68,26 @@ bundle exec ruby bin/review g2-violation --inspect
 
 Validation and inspection make no model requests. The supplied 24 cases include 16 development examples and 8 held-out examples. Every case has a readable `change.diff`, an `input.json` structured patch, and separate expected `labels.json`.
 
+## Review another local repository
+
+Run from the Slop Guard checkout with Ruby 3.4 activated. The target must be a local Git repository with the base and head commits available. This reviews committed changes from their merge base; staged, unstaged and untracked files are excluded.
+
+Write a change description with `## Expected behavior` and `## Failure cases` sections. Use [the example](docs/examples/review-expectations.md) as a starting point and replace its scenarios with the behavior your change promises.
+
+```sh
+# Offline: inspect exactly which committed source and tests will be sent.
+bundle exec ruby bin/review --repo /path/to/project \
+  --base main --head HEAD --expectations /path/to/change.md --inspect
+
+# Paid: send that evidence to Jev using Slop Guard's local API key.
+bundle exec ruby bin/review --repo /path/to/project \
+  --base main --head HEAD --expectations /path/to/change.md --live
+```
+
+Repository mode uses general Ruby responsibility questions; the saved log-parser benchmarks keep their original questions. Reports record the base, head, merge-base and rule revision. No GitHub token, webhook server or installation in the target repo is needed.
+
+This is a bounded Ruby/RSpec reviewer, not a whole-repository audit. Source selection, custom rules, size limits and offline test behavior are explained in [local repository reviews](docs/local-repository-review.md).
+
 ## Review one case with Jev
 
 Copy `.env.example` to `.env` and set `TYPESAFE_API_KEY` locally. Do not put credentials in a patch or paste them into a PR. The file is ignored by Git.
@@ -85,7 +105,7 @@ A concern does not fail the single-review command: exit 0 means the review compl
 
 Follow [the evaluation guide](docs/evaluation.md). The authored labels remain provisional until reviewed; development runs can help assess the questions, while qualification requires agreed outcomes. Tune only development cases, freeze the versions after a passing development run, then evaluate the held-out set three times. A passing mock response does not qualify a rule.
 
-GitHub webhooks, inline comments, SQLite processing and deployment are not implemented yet. The reviewer and its planned GitHub App delivery remain separate from the projects it reviews; no reviewed application code runs inside the reviewer.
+The [GitHub App service](docs/github-app.md) receives signed webhooks, queues work in SQLite, and publishes inline findings plus one updated summary. One Docker container runs the Ruby web server and worker. The reviewer remains separate from the projects it reviews; no reviewed application code runs inside it. Offline delivery tests do not qualify model accuracy.
 
 ## CI and code quality
 

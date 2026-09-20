@@ -1,0 +1,11 @@
+**
+!Gemfile
+!Gemfile.lock
+!config.ru
+!lib/
+!lib/**
+!config/
+!config/**
+!bin/
+!bin/app-server
+!bin/app-worker
