@@ -106,24 +106,20 @@ module SlopGuard
     end
 
     def build_snapshot(options, profile)
+      Snapshot.build(input(options, profile), profile: profile)
+    end
+
+    # A local Git range, a saved input document, or a saved evaluation case.
+    def input(options, profile)
       if options[:repo]
-        source = GitSource.new(repository: options[:repo], base: options[:base], head: options[:head] || 'HEAD',
-                               profile: profile)
-        Snapshot.build(source.input(pr_body: expectations(options)), profile: profile)
+        GitSource.new(repository: options[:repo], base: options[:base], head: options[:head] || 'HEAD',
+                      profile: profile).input(pr_body: expectations(options))
       elsif options[:input]
-        raw = File.binread(options[:input], (Limits::BUNDLE_BYTES * 2) + 1)
-        raise InputTooLarge, 'Input document exceeds 2 MiB' if raw.bytesize > Limits::BUNDLE_BYTES * 2
-
-        input = JSON.parse(raw)
-        raise InvalidInput, 'Input document must be an object' unless input.is_a?(Hash)
-
-        Snapshot.build(input.merge('pr_body' => expectations(options)), profile: profile)
+        InputDocument.read(options[:input]).merge('pr_body' => expectations(options))
       else
         require_relative 'eval'
-        Snapshot.build(Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case)), profile: profile)
+        Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case))
       end
-    rescue JSON::ParserError
-      raise InvalidInput, 'Input document is not valid JSON'
     end
 
     def expectations(options)

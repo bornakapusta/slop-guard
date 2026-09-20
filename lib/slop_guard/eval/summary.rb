@@ -35,7 +35,7 @@ module SlopGuard
         lines << '|---|---:|---:|---:|---:|'
         report.fetch('metrics').fetch('by_rule').each do |id, counts|
           values = counts.values_at('true_positives', 'false_positives', 'misses', 'unnecessary_abstentions')
-          lines << "| #{Report.escape(id)} | #{values.join(' | ')} |"
+          lines << "| #{Markdown.escape(id)} | #{values.join(' | ')} |"
         end
         lines << "Cases with outcome changes across repeats: #{report.fetch('metrics').fetch('outcome_flips')}."
       else
@@ -46,7 +46,7 @@ module SlopGuard
         lines << '' << analysis.markdown
       end
       lines << '' << '### Recorded versions'
-      report.fetch('versions').each { |name, value| lines << "- #{Report.escape(name)}: #{Report.escape(value)}" }
+      report.fetch('versions').each { |name, value| lines << "- #{Markdown.escape(name)}: #{Markdown.escape(value)}" }
       lines << '' << 'Development results are separate from code-quality CI and held-out qualification.'
       lines << 'Provisional labels do not establish agreed review quality.' unless report.fetch('labels_reviewed')
       lines.join("\n")

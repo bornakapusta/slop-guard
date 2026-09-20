@@ -108,10 +108,11 @@ module SlopGuard
 
         def body_for(finding, anchor)
           [finding_marker(finding, anchor),
-           "**Slop Guard · #{Report.escape(Report.check_name(finding['rule']))}** (advisory)", '',
-           "**Code:** #{Report.location(finding.fetch('anchor'), source_url: source_url)}", '',
-           "**Context:** #{Report.escape(finding['scenario'] || finding['topic'])}", '',
-           Report.escape(finding['message']), '', "**Suggested change:** #{Report.escape(finding['correction'])}", '',
+           "**Slop Guard · #{Markdown.escape(Markdown.check_name(finding['rule']))}** (advisory)", '',
+           "**Code:** #{Markdown.location(finding.fetch('anchor'), source_url: source_url)}", '',
+           "**Context:** #{Markdown.escape(finding['scenario'] || finding['topic'])}", '',
+           Markdown.escape(finding['message']), '',
+           "**Suggested change:** #{Markdown.escape(finding['correction'])}", '',
            "Last reviewed commit: `#{head}`. Test execution is not established."].join("\n")
         end
       end

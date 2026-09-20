@@ -4,9 +4,7 @@ module SlopGuard
   class Snapshot
     # The permitted, bounded file trees of one review. Unsupported paths are listed, never sent. Oversized files
     # are dropped with a gap, matching the Git adapter.
-    class Trees < Data.define(:files, :before, :skipped)
-      UNSAFE_SEGMENTS = ['', '.', '..'].freeze
-
+    Trees = Data.define(:files, :before, :skipped) do
       def self.select(files, before, already_skipped, profile:, gaps:)
         validate!(files, before)
         skipped = ((files.keys | before.keys).reject { |path| profile.permitted?(path) } + already_skipped).uniq.sort
@@ -29,18 +27,12 @@ module SlopGuard
           raise InvalidInput, 'Invalid file inventory' unless tree.is_a?(Hash)
 
           tree.each do |path, text|
-            raise InvalidInput, 'Unsafe source path' if unsafe?(path)
-            unless text.is_a?(String) && text.valid_encoding? && !text.include?("\0")
-              raise InvalidInput, 'Invalid source encoding'
-            end
+            raise InvalidInput, 'Unsafe source path' if SourcePath.unsafe?(path)
+            raise InvalidInput, 'Invalid source encoding' unless SourceText.valid?(text)
           end
         end
       end
-
-      def self.unsafe?(path)
-        path.start_with?('/') || path.split('/').intersect?(UNSAFE_SEGMENTS)
-      end
-      private_class_method :validate!, :unsafe?
+      private_class_method :validate!
     end
   end
 end

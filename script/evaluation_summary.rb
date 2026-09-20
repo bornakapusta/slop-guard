@@ -32,6 +32,6 @@ begin
   puts summary.markdown
   exit 1 unless summary.status == 'PASSED DEVELOPMENT LABELS'
 rescue SlopGuard::Error, JSON::ParserError, KeyError, ArgumentError, SystemCallError => e
-  puts "## Jev development evaluation\n\n**REPORT UNAVAILABLE:** #{SlopGuard::Report.escape(e.message)}"
+  puts "## Jev development evaluation\n\n**REPORT UNAVAILABLE:** #{SlopGuard::Markdown.escape(e.message)}"
   exit 2
 end

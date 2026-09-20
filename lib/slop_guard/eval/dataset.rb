@@ -136,10 +136,7 @@ module SlopGuard
     end
 
     def validate_source_path!(path)
-      return if path.is_a?(String) && !path.start_with?('/') && !path.split('/').intersect?(['', '.', '..'])
-
-      raise InvalidInput,
-            'Unsafe source path'
+      raise InvalidInput, 'Unsafe source path' if SourcePath.unsafe?(path)
     end
   end
 end
