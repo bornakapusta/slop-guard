@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "020"
 tags: [code-review, simplification]
@@ -73,3 +73,10 @@ EvaluationAnalysis falls back to `legacy-#{batch}` fingerprints when `question_f
 ## Notes
 
 **Correction (2026-09-20, spec-flow analysis):** the premise "no historical report exists in the repo" is false. All `docs/verification/*.json` reports (evaluation-benchmark, first-live-development, fixture-runs, threshold-calibration) lack both `question_fingerprints` and `case_ids`, and docs point `bin/analyze-evaluation` at them. Either keep a documented fallback for committed historical reports or mark them historical and stop referencing them from analysis commands. Do not simply require the fields.
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Fallbacks kept deliberately and documented in code, because the committed docs/verification reports lack the fields. Eager fingerprints mean new reports never hit them.

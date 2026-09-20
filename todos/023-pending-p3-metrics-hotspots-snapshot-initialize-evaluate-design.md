@@ -71,3 +71,12 @@ RuboCop Metrics (informational in CI) flags Snapshot#initialize (ABC 81, CC 21),
 - Drafted solution options
 
 
+
+### 2026-09-20 - Mostly done
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Snapshot#initialize (validate_trees!, apply_profile), Evaluator (RuleRun with scenario_questions/classify_scenario/classify_candidate/classify_design), Dataset#validate! (validate_manifest!/validate_labels!/validate_anchor!) and Candidates#check_call split. EvalRunner#run split into prepare/review_case/finalize. EvaluationAnalysis#validate! still long.
+
+**Metrics count:** RuboCop Metrics offenses rose from 199 (main) to 243 on this branch despite the splits above, because the new CLI, GitSource, Profile and Evaluator methods exceed MethodLength 10 and AbcSize 17. Informational in CI; consider raising Metrics thresholds to realistic values in .rubocop.yml or continuing extraction.

@@ -4,7 +4,7 @@
 require 'bundler/setup'
 require 'dotenv'
 require 'optparse'
-require_relative '../lib/slop_guard'
+require_relative '../lib/slop_guard/eval'
 
 options = { split: 'development', repeats: 3 }
 parser = OptionParser.new do |opts|
@@ -38,7 +38,7 @@ begin
   if options[:validate]
     dataset.validate!
     contexts = dataset.cases.map do |entry|
-      snapshot = SlopGuard::Snapshot.new(dataset.input(entry['id']))
+      snapshot = SlopGuard::Snapshot.new(dataset.input(entry['id']), profile: SlopGuard::Profile.load('demo'))
       { 'case' => entry['id'], 'state_bytes' => JSON.generate(snapshot.state).bytesize, 'gaps' => snapshot.gaps }
     end
     puts JSON.pretty_generate('cases' => contexts, 'labels_reviewed' => dataset.manifest['labels_reviewed'],

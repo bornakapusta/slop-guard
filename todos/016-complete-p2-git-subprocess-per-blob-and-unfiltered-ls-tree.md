@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "016"
 tags: [code-review, performance]
@@ -71,3 +71,10 @@ GitSource runs one `git cat-file blob` subprocess per selected file per revision
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- One `git cat-file --batch` per revision (2 processes for the trees); environment built once; IO.select deadline replaces Timeout; Ruby fnmatch filter kept after ls-tree because Git pathspec globbing differs.

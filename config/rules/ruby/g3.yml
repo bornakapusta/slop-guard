@@ -1,5 +1,7 @@
 name: Focused responsibilities
 version: 1
+kind: design
+candidate_kind: method
 high: 0.85
 low: 0.20
 applicable: Does this change modify production methods with inspectable responsibilities?

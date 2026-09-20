@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "007"
 tags: [code-review, architecture, quality]
@@ -72,3 +72,10 @@ The set `%w[G1 G2 G3 G4]` and the kind test `%w[G1 G2].include?(id)` are repeate
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Every rule file declares `kind`, plus `scenarios` (tests) or `candidate_kind` (design). Rules loads `*.yml` from the directory; Evaluator and Report dispatch on kind. Harness keeps `Rules::IDS` as the fixture contract.

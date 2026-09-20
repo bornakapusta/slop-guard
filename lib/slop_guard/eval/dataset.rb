@@ -70,50 +70,66 @@ module SlopGuard
     end
 
     def validate!
-      unless cases('development').size == 16 && cases('holdout').size == 8
-        raise InvalidInput,
-              'Dataset must contain 16 development and 8 holdout cases'
-      end
-      raise InvalidInput, 'Duplicate case IDs' unless cases.map { |entry| entry.fetch('id') }.uniq.size == cases.size
-
-      families = cases.group_by { |entry| entry.fetch('family') }
-      raise InvalidInput, 'Case family crosses dataset splits' if families.values.any? do |entries|
-        entries.map do |entry|
-          entry['split']
-        end.uniq.size > 1
-      end
-
+      validate_manifest!
       cases.each do |entry|
-        raise InvalidInput, 'Unknown split' unless %w[development holdout].include?(entry['split'])
-
         data = input(entry.fetch('id'))
-        label = labels(entry.fetch('id'))
-        raise InvalidInput, 'Every rule needs a label' unless label.fetch('outcomes').keys.sort == %w[G1 G2 G3 G4]
-        raise InvalidInput, 'Unknown expected outcome' unless label['outcomes'].values.all? do |value|
-          %w[concern no_concern not_applicable inconclusive].include?(value)
-        end
-        raise InvalidInput, 'Label rationale required' if label.fetch('rationale').strip.empty?
-
-        label.fetch('findings').each do |finding|
-          unless label['outcomes'][finding.fetch('rule')] == 'concern'
-            raise InvalidInput,
-                  'Finding rule must have concern outcome'
-          end
-
-          finding.fetch('anchors').each do |anchor|
-            body = data.fetch('files')[anchor.fetch('path')]
-            line = anchor.fetch('line')
-            valid = body && line.is_a?(Integer) && line.between?(1, body.lines.size)
-            raise InvalidInput, 'Invalid expected anchor' unless valid
-          end
-        end
+        validate_labels!(labels(entry.fetch('id')), data.fetch('files'))
       end
       true
-    rescue KeyError, NoMethodError
+    rescue KeyError, TypeError
       raise InvalidInput, 'Invalid dataset manifest or labels'
     end
 
     private
+
+    # The fixed demo split contract: 16 development and 8 held-out cases, families never crossing splits.
+    def validate_manifest!
+      unless cases('development').size == 16 && cases('holdout').size == 8
+        raise InvalidInput, 'Dataset must contain 16 development and 8 holdout cases'
+      end
+      raise InvalidInput, 'Duplicate case IDs' unless cases.map { |entry| entry.fetch('id') }.uniq.size == cases.size
+
+      families = cases.group_by { |entry| entry.fetch('family') }
+      if families.values.any? { |entries| entries.map { |entry| entry['split'] }.uniq.size > 1 }
+        raise InvalidInput, 'Case family crosses dataset splits'
+      end
+
+      cases.each do |entry|
+        raise InvalidInput, 'Unknown split' unless %w[development holdout].include?(entry['split'])
+      end
+    end
+
+    def validate_labels!(label, files)
+      unless label.is_a?(Hash) && label['outcomes'].is_a?(Hash) && label['findings'].is_a?(Array)
+        raise InvalidInput, 'Labels must map outcomes and list findings'
+      end
+      raise InvalidInput, 'Every rule needs a label' unless label.fetch('outcomes').keys.sort == Rules::IDS
+      unless label['outcomes'].values.all? do |value|
+        %w[concern no_concern not_applicable inconclusive].include?(value)
+      end
+        raise InvalidInput, 'Unknown expected outcome'
+      end
+      raise InvalidInput, 'Label rationale required' if label.fetch('rationale').strip.empty?
+
+      label.fetch('findings').each do |finding|
+        raise InvalidInput, 'Each finding needs anchors' unless finding.is_a?(Hash) && finding['anchors'].is_a?(Array)
+        unless label['outcomes'][finding.fetch('rule')] == 'concern'
+          raise InvalidInput,
+                'Finding rule must have concern outcome'
+        end
+
+        finding.fetch('anchors').each { |anchor| validate_anchor!(anchor, files) }
+      end
+    end
+
+    def validate_anchor!(anchor, files)
+      raise InvalidInput, 'Invalid expected anchor' unless anchor.is_a?(Hash)
+
+      body = files[anchor.fetch('path')]
+      line = anchor.fetch('line')
+      raise InvalidInput, 'Invalid expected anchor' unless body && line.is_a?(Integer) && line.between?(1,
+                                                                                                        body.lines.size)
+    end
 
     def entry_for(id)
       cases.find { |item| item.fetch('id') == id } || raise(InvalidInput, 'Unknown case ID')

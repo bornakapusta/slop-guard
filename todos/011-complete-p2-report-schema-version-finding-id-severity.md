@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "011"
 tags: [code-review, agent-native, architecture]
@@ -73,3 +73,10 @@ The report emits snapshot/version/model/rules_revision/status/rules/skipped_path
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- `report_version: 1`, finding `id` (digest of rule, topic, scenario, anchor path, matching the publisher), `severity: advisory`, `anchor.side: head`. Markdown dedupe removed so JSON and Markdown agree. Scenario anchors prefer the changed method the scenario names. Schema in docs/report-schema.md.

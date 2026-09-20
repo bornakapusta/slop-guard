@@ -44,7 +44,7 @@ mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-violation --live --env-fi
 mise exec ruby@3.4.5 -- bundle exec ruby bin/review g2-fixed --live --env-file .env
 ```
 
-Each command makes paid requests with a $0.10 reservation limit, at most 20 attempts, and a 120-second review deadline. Reports and reservation ledgers are saved under `tmp/reviews/`. Exit 0 means the review completed; exit 2 means invalid input, incomplete evidence, or an operational failure.
+Each command makes paid requests with a $0.10 reservation limit, at most 20 attempts, and a 120-second review deadline. Reports and reservation ledgers are saved under `tmp/reviews/`. Exit 0 means the review completed; exit 1 means it completed with incomplete evidence; exit 2 means invalid input; exit 3 means a provider, budget or deadline failure.
 
 The committed thresholds remain `high: 0.85`, `low: 0.20`. The historical G2 finding used experimental `high: 0.60`; a fresh run with defaults may be inconclusive. Present the actual outcome and any gaps. The rules have not passed qualification.
 

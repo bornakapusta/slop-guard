@@ -90,3 +90,10 @@ Several small readability issues that RuboCop does not catch but a reader will t
 - Done: U+200C moved to `Report::MENTION_BREAK` with a comment; evaluator status if/elsif; design booleans renamed (`positives_high`, `negatives_low`, `any_negative_high`, `any_positive_low`, `ruled_out`) with a comment on `any_positive`; `ENDPOINT.freeze`; `dataset.rb` ternary assignment to if/else; `bin/review` single key check via an `api_key` local.
 - Remaining (Phase 5 with 023): `candidates.rb` constants and helpers; `snapshot.rb` `production_ruby_path?`; naming items.
 
+
+### 2026-09-20 - Mostly done
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Candidates helpers and constants, snapshot anchorable? predicate landed with Phases 3-5. Naming items (EvalRunner vs EvaluationAnalysis, --repeats vs repetitions:) left as is.

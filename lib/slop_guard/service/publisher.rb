@@ -51,7 +51,8 @@ module SlopGuard
           anchor = finding.fetch('anchor')
           next unless changed.fetch(anchor['path'], []).include?(anchor['line'])
 
-          id = SlopGuard.digest(finding.slice('rule', 'topic', 'scenario').merge('path' => anchor['path']))
+          id = finding['id'] ||
+               SlopGuard.digest(finding.slice('rule', 'topic', 'scenario').merge('path' => anchor['path']))
           finding_marker = "<!-- slop-guard:finding:#{id} -->"
           body = inline_body(finding, finding_marker)
           previous = existing.find do |comment|

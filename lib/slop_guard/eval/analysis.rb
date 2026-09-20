@@ -5,13 +5,16 @@ module SlopGuard
   class EvaluationAnalysis
     OUTCOMES = %w[concern no_concern not_applicable inconclusive].freeze
     RULES = %w[G1 G2 G3 G4].freeze
+    COUNTS = %w[true_positives false_positives misses correct_abstentions unnecessary_abstentions].freeze
 
     def initialize(report, case_ids:)
+      raise InvalidInput, 'Malformed evaluation report' unless report.is_a?(Hash) && report['runs'].is_a?(Array)
+
       @report = report
       @case_ids = case_ids
       @runs = report.fetch('runs')
       validate!
-    rescue KeyError, TypeError, NoMethodError
+    rescue KeyError, TypeError
       raise InvalidInput, 'Malformed evaluation report'
     end
 
@@ -34,6 +37,18 @@ module SlopGuard
         'review_latency_seconds' => distribution(@runs.filter_map { |run| run['review_seconds'] }),
         'usage' => usage,
         'probability_variance' => probability_variance(valid) }
+    end
+
+    # The compact totals the runner stores as `metrics` and the CI summary reads. One definition for every count.
+    def metrics
+      valid = @runs.reject { |run| run.fetch('report').fetch('status') == 'failed' }
+      totals = COUNTS.to_h { |key| [key, valid.sum { |run| run.fetch('score').fetch(key) }] }
+      totals.merge(rates(totals),
+                   'operational_failures' => @runs.size - valid.size,
+                   'outcome_flips' => @runs.group_by { |run| run.fetch('case') }.count do |_, runs|
+                     runs.map { |run| run.fetch('score').fetch('actual_outcomes') }.uniq.size > 1
+                   end,
+                   'by_rule' => RULES.to_h { |id| [id, rule_counts(id, valid)] })
     end
 
     def markdown
@@ -81,15 +96,25 @@ module SlopGuard
       agreements = valid.group_by { |run| run.fetch('case') }.values.filter_map do |runs|
         pair_agreement(runs.map { |run| run.fetch('score').fetch('actual_outcomes').fetch(id) })
       end
-      findings = %w[true_positives false_positives misses].to_h do |key|
-        [key, valid.sum { |run| run.fetch('score').fetch('by_rule').fetch(id).fetch(key) }]
+      counts = rule_counts(id, valid)
+      counts.merge('matches' => matches, 'observations' => valid.size, 'accuracy' => ratio(matches, valid.size),
+                   'confusion_expected_actual' => confusion, 'cases_with_pairs' => agreements.size,
+                   'mean_case_repeat_agreement' => mean(agreements),
+                   'finding_precision' => counts.fetch('precision'), 'finding_recall' => counts.fetch('recall'))
+    end
+
+    # Abstention counts are absent from the oldest saved reports and default to zero there.
+    def rule_counts(id, valid)
+      counts = COUNTS.to_h do |key|
+        [key, valid.sum { |run| run.fetch('score').fetch('by_rule').fetch(id).fetch(key, 0) }]
       end
-      tp = findings.fetch('true_positives')
-      findings.merge('matches' => matches, 'observations' => valid.size, 'accuracy' => ratio(matches, valid.size),
-                     'confusion_expected_actual' => confusion, 'cases_with_pairs' => agreements.size,
-                     'mean_case_repeat_agreement' => mean(agreements),
-                     'finding_precision' => ratio(tp, tp + findings.fetch('false_positives')),
-                     'finding_recall' => ratio(tp, tp + findings.fetch('misses')))
+      counts.merge(rates(counts))
+    end
+
+    def rates(counts)
+      tp = counts.fetch('true_positives')
+      { 'precision' => ratio(tp, tp + counts.fetch('false_positives')),
+        'recall' => ratio(tp, tp + counts.fetch('misses')) }
     end
 
     def case_metrics(id, valid)
@@ -113,6 +138,8 @@ module SlopGuard
         runs.each do |run|
           run.fetch('report').fetch('rules').each do |id, rule|
             rule.fetch('readings').each_with_index do |values, batch|
+              # Reports written since 2026-09-20 always carry fingerprints. The committed docs/verification
+              # reports predate them and are still analysed offline, so batch position stands in for those.
               identity = if rule.key?('question_fingerprints')
                            rule.fetch('question_fingerprints').fetch(batch)
                          else
@@ -190,6 +217,11 @@ module SlopGuard
       end
 
       @runs.each do |run|
+        unless run.is_a?(Hash) && run['score'].is_a?(Hash) && run['report'].is_a?(Hash) &&
+               run['score']['by_rule'].is_a?(Hash) && run['report']['rules'].is_a?(Hash)
+          raise InvalidInput, 'Invalid review record'
+        end
+
         score = run.fetch('score')
         unless [true, false].include?(score.fetch('passed')) &&
                %w[complete incomplete failed].include?(run.fetch('report').fetch('status'))
@@ -198,7 +230,7 @@ module SlopGuard
 
         %w[actual_outcomes expected_outcomes].each do |key|
           outcomes = score.fetch(key)
-          unless outcomes.keys.sort == RULES && (outcomes.values - OUTCOMES).empty?
+          unless outcomes.is_a?(Hash) && outcomes.keys.sort == RULES && (outcomes.values - OUTCOMES).empty?
             raise InvalidInput, 'Invalid rule outcome inventory'
           end
         end
@@ -223,6 +255,10 @@ module SlopGuard
         end
 
         rules.each_value do |rule|
+          unless rule.is_a?(Hash) && rule['readings'].is_a?(Array) && rule['readings'].all?(Hash)
+            raise InvalidInput, 'Invalid readings'
+          end
+
           if rule.key?('question_fingerprints')
             fingerprints = rule.fetch('question_fingerprints')
             unless fingerprints.is_a?(Array) && fingerprints.size == rule.fetch('readings').size &&

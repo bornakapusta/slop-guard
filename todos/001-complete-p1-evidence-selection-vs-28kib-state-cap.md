@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "001"
 tags: [code-review, architecture, performance, blocker]
@@ -98,3 +98,10 @@ Snapshot#state sends every permitted head file, numbered, plus changed before-fi
 
 Option 2 is a stopgap that can ship first. Option 1 is the real fix and is the top blocker for GitHub bot use.
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Snapshot#selected_paths sends changed files, test files, required files and their require_relative closure; other permitted files are listed by path. `--inspect` reports state_bytes, live_limit_bytes and fits_live_limit.

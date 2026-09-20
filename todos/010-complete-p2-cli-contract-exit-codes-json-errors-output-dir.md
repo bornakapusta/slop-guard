@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "010"
 tags: [code-review, agent-native, quality]
@@ -74,3 +74,10 @@ bin/review exits 2 for invalid input, incomplete evidence, provider failure and 
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Exit codes 0 complete / 1 incomplete / 2 invalid / 3 operational; JSON error envelope under --json; `--output DIR` and SLOP_GUARD_OUTPUT_DIR; report_path and ledger_path in JSON. Documented in docs/report-schema.md.

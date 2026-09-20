@@ -8,10 +8,10 @@ module SlopGuard
     class GitHubSource
       attr_reader :profile
 
-      def initialize(client:, settings:)
+      def initialize(client:, settings:, profile: Profile.load('ruby'))
         @client = client
         @settings = settings
-        @profile = YAML.safe_load_file(File.join(ROOT, 'config/repository.yml'))
+        @profile = profile
       end
 
       def pull(number)
@@ -34,13 +34,13 @@ module SlopGuard
       def snapshot(pull)
         Timeout.timeout(120, LimitExceeded, 'GitHub source collection deadline exceeded') do
           body = pull['body'].to_s
-          raise LimitExceeded, 'PR body exceeds 16 KiB' if body.bytesize > 16_384
+          raise InputTooLarge, 'PR body exceeds 16 KiB' if body.bytesize > Limits::BODY_BYTES
 
           base = sha(pull.dig('base', 'sha'))
           head = sha(pull.dig('head', 'sha'))
           inventory = @client.list("#{@client.repo_path}/pulls/#{pull['number']}/files")
-          unless inventory.size == pull.fetch('changed_files') && inventory.size <= 50
-            raise LimitExceeded, 'PR file inventory is incomplete or exceeds 50 changed files'
+          unless inventory.size == pull.fetch('changed_files') && inventory.size <= Limits::CHANGED_FILES
+            raise InputTooLarge, "PR file inventory is incomplete or exceeds #{Limits::CHANGED_FILES} changed files"
           end
 
           merge = @client.get("#{@client.repo_path}/compare/#{base}...#{head}")
@@ -88,12 +88,14 @@ module SlopGuard
           path = entry.fetch('path')
           next false if entry['type'] == 'tree'
 
-          permitted = profile.fetch('file_patterns').any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
+          permitted = profile.permitted?(path)
           @gaps << "Submodule was not inspected: #{path}" if entry['mode'] == '160000'
           @skipped << path unless permitted
           permitted
         end
-        raise LimitExceeded, 'Repository exceeds 100 supported files per revision' if entries.size > 100
+        if entries.size > Limits::FILE_COUNT
+          raise InputTooLarge, "Repository exceeds #{Limits::FILE_COUNT} supported files per revision"
+        end
 
         entries.each_with_object({}) do |entry, files|
           path = entry.fetch('path')
@@ -101,12 +103,12 @@ module SlopGuard
             @gaps << "Non-regular file was not inspected: #{path}"
             next
           end
-          raise LimitExceeded, 'Source file exceeds 16 KiB' if entry.fetch('size') > 16_384
+          raise InputTooLarge, 'Source file exceeds 16 KiB' if entry.fetch('size') > Limits::FILE_BYTES
 
           oid = sha(entry.fetch('sha'))
           files[path] = @blobs[oid] ||= blob(oid)
           @bytes += files[path].bytesize
-          raise LimitExceeded, 'Source bundle exceeds 1 MiB' if @bytes > 1_048_576
+          raise InputTooLarge, 'Source bundle exceeds 1 MiB' if @bytes > Limits::BUNDLE_BYTES
         end
       end
 
@@ -115,7 +117,7 @@ module SlopGuard
         raise InvalidInput, 'Unsupported GitHub blob encoding' unless result.fetch('encoding') == 'base64'
 
         body = Base64.strict_decode64(result.fetch('content').delete("\n")).force_encoding(Encoding::UTF_8)
-        raise LimitExceeded, 'Source file exceeds 16 KiB' if body.bytesize > 16_384
+        raise InputTooLarge, 'Source file exceeds 16 KiB' if body.bytesize > Limits::FILE_BYTES
         raise InvalidInput, 'Source blob is not valid text' unless body.valid_encoding? && !body.include?("\0")
 
         body

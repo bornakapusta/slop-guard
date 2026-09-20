@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "027"
 tags: [code-review, security, reliability]
@@ -67,3 +67,10 @@ GitSource#git uses Open3.popen2e, so any Git warning is concatenated into the pa
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Open3.popen3 with stderr drained under the same deadline and capped; the first stderr line (control characters escaped) is included in the InvalidInput message. Spec: branch and tag both named rel.

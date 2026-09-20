@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../script/calibrate_thresholds'
-
 RSpec.describe SlopGuard::ThresholdCalibration do
   let(:dataset) { fixture_dataset }
   let(:versions) { SlopGuard::EvalRunner.new(dataset: dataset).versions }
@@ -45,16 +43,14 @@ RSpec.describe SlopGuard::ThresholdCalibration do
   end
 
   it 'marks a newly entered decision branch unavailable rather than inventing candidate readings' do
-    snapshot = SlopGuard::Snapshot.new(dataset.input('g4-violation'))
+    snapshot = demo_snapshot(dataset.input('g4-violation'))
     original = SlopGuard::Rules.new.definitions.fetch('G4')
     capture = described_class::Capture.new([{ 'applicable' => 0.8, 'concern' => 0.9 }])
     baseline = SlopGuard::Evaluator.new(client: capture,
-                                        rules: described_class::SingleRule.new(
-                                          'G4', original
-                                        )).call(snapshot)
+                                        rules: SlopGuard::Rules.from_definitions('G4' => original)).call(snapshot)
     expect(baseline['rules']['G4']['outcome']).to eq('inconclusive')
     expect(capture.complete?).to be(true)
-    lowered = described_class::SingleRule.new('G4', original.merge('high' => 0.75))
+    lowered = SlopGuard::Rules.from_definitions('G4' => original.merge('high' => 0.75))
     expect { SlopGuard::Evaluator.new(client: described_class::Replay.new(capture.transcript), rules: lowered).call(snapshot) }
       .to raise_error(described_class::MissingReading)
   end

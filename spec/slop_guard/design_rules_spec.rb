@@ -4,16 +4,17 @@ RSpec.describe 'design decisions' do
   let(:dataset) { fixture_dataset }
 
   def review(id, global:, candidate:)
+    # Candidate questions arrive as "<candidate id>/<question>" in one batched ask per rule.
     client = stub_client do |_state, questions|
       if questions.key?('concern')
         global
-      elsif questions.key?('abstraction') || questions.key?('counting_presentation')
-        questions.to_h { |key, _| [key, candidate.fetch(key, 0.05)] }
+      elsif questions.keys.any? { |key| key.end_with?('/abstraction', '/counting_presentation') }
+        questions.to_h { |key, _| [key, candidate.fetch(key.split('/').last, 0.05)] }
       else
-        questions.to_h { |key, _| [key, key == 'clear' ? 0.95 : 0.05] }
+        questions.to_h { |key, _| [key, key.end_with?('/clear') ? 0.95 : 0.05] }
       end
     end
-    SlopGuard::Evaluator.new(client: client).call(SlopGuard::Snapshot.new(dataset.input(id)))
+    SlopGuard::Evaluator.new(client: client).call(demo_snapshot(dataset.input(id)))
   end
 
   it 'requires the abstraction to lack both consumers and a present constraint' do

@@ -68,6 +68,7 @@ jobs:
           name: development-evaluation-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             tmp/evaluations/*/report.json
+            tmp/evaluations/*/runs.jsonl
             tmp/evaluations/*/requests.jsonl
           retention-days: 14
           if-no-files-found: error

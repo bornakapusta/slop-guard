@@ -1,4 +1,5 @@
 version: 1
+rules_dir: config/rules
 file_patterns:
   - lib/**/*.rb
   - bin/**/*.rb

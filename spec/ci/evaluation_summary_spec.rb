@@ -2,7 +2,6 @@
 
 require 'open3'
 require 'rbconfig'
-require_relative '../../script/evaluation_summary'
 
 RSpec.describe SlopGuard::EvaluationSummary do
   let(:cases) { %w[violation fixed] }

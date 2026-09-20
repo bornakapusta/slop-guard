@@ -5,8 +5,29 @@ module SlopGuard
   class EvalRunner
     attr_reader :dataset, :rules
 
-    def initialize(dataset:, rules: Rules.new, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+    # Reads a saved evaluation directory. Runs appended to runs.jsonl after the last report.json checkpoint are
+    # merged in, so an interrupted session loses nothing that finished.
+    def self.load(directory)
+      report = JSON.parse(File.read(File.join(directory, 'report.json')))
+      raise InvalidInput, 'Malformed evaluation report' unless report.is_a?(Hash) && report['runs'].is_a?(Array)
+
+      log = File.join(directory, 'runs.jsonl')
+      if File.file?(log)
+        seen = report['runs'].map { |run| run.values_at('case', 'repeat') }
+        File.foreach(log) do |line|
+          run = JSON.parse(line)
+          report['runs'] << run unless seen.include?(run.values_at('case', 'repeat'))
+        end
+      end
+      report
+    rescue JSON::ParserError
+      raise InvalidInput, 'Malformed evaluation report'
+    end
+
+    def initialize(dataset:, profile: Profile.load('demo'), rules: Rules.new(profile.rules_dir),
+                   clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       @dataset = dataset
+      @profile = profile
       @rules = rules
       @clock = clock
     end
@@ -19,7 +40,7 @@ module SlopGuard
       { 'model' => JevClient::MODEL, 'rules' => rules.revision, 'engine' => SlopGuard.digest(sources),
         'dataset' => SlopGuard.digest(artifacts),
         'lockfile' => Digest::SHA256.file(File.join(ROOT, 'Gemfile.lock')).hexdigest,
-        'ruby' => RUBY_VERSION, 'profile' => Digest::SHA256.file(File.join(ROOT, 'config/demo.yml')).hexdigest }
+        'ruby' => RUBY_VERSION, 'profile' => SlopGuard.digest(@profile.to_h) }
     end
 
     def score(report, labels)
@@ -28,9 +49,10 @@ module SlopGuard
       matched = []
       false_positives = 0
       actual.each do |finding|
+        anchor = finding.fetch('anchor').slice('path', 'line')
         index = expected.each_index.find do |i|
           !matched.include?(i) && expected[i]['rule'] == finding['rule'] && expected[i]['topic'] == finding['topic'] &&
-            expected[i]['anchors'].include?(finding['anchor'])
+            expected[i]['anchors'].any? { |candidate| candidate.slice('path', 'line') == anchor }
         end
         index ? matched << index : false_positives += 1
       end
@@ -60,19 +82,7 @@ module SlopGuard
     end
 
     def run(split:, repetitions:, directory:, client_factory:, live: false, benchmark: false)
-      dataset.validate!
-      raise InvalidInput, 'Split must be development or holdout' unless %w[development holdout].include?(split)
-      raise InvalidInput, 'Benchmarks use development cases only' if benchmark && split != 'development'
-
-      maximum = benchmark ? 100 : 3
-      unless repetitions.is_a?(Integer) && (1..maximum).cover?(repetitions)
-        raise InvalidInput, "Repetitions must be between 1 and #{maximum}"
-      end
-
-      # Prepare once so only model judgments vary between repetitions.
-      prepared = dataset.cases(split).map do |entry|
-        [entry.fetch('id'), Snapshot.new(dataset.input(entry.fetch('id'))), dataset.labels(entry.fetch('id'))]
-      end
+      prepared = prepare(split, repetitions, benchmark)
       FileUtils.mkdir_p(directory)
       result = { 'live' => live, 'split' => split, 'versions' => versions, 'repetitions' => repetitions,
                  'mode' => benchmark ? 'benchmark' : 'evaluation', 'case_ids' => prepared.map(&:first),
@@ -81,49 +91,20 @@ module SlopGuard
       catch(:benchmark_failed) do
         repetitions.times do |repeat|
           prepared.each do |id, snapshot, labels|
-            budget = Budget.new(ledger: File.join(directory, 'requests.jsonl'))
-            client = client_factory.call(budget)
-            review_start = @clock.call
-            report = Evaluator.new(client: client, rules: rules).call(snapshot)
-            run = { 'case' => id, 'repeat' => repeat + 1, 'report' => report,
-                    'review_seconds' => @clock.call - review_start,
-                    'score' => score(report, labels), 'attempts' => budget.attempts,
-                    'input_tokens' => budget.usage, 'reserved_usd' => budget.reserved,
-                    'estimated_usd' => budget.usage * 0.042 / 1_000_000 }
+            run = review_case(id, snapshot, labels, repeat + 1, directory, client_factory)
             result['runs'] << run
-            if benchmark && report.fetch('status') == 'failed'
-              result['stopped_reason'] = 'Operational failure; inspect the failed review and request ledger'
-              save(directory, result)
-              throw :benchmark_failed
-            end
+            append(directory, run)
+            next unless benchmark && run['report'].fetch('status') == 'failed'
+
+            result['stopped_reason'] = 'Operational failure; inspect the failed review and request ledger'
             save(directory, result)
+            throw :benchmark_failed
           end
+          # One checkpoint per repetition; runs.jsonl carries anything finished since.
+          save(directory, result)
         end
       end
-      result['completed'] = result['runs'].size == prepared.size * repetitions
-      result['passed'] = result['completed'] && result['runs'].all? { |run| run['score']['passed'] }
-      result['seconds'] = @clock.call - start
-      valid = result['runs'].reject { |run| run['report']['status'] == 'failed' }
-      totals = %w[true_positives false_positives misses correct_abstentions unnecessary_abstentions].to_h do |key|
-        [key, valid.sum { |run| run['score'][key] }]
-      end
-      tp = totals['true_positives']
-      totals['precision'] = ratio(tp, tp + totals['false_positives'])
-      totals['recall'] = ratio(tp, tp + totals['misses'])
-      totals['operational_failures'] = result['runs'].size - valid.size
-      totals['outcome_flips'] = result['runs'].group_by { |run| run['case'] }.count do |_, runs|
-        runs.map { |run| run['score']['actual_outcomes'] }.uniq.size > 1
-      end
-      totals['by_rule'] = %w[G1 G2 G3 G4].to_h do |id|
-        counts = %w[true_positives false_positives misses correct_abstentions unnecessary_abstentions].to_h do |key|
-          [key, valid.sum { |run| run['score']['by_rule'][id][key] }]
-        end
-        counts['precision'] = ratio(counts['true_positives'], counts['true_positives'] + counts['false_positives'])
-        counts['recall'] = ratio(counts['true_positives'], counts['true_positives'] + counts['misses'])
-        [id, counts]
-      end
-      result['metrics'] = totals
-      result['probability_ranges'] = probability_ranges(result['runs'])
+      finalize(result, prepared.size * repetitions, start)
       save(directory, result)
       result
     end
@@ -147,22 +128,44 @@ module SlopGuard
 
     private
 
-    def probability_ranges(runs)
-      runs.group_by { |run| run['case'] }.transform_values do |repeats|
-        signals = Hash.new { |hash, key| hash[key] = [] }
-        repeats.each do |run|
-          run['report']['rules'].each do |id, rule|
-            rule['readings'].each_with_index do |values, batch|
-              values.each { |question, probability| signals["#{id}/#{batch}/#{question}"] << probability }
-            end
-          end
-        end
-        signals.transform_values { |values| { 'min' => values.min, 'max' => values.max, 'samples' => values.size } }
+    # Prepare once so only model judgments vary between repetitions.
+    def prepare(split, repetitions, benchmark)
+      dataset.validate!
+      raise InvalidInput, 'Split must be development or holdout' unless %w[development holdout].include?(split)
+      raise InvalidInput, 'Benchmarks use development cases only' if benchmark && split != 'development'
+
+      maximum = benchmark ? 100 : 3
+      unless repetitions.is_a?(Integer) && (1..maximum).cover?(repetitions)
+        raise InvalidInput, "Repetitions must be between 1 and #{maximum}"
+      end
+
+      dataset.cases(split).map do |entry|
+        id = entry.fetch('id')
+        [id, Snapshot.new(dataset.input(id), profile: @profile), dataset.labels(id)]
       end
     end
 
-    def ratio(numerator, denominator)
-      denominator.zero? ? nil : numerator.fdiv(denominator)
+    def review_case(id, snapshot, labels, repeat, directory, client_factory)
+      budget = Budget.new(ledger: File.join(directory, 'requests.jsonl'))
+      client = client_factory.call(budget)
+      review_start = @clock.call
+      report = Evaluator.new(client: client, rules: rules).call(snapshot)
+      { 'case' => id, 'repeat' => repeat, 'report' => report,
+        'review_seconds' => @clock.call - review_start,
+        'score' => score(report, labels), 'attempts' => budget.attempts,
+        'input_tokens' => budget.usage, 'reserved_usd' => budget.reserved,
+        'estimated_usd' => budget.usage * JevClient::USD_PER_INPUT_TOKEN }
+    end
+
+    def finalize(result, expected_runs, start)
+      result['completed'] = result['runs'].size == expected_runs
+      result['passed'] = result['completed'] && result['runs'].all? { |run| run['score']['passed'] }
+      result['seconds'] = @clock.call - start
+      result['metrics'] = EvaluationAnalysis.new(result, case_ids: result['case_ids']).metrics
+    end
+
+    def append(directory, run)
+      File.open(File.join(directory, 'runs.jsonl'), 'a') { |file| file.puts(JSON.generate(run)) }
     end
 
     def save(directory, result)

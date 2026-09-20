@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "025"
 tags: [code-review, architecture]
@@ -66,3 +66,10 @@ README calls this a general-purpose reviewer, but `spec/` prefix checks, `spec/s
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- Profile carries the Ruby/RSpec conventions (test_path?, anchorable?, required_files, known_requires); Candidates and Snapshot consult it. A second language would supply its own Profile answers.

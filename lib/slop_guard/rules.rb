@@ -3,26 +3,39 @@
 module SlopGuard
   # Loads trusted questions and thresholds with a content revision.
   class Rules
-    attr_reader :definitions, :revision
+    # The saved benchmark rule set. The evaluation harness validates labels against exactly these IDs.
+    IDS = %w[G1 G2 G3 G4].freeze
+    KINDS = %w[tests design].freeze
+    SCENARIO_SOURCES = %w[behaviors failures].freeze
+    CANDIDATE_KINDS = %w[method class].freeze
 
-    def initialize(directory = File.join(ROOT, 'config/rules'), repository: false)
-      @definitions = %w[G1 G2 G3 G4].to_h do |id|
-        path = if repository && id == 'G3'
-                 File.join(ROOT, 'config/rules/ruby/g3.yml')
-               else
-                 File.join(directory, "#{id.downcase}.yml")
-               end
+    attr_reader :definitions, :revision, :files
+
+    # Wraps already-validated definitions, e.g. a single rule during threshold replay.
+    def self.from_definitions(definitions)
+      allocate.tap { |rules| rules.send(:assign, definitions, []) }
+    end
+
+    # Every `*.yml` directly inside the directory is a rule; its ID is the upper-cased file name.
+    def initialize(directory = File.join(ROOT, 'config/rules'))
+      files = Dir[File.join(directory, '*.yml')]
+      raise InvalidInput, 'No rule files found' if files.empty?
+
+      definitions = files.to_h do |path|
         rule = YAML.safe_load_file(path)
-        validate_questions!(id, rule)
-        valid = rule.fetch('low').between?(0, 1) && rule.fetch('high').between?(0, 1) &&
-                rule['low'] < rule['high']
-        raise InvalidInput, 'Invalid rule thresholds' unless valid
+        raise InvalidInput, 'Each rule file must be a mapping' unless rule.is_a?(Hash)
 
+        id = File.basename(path, '.yml').upcase
+        validate!(id, rule)
         [id, rule]
       end
-      @revision = SlopGuard.digest(definitions)
-    rescue KeyError, NoMethodError, TypeError, ArgumentError, Psych::Exception, SystemCallError
+      assign(definitions, files)
+    rescue KeyError, TypeError, ArgumentError, Psych::Exception, SystemCallError
       raise InvalidInput, 'Invalid rule configuration; expected g1.yml through g4.yml with valid thresholds'
+    end
+
+    def test_rule?(id)
+      definitions.fetch(id).fetch('kind') == 'tests'
     end
 
     def question(text)
@@ -33,20 +46,45 @@ module SlopGuard
 
     private
 
-    def validate_questions!(id, rule)
-      fields = %w[name applicable message correction] + (%w[G1 G2].include?(id) ? ['missing'] : ['global'])
-      valid = fields.all? { |key| rule.fetch(key).is_a?(String) && !rule[key].strip.empty? }
-      unless %w[G1 G2].include?(id)
-        candidates = rule.fetch('candidate')
-        valid &&= candidates.is_a?(Hash) && !candidates.empty? &&
-                  candidates.all? { |key, value| key.is_a?(String) && value.is_a?(String) && !value.strip.empty? }
-        %w[positive negative any_positive].each do |key|
-          names = key == 'any_positive' ? rule.fetch(key, []) : rule.fetch(key)
-          valid &&= names.is_a?(Array) && names.all? { |name| candidates.key?(name) }
-          valid &&= !names.empty? unless key == 'any_positive'
-        end
+    def assign(definitions, files)
+      @definitions = definitions
+      @files = files.map { |path| path.delete_prefix("#{ROOT}/") }
+      @revision = SlopGuard.digest(definitions)
+    end
+
+    def validate!(id, rule)
+      unless rule.fetch('low').between?(0, 1) && rule.fetch('high').between?(0, 1) && rule['low'] < rule['high']
+        raise InvalidInput, 'Invalid rule thresholds'
+      end
+
+      kind = rule.fetch('kind')
+      raise InvalidInput, "Rule #{id} kind must be one of #{KINDS.join(', ')}" unless KINDS.include?(kind)
+
+      kind == 'tests' ? validate_test_rule!(rule) : validate_design_rule!(rule)
+    end
+
+    def validate_test_rule!(rule)
+      valid = text?(rule, %w[name applicable message correction missing]) &&
+              SCENARIO_SOURCES.include?(rule.fetch('scenarios'))
+      raise InvalidInput, 'Invalid rule configuration: missing questions or scenario source' unless valid
+    end
+
+    def validate_design_rule!(rule)
+      candidates = rule.fetch('candidate')
+      valid = text?(rule, %w[name applicable message correction global]) &&
+              CANDIDATE_KINDS.include?(rule.fetch('candidate_kind')) &&
+              candidates.is_a?(Hash) && !candidates.empty? &&
+              candidates.all? { |key, value| key.is_a?(String) && value.is_a?(String) && !value.strip.empty? }
+      %w[positive negative any_positive].each do |key|
+        names = key == 'any_positive' ? rule.fetch(key, []) : rule.fetch(key)
+        valid &&= names.is_a?(Array) && candidates.is_a?(Hash) && names.all? { |name| candidates.key?(name) }
+        valid &&= !names.empty? unless key == 'any_positive'
       end
       raise InvalidInput, 'Invalid rule configuration: missing questions or candidate references' unless valid
+    end
+
+    def text?(rule, fields)
+      fields.all? { |key| rule.fetch(key).is_a?(String) && !rule[key].strip.empty? }
     end
   end
 end

@@ -43,7 +43,7 @@ RSpec.describe SlopGuard::Service::GitHubSource do
 
   it 'rejects incomplete PR file inventories' do
     pull['changed_files'] = 2
-    expect { source.snapshot(pull) }.to raise_error(SlopGuard::LimitExceeded, /inventory/)
+    expect { source.snapshot(pull) }.to raise_error(SlopGuard::InputTooLarge, /inventory/)
   end
 
   it 'rejects evidence collected across two PR revisions' do
@@ -59,7 +59,7 @@ RSpec.describe SlopGuard::Service::GitHubSource do
 
   it 'bounds blobs before issuing provider requests' do
     tree_entries.first['size'] = 16_385
-    expect { source.snapshot(pull) }.to raise_error(SlopGuard::LimitExceeded, /16 KiB/)
+    expect { source.snapshot(pull) }.to raise_error(SlopGuard::InputTooLarge, /16 KiB/)
   end
 
   it 'does not accept repository or SHA values from an unexpected source' do

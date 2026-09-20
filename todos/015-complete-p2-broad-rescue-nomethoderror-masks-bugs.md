@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "015"
 tags: [code-review, quality]
@@ -69,3 +69,10 @@ Five validators rescue NoMethodError alongside KeyError/TypeError and re-raise a
 - Drafted solution options
 
 
+
+### 2026-09-20 - Fixed
+
+**By:** Claude Code (Phases 2-5, branch `refactor/review-phases-2-6`)
+
+**Actions:**
+- No `rescue NoMethodError` remains in lib/; validators check shapes with is_a? before fetching. Ruby hash patterns need symbol keys, so JevClient#validate uses explicit checks.
