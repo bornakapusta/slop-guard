@@ -46,6 +46,8 @@ removed or changes meaning; additions keep the version.
 
 ## Exit codes
 
+Markdown output presents descriptive check names, a finding count, source locations, suggested changes, and unresolved checks. Raw rule outcomes and diagnostic signals remain available in a collapsed section. The GitHub App adds source links pinned to the reviewed commit and publishes supported findings as inline comments. Inconclusive checks stay in the summary; they are not treated as code defects. This presentation does not change the JSON schema or decision thresholds.
+
 | Code | `bin/review` | `bin/evaluate` |
 |---|---|---|
 | 0 | Review completed (concerns may be present). | All expected outcomes matched. |

@@ -250,7 +250,7 @@ RSpec.describe SlopGuard::GitSource do
     expect(client).to have_received(:ask).at_least(:once)
     expect(result['rules']['G1']['outcome']).to eq('inconclusive')
     expect(result['rules']['G1']['readings']).not_to be_empty
-    expect(SlopGuard::Report.markdown(result)).to include('G1: inconclusive')
+    expect(SlopGuard::Report.markdown(result)).to include('Behavior test coverage | Could not determine')
   end
   it 'keeps coverage gaps inconclusive even when no supported source lines changed' do
     File.symlink('/etc/passwd', File.join(@repository, 'lib/link.rb'))

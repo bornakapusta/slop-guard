@@ -7,16 +7,22 @@ This version supports one configured installation and one Ruby/RSpec repository 
 ## What a PR receives
 
 - Inline comments on supported changed lines, with the guideline, concern and suggested correction. These are grouped in a GitHub `COMMENT` review pinned to the reviewed commit.
-- One summary comment updated with the current commit, rule outcomes and evidence gaps. Findings without valid inline locations stay here. At most 20 inline comments are published per review; the summary retains all findings within GitHub's display limit.
+- One summary comment with the finding count, descriptive check names, and plain-language explanations of unresolved checks. Every finding includes a link to its source line at the reviewed commit. Technical rule IDs, snapshot IDs and finding signals are in collapsed diagnostics. At most 20 inline comments are published per review; the summary retains all findings within GitHub's display limit, including those GitHub cannot place inline.
 - Matching bot threads that GitHub still maps to the same path and line are updated. If a thread becomes outdated or its anchor moves, a new thread may be needed; historical threads are retained. Human comments and replies are untouched.
 
 Example inline comment next to a new error branch:
 
-> **Slop Guard · G2** (advisory)
+> **Slop Guard · Failure case coverage** (advisory)
+>
+> **Code:** `lib/input.rb:12` (linked to the reviewed commit)
+>
+> **Context:** Missing input raises `ArgumentError`.
 >
 > The inspected tests do not assert this documented failure outcome.
 >
-> Exercise the relevant invalid input through production code and assert its documented outcome.
+> **Suggested change:** Exercise the relevant invalid input through production code and assert its documented outcome.
+
+Unresolved checks are not findings and do not create inline accusations. A review with only uncertain judgments says “No actionable findings were reported” and “Some checks could not reach a conclusion.” It explains what needs manual review in the summary. This does not mean the change passed; finding quality still depends on the questions and supplied evidence.
 
 That is an illustration of the format, not a guarantee the model will flag a particular change. See the [calibration results](verification/threshold-calibration.md).
 
