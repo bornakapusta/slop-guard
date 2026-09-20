@@ -12,7 +12,7 @@ Implementation: [PR 1](https://github.com/bornakapusta/slop-guard/pull/1), branc
 
 The restored workflow matches the initial successful revision. The final documentation commit receives another full CI run; see the PR's latest checks for its exact revision and status. No merge attempt was made during the probes.
 
-Observed check contexts are `Tests`, `Static analysis`, `Dependencies`, `Fixtures`, and `Complexity`, from GitHub Actions integration 15368. Coverage reports 661/849 lines (77.85% as displayed by SimpleCov) and 218/330 branches (66.06%); there are 102 informational Metrics offenses. RSpec reports 58 examples, zero failures.
+Observed check contexts were `Tests`, `Static analysis`, `Dependencies`, `Fixtures`, and `Complexity` (the informational Complexity job has since been removed), from GitHub Actions integration 15368. Coverage reports 661/849 lines (77.85% as displayed by SimpleCov) and 218/330 branches (66.06%); there are 102 informational Metrics offenses. RSpec reports 58 examples, zero failures.
 
 Downloaded all 5 successful-run artifacts: exactly 7 allowlisted files (RSpec JSON, coverage HTML/JSON, RuboCop JSON, Metrics JSON, audit JSON, fixture JSON). GitHub expiry dates confirm 14-day retention. Inspected source inventory excludes specs, fixtures, dependencies and generated directories; both CLI entry points are included. The failing hosted spec run retained RSpec and coverage artifacts. Neither downloaded artifact set contains the local TypeSafe key or `.env`.
 

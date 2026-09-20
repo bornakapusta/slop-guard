@@ -44,6 +44,7 @@ The candidate set still fails the development gate, so it was not promoted or fr
 ## Reproduction and checks
 
 ```sh
+# Historical command; the calibration script has since been removed from the repository.
 ruby script/calibrate_thresholds.rb tmp/evaluations/20260919T195144-20791/report.json tmp/calibration/threshold-grid.json
 ```
 

@@ -26,20 +26,6 @@ bundle exec ruby bin/evaluate --live --split holdout --repeats 3 --frozen tmp/fr
 
 Each invocation creates a new evaluation directory with `report.json`, a `runs.jsonl` line per finished review and a request-reservation ledger. `report.json` is checkpointed after each repetition and finalized at the end; interrupted sessions keep every finished review in `runs.jsonl`, which the CI summary merges back in, and conservative cost reservations. The `$2` session limit spans one `bin/evaluate` invocation; `bin/review` starts a fresh ledger per review and is bounded by its per-review limits only. There is no automatic resume or request-cache path; a new invocation starts a new explicitly requested session. Do not keep retrying a failed holdout until it happens to pass.
 
-## Calibrating thresholds from saved readings
-
-Run the offline sweep against a complete live **development** report from the current engine, rules and dataset:
-
-```sh
-ruby script/calibrate_thresholds.rb tmp/evaluations/RUN/report.json tmp/calibration/threshold-grid.json
-```
-
-This makes no API calls. It tests 90 high/low pairs per rule through the actual evaluator: high 0.50–0.95 and low 0.05–0.45, both in 0.05 steps. It first verifies version fingerprints and reproduces every original rule result exactly. Request replay matches the complete evidence and question text. If changed thresholds enter a branch whose questions were never recorded, that candidate is marked unavailable; no readings are invented.
-
-Selection requires complete replay, zero false-positive findings and preserved correct abstentions. It then favors detected violations, exact rule matches, fewer unnecessary abstentions and smaller threshold changes, in that order. The output includes all candidates, original settings and the best replay settings. It does not modify the configured rules or qualify the reviewer. Fresh repeated development evaluations are needed to check whether an apparent improvement survives new model responses.
-
-See [the first threshold calibration](verification/threshold-calibration.md) for the measured results and remaining blockers. These examples have provisional labels and only one seeded violation per rule, so fitted thresholds cannot establish general accuracy.
-
 ## Scoring
 
 A true positive must match the rule, intended concern and an allowed source anchor. Wrong reasons/locations and duplicate accusations are false positives. An inconclusive answer on an answerable positive remains a miss in recall. Correct abstentions on intentionally incomplete cases and needless abstentions are separate counts. API failures fail completion and are reported separately from semantic accuracy. Raw readings remain available for inspection; the harness does not use another model to set ground truth.
@@ -58,10 +44,10 @@ After the workflow is merged into `main`, dispatch **Development evaluation** fr
 
 The job summary distinguishes a completed label match, mismatch, interrupted run and unavailable report. It reports provisional-label status, per-rule counts, repeat variability, versions, estimated input cost and request reservations. Download the raw report and ledger within 14 days. Code-quality CI and this workflow are independent; a green CI run is not model qualification. See [CI operation](ci.md).
 
-The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version. The 2026-09-20 remediation changed the prompts themselves (evidence selection, one batched request per rule, scenario and candidate text moved into the state), so `first-live-development`, `threshold-calibration` and `evaluation-benchmark` describe superseded prompts. The first run on the new prompts is [the Phase 4 development check](verification/phase4-development.md), with an offline threshold replay alongside it.
+The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version. The offline threshold-replay tool that produced the calibration reports has been removed; threshold changes now require fresh repeated development evaluations. The 2026-09-20 remediation changed the prompts themselves (evidence selection, one batched request per rule, scenario and candidate text moved into the state), so `first-live-development`, `threshold-calibration` and `evaluation-benchmark` describe superseded prompts. The first run on the new prompts is [the Phase 4 development check](verification/phase4-development.md).
 
 ## Accuracy and repeatability reports
 
-Use `bundle exec ruby bin/analyze-evaluation REPORT.json` to analyze saved evidence offline. Add `--json` for confusion matrices, per-case agreement, finding precision/recall and per-question sample variance. New reports include per-review latency. The [benchmark guide](evaluation-benchmark.md) documents the optional development-only `--benchmark --repeats 10` mode, partial-run handling and the unchanged budget guard.
+Use `bundle exec ruby bin/analyze-evaluation REPORT.json` to analyze saved evidence offline. Add `--json` for confusion matrices, per-case agreement, finding precision/recall and per-question sample variance. New reports include per-review latency. The [benchmark guide](evaluation-benchmark.md) documents the measurements, partial-run handling and the unchanged budget guard.
 
-Freezing now requires the report's labels to be marked reviewed. Exploratory benchmark reports cannot be frozen; use a fresh ordinary development evaluation after label review and calibration.
+Freezing requires the report's labels to be marked reviewed; use a fresh development evaluation after label review.

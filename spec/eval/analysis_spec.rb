@@ -2,6 +2,7 @@
 
 RSpec.describe SlopGuard::EvaluationAnalysis do
   let(:ids) { %w[missing_test corrected] }
+  let(:fingerprint) { 'f' * 64 }
 
   def row(id:, repeat:, actual: 'concern', expected: 'concern', failed: false, reading: 0.8)
     outcomes = %w[G1 G2 G3 G4].to_h { |rule| [rule, rule == 'G1' ? actual : 'not_applicable'] }
@@ -18,7 +19,8 @@ RSpec.describe SlopGuard::EvaluationAnalysis do
                    'expected_outcomes' => expected_outcomes, 'by_rule' => by_rule },
       'report' => { 'snapshot' => id, 'status' => failed ? 'failed' : 'complete',
                     'rules' => outcomes.to_h do |rule, outcome|
-                      [rule, { 'outcome' => outcome, 'readings' => [{ 'concern' => reading }] }]
+                      [rule, { 'outcome' => outcome, 'readings' => [{ 'concern' => reading }],
+                               'question_fingerprints' => [fingerprint] }]
                     end } }
   end
 
@@ -60,7 +62,7 @@ RSpec.describe SlopGuard::EvaluationAnalysis do
     expect(result['by_rule']['G1']['accuracy']).to be_within(1e-10).of(5.0 / 6)
     expect(result['per_case'][ids.first]['outcome_vector_repeat_agreement']).to eq(1.0 / 3)
     expect(result['by_rule']['G1']['mean_case_repeat_agreement']).to eq(2.0 / 3)
-    signal = result['probability_variance'][ids.first]['G1/legacy-0/concern']
+    signal = result['probability_variance'][ids.first]["G1/#{fingerprint}/concern"]
     expect(signal['mean']).to be_within(1e-10).of(0.7)
     expect(signal['sample_variance']).to be_within(1e-10).of(0.03)
   end
@@ -95,14 +97,14 @@ RSpec.describe SlopGuard::EvaluationAnalysis do
     expect(result['usage']['request_attempts']).to eq(6)
   end
 
-  it 'does not invent perfect stability, variance or timing for a partial historical report' do
+  it 'does not invent perfect stability, variance or timing for a partial report' do
     report['runs'] = [report['runs'].first]
     report['runs'].first.delete('review_seconds')
     report.delete('metrics')
     result = analyze
     expect(result['complete']).to be(false)
     expect(result['by_rule']['G1']['mean_case_repeat_agreement']).to be_nil
-    expect(result['probability_variance'][ids.first]['G1/legacy-0/concern']['sample_variance']).to be_nil
+    expect(result['probability_variance'][ids.first]["G1/#{fingerprint}/concern"]['sample_variance']).to be_nil
     expect(result['review_latency_seconds']).to eq('samples' => 0, 'mean' => nil, 'p50' => nil, 'p95' => nil)
     expect(described_class.new(report, case_ids: ids).markdown).to include('PARTIAL', 'PROVISIONAL', 'unavailable')
   end

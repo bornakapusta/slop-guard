@@ -9,11 +9,11 @@ origin: docs/brainstorms/2026-09-19-slop-guard-demo-requirements.md
 
 # feat: Build and evaluate Slop Guard
 
-**Primary target:** `slop-guard`. Paths below are relative to that repository unless a unit explicitly names the separate `log-parser` demo repository (currently supplied as `log-parser-master`).
+**Primary target:** `slop-guard`. Paths below are relative to that repository unless a unit explicitly names the separate sample-project demo repository.
 
 ## Overview and Problem Frame
 
-Build a general-purpose code reviewer implemented in Ruby, with GitHub App delivery. This milestone uses log-parser PRs to evaluate four explicit guidelines: observable behavior tests (G1), relevant failure-case tests (G2), focused responsibilities (G3), and justified abstractions (G4). Findings are advisory, appear inline where possible, and cite the applicable guideline and evidence. Jev supplies bounded judgments; Ruby owns context selection, thresholds, explanations, and GitHub actions.
+Build a general-purpose code reviewer implemented in Ruby, with GitHub App delivery. This milestone uses sample-project PRs to evaluate four explicit guidelines: observable behavior tests (G1), relevant failure-case tests (G2), focused responsibilities (G3), and justified abstractions (G4). Findings are advisory, appear inline where possible, and cite the applicable guideline and evidence. Jev supplies bounded judgments; Ruby owns context selection, thresholds, explanations, and GitHub actions.
 
 Prove review quality before investing in GitHub delivery. Phase A qualifies the four rules using saved patches and live Jev evaluations. Phase B connects the same engine to GitHub and demonstrates opening a PR, receiving feedback, fixing the issue, and seeing the review update. A working webhook is not evidence of a useful reviewer.
 
@@ -42,22 +42,22 @@ The user selected the GitHub App architecture, one Ruby demo project, advisory f
 
 One installed demo repository; no dashboard, arbitrary guideline ingestion, general agent framework, automatic fixes, automatic approval, merge blocking, or other languages. Do not replicate lint or claim that reading a test proves it passes. Review only concerns caused or exposed by the PR; unchanged source is context, not an invitation to audit the project.
 
-Existing source examples from `api-main` inform the four adapted guidelines. They are not runtime dependencies and do not introduce Rails, databases, or adapter frameworks into log-parser. No proprietary `api-main` source or fixtures enter the evaluation corpus or model requests.
+Existing source examples from an internal reference codebase inform the four adapted guidelines. They are not runtime dependencies and do not introduce Rails, databases, or adapter frameworks into the sample project. No proprietary source or fixtures from that codebase enter the evaluation corpus or model requests.
 
 ### Work in the Separate Demo Repository
 
-Unit 1 establishes log-parser's runtime, baseline, adopted guidelines and PR template. Unit 8 creates controlled demo PRs there. These are part of this milestone but must remain isolated from the bot's source and credentials. Preserve the original supplied project; make compatibility changes explicit in the demo baseline.
+Unit 1 establishes the sample project's runtime, baseline, adopted guidelines and PR template. Unit 8 creates controlled demo PRs there. These are part of this milestone but must remain isolated from the bot's source and credentials. Preserve the original supplied project; make compatibility changes explicit in the demo baseline.
 
 ## Context and Research
 
 ### Local Evidence
 
 - Slop Guard has the origin document but no application, manifest, deployment configuration, local guidance or `docs/solutions/` learnings. Its directory and the supplied parser directory were not Git checkouts when inspected. Do not invent remotes or overwrite an existing remote during setup.
-- Log-parser's `Gemfile` pins Ruby 2.6.5; `Gemfile.lock` contains RSpec 3.10 and RuboCop 1.21. `lib/file_reader/parser.rb` reads log lines, `lib/path_tracker/page.rb` counts visits, `lib/path_tracker/pages.rb` groups/sorts pages, and `lib/presenters/pages_presenter.rb` formats results. These boundaries give G3 concrete project context.
+- The sample project's `Gemfile` pins Ruby 2.6.5; `Gemfile.lock` contains RSpec 3.10 and RuboCop 1.21. `lib/file_reader/parser.rb` reads log lines, `lib/path_tracker/page.rb` counts visits, `lib/path_tracker/pages.rb` groups/sorts pages, and `lib/presenters/pages_presenter.rb` formats results. These boundaries give G3 concrete project context.
 - Source and tests under the inspected Ruby paths total approximately 19 KB before numbering/context metadata. This supports inspecting the whole small corpus instead of building semantic retrieval.
 - `spec/tests/file_reader/parser_spec.rb` checks page count and a nil-file error; it does not by itself establish all unique-visitor behavior. Other specs must be included before concluding a scenario is absent.
 - Source observation to characterize: `bin/log_parser.rb` rescues the `Errors::FileParsing` module, while exception classes inherit `Errors::FileParsing::Base`. No failure path has been executed in planning. Establish CLI behavior before using it as a labeled example.
-- The adopted guideline sources are recorded in the origin: `api-main`'s `docs/adapter-pattern.md`, `.github/PULL_REQUEST_TEMPLATE.md`, and `.rubocop.yml`. The separately linked primary engineering documentation was unavailable.
+- The adopted guideline sources are recorded in the origin: the reference codebase's adapter documentation, pull request template, and RuboCop configuration. The separately linked primary engineering documentation was unavailable.
 
 ### External Contracts Checked
 
@@ -137,7 +137,7 @@ Validate that labels are defensible from the supplied evidence and that the demo
 
 ### Gates
 
-1. **Baseline gate:** log-parser's selected baseline has documented test/lint results and stable behavior; fixtures and human labels pass validation.
+1. **Baseline gate:** the sample project's selected baseline has documented test/lint results and stable behavior; fixtures and human labels pass validation.
 2. **Rule gate:** all four guidelines satisfy their agreed development outcomes and both held-out outcomes in all three runs, with correct evidence and no extra accusations. Incomplete cases abstain correctly. Freeze model, rules, context-builder version and thresholds. If a rule fails, stop the four-rule demo qualification, report the failure, and revise/evaluate; do not silently drop a selected guideline or substitute canned live answers.
 3. **Delivery gate:** automated integration tests verify authenticated ingestion, durable work, duplicate/restart recovery, same-SHA description changes, new-head cancellation, publication reconciliation and partial failures.
 4. **Live gate:** a real GitHub PR and fix produce the expected live review cycle. Separately demonstrate an incomplete-context case and an injected provider failure. Preserve run IDs, head SHAs, report versions and links as evidence.
@@ -196,11 +196,11 @@ Dockerfile, compose.yml       demo runtime and persistent volume
 
 - Slop Guard: `README.md`, `Gemfile`, `Gemfile.lock`, `.ruby-version`, `.gitignore`, `.env.example`, `docs/guidelines.md`, `docs/evaluation.md`, `config/demo.yml`, `eval/baselines/`, `eval/development/`, `eval/holdout/`, `eval/manifest.yml`.
 - Tests: `spec/eval/fixture_contract_spec.rb`.
-- Separate log-parser repo: `Gemfile`, `Gemfile.lock`, `.ruby-version`, `README.md`, `docs/engineering-guidelines.md`, `.github/PULL_REQUEST_TEMPLATE.md`; characterization in `spec/tests/cli/log_parser_spec.rb` and relevant existing specs.
+- Separate sample-project repo: `Gemfile`, `Gemfile.lock`, `.ruby-version`, `README.md`, `docs/engineering-guidelines.md`, `.github/PULL_REQUEST_TEMPLATE.md`; characterization in `spec/tests/cli/log_parser_spec.rb` and relevant existing specs.
 
 **Approach:** Use Ruby 3.4 for the bot. Characterize the supplied parser behavior first, then establish an explicit Ruby 3.4 demo baseline with only necessary dependency/compatibility changes. If baseline errors are reproduced, fix them separately before introducing labeled defects; record what changed. Copy adapted guidelines, not company-specific implementation. Fixture authors define all expected outcomes before observing model scores.
 
-**Patterns:** log-parser's `spec/tests/` organization and actual parser/counting/presenter boundaries; the origin's source provenance.
+**Patterns:** the sample project's `spec/tests/` organization and actual parser/counting/presenter boundaries; the origin's source provenance.
 
 **Execution note:** Characterization-first for the legacy CLI; fixture labels before model tuning.
 
@@ -220,7 +220,7 @@ Dockerfile, compose.yml       demo runtime and persistent volume
 
 **Approach:** Normalize before/head files, diff ranges, PR scenarios, trusted guideline revision and a completeness manifest. Use Prism nodes for class/method/test ranges. Handle nested RSpec contexts and setup in the supplied simple test style; flag unsupported dynamic cases. Parse the controlled template's flat scenario bullets. Anchor candidates using paths, qualified names, scenario identities and source fingerprints rather than line numbers alone. Restrict local fixture reads to the fixture root; reject traversal and symlinks.
 
-**Patterns:** log-parser's RSpec calls and `require_relative` edges; Prism source-location documentation. Parser code locates evidence; it does not judge guideline violations.
+**Patterns:** the sample project's RSpec calls and `require_relative` edges; Prism source-location documentation. Parser code locates evidence; it does not judge guideline violations.
 
 **Test scenarios:** existing test outside diff retained; nested setup accompanies assertion; file rename and deletion preserve before/head attribution; line-number shift retains logical candidate identity; parse error, unknown helper or unresolved shared example yields a gap; oversized file/request does not truncate silently; missing/compound expectations are explicit; source strings containing instructions are kept as data.
 
@@ -353,13 +353,13 @@ The check is not a required merge check. Check conclusions are not approvals. A 
 
 **Dependencies:** All prior gates; actual App installation, Jev access and webhook URL supplied during setup.
 
-**Files:** `Dockerfile`, `compose.yml`, `.github/workflows/ci.yml`, `docs/github-app-setup.md`, `docs/demo-runbook.md`, `README.md`; tests `spec/integration/configuration_spec.rb`. Separate log-parser repo: `.github/workflows/ci.yml` and controlled demonstration branches/PRs; do not add the bot source there.
+**Files:** `Dockerfile`, `compose.yml`, `.github/workflows/ci.yml`, `docs/github-app-setup.md`, `docs/demo-runbook.md`, `README.md`; tests `spec/integration/configuration_spec.rb`. Separate sample-project repo: `.github/workflows/ci.yml` and controlled demonstration branches/PRs; do not add the bot source there.
 
 **Approach:** Run one receiver and one worker on a single machine with a shared local SQLite volume. Bind the receiver to loopback and forward HTTPS from an operator-selected tunnel; validate signatures even behind forwarding. Pin dependencies and container inputs. CI runs deterministic specs/lint and builds the image; deployment selects a reviewed bot revision and restarts the local demo runtime. No provider secrets go into ordinary CI or the demo application's test job. Document startup validation, delivery redelivery, report locations, state backup and rollback by stopping the worker and restoring a compatible image/schema pair.
 
 Provide empty placeholders for the Jev key, GitHub App ID/private-key path, webhook secret, installed repository ID and database path. Fail startup clearly on invalid required configuration. Limit persistence to run metadata/results and delete transient source after evaluation; exclude runtime state from version control. Rotate/revoke secrets through the service settings rather than code changes.
 
-**Patterns:** Existing log-parser execution semantics; GitHub's App installation and webhook delivery tools. No hosted deployment is claimed until reachable callback delivery is observed.
+**Patterns:** Existing sample-project execution semantics; GitHub's App installation and webhook delivery tools. No hosted deployment is claimed until reachable callback delivery is observed.
 
 **Test scenarios:** missing configuration prevents startup without printing secrets; persisted queue survives container restart; deterministic CI works without external keys; real PR receives correct summary and inline evidence; pushed fix updates current findings; valid clean PR produces no concerns; provider outage and incomplete source show honest status; manually redelivered event adds no duplicate current finding.
 

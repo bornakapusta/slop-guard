@@ -9,7 +9,7 @@ topic: ci-code-quality
 
 Contributors currently run Slop Guard's checks locally. The inspected checkout has RSpec, RuboCop and evaluation validation, but no CI workflows. Pull requests need consistent, visible checks for the reviewer's own code. A successful code-quality run must not imply that Jev's judgments are qualified.
 
-The user selected a practical CI baseline. Deployment was explicitly deferred after discussing full CI/CD. Slop Guard remains a general-purpose reviewer; the log parser is its current evaluation fixture.
+The user selected a practical CI baseline. Deployment was explicitly deferred after discussing full CI/CD. Slop Guard remains a general-purpose reviewer; the bundled sample project is its current evaluation fixture.
 
 ## Requirements
 

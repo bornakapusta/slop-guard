@@ -94,7 +94,7 @@ RSpec.describe 'local commands' do
     expect(JSON.parse(stdout)['gaps']).to eq([])
   end
 
-  it 'analyzes saved evidence offline and rejects an invalid benchmark invocation' do
+  it 'analyzes saved evidence offline' do
     client = stub_client { |_state, questions| questions.transform_values { 0.5 } }
     Dir.mktmpdir do |directory|
       runner = SlopGuard::EvalRunner.new(dataset: fixture_dataset)
@@ -111,9 +111,6 @@ RSpec.describe 'local commands' do
       _, _, status = run_command('bin/analyze-evaluation', path)
       expect(status.exitstatus).to eq(2)
     end
-    _, stderr, status = run_command('bin/evaluate', '--validate', '--benchmark')
-    expect(status.exitstatus).to eq(2)
-    expect(stderr).to include('--benchmark requires --live --split development')
   end
 
   it 'validates fixtures offline, rejects conflicting evaluate modes and a missing credential file' do

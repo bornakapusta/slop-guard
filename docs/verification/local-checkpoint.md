@@ -9,7 +9,7 @@ Date: 2026-09-19. Runtime: Ruby 3.4.5 on macOS arm64. These are local execution 
 | Demo parser RSpec | PASS: 35 examples, 0 failures |
 | Demo parser Ruby lint | PASS: 19 files, no offenses |
 | Dataset contract | PASS: 16 development + 8 holdout cases; labels kept outside model state |
-| Complete patch execution | PASS: all 20 complete patches; see fixture-runs.json |
+| Complete patch execution | PASS: all 20 complete patches |
 | Incomplete-context inputs | PASS: 4 intentionally omitted-context cases report gaps |
 | Largest serialized state | 24,202 bytes, under the 28 KiB state-plus-question bound for current questions |
 | Live Jev evaluation | NOT VERIFIED: key not configured; no model requests made |

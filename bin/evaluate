@@ -8,13 +8,10 @@ require_relative '../lib/slop_guard/eval'
 
 options = { split: 'development', repeats: 3 }
 parser = OptionParser.new do |opts|
-  opts.banner = 'Usage: bin/evaluate --validate | --live [--split development|holdout] [--repeats 1..3] [--benchmark]'
+  opts.banner = 'Usage: bin/evaluate --validate | --live [--split development|holdout] [--repeats 1..3]'
   opts.on('--validate', 'Check cases and context without a model call') { options[:validate] = true }
   opts.on('--live', 'Run paid fresh evaluations') { options[:live] = true }
   opts.on('--split NAME') { |value| options[:split] = value }
-  opts.on('--benchmark', 'Development benchmark: allow 1..100 repeats, stop on operational failure') do
-    options[:benchmark] = true
-  end
   opts.on('--repeats N', Integer) { |value| options[:repeats] = value }
   opts.on('--frozen PATH', 'Required version lock for a holdout run') { |value| options[:frozen] = value }
   opts.on('--freeze REPORT', 'Create a version lock from a passing live development report') do |value|
@@ -28,10 +25,6 @@ begin
   parser.parse!
   raise SlopGuard::InvalidInput, parser.to_s unless ARGV.empty? && [options[:validate], options[:live],
                                                                     !options[:freeze].nil?].count(true) == 1
-
-  if options[:benchmark] && (!options[:live] || options[:split] != 'development')
-    raise SlopGuard::InvalidInput, '--benchmark requires --live --split development'
-  end
 
   dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
   runner = SlopGuard::EvalRunner.new(dataset: dataset)
@@ -68,7 +61,7 @@ begin
     directory = File.join(SlopGuard::ROOT, 'tmp/evaluations',
                           "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
     result = runner.run(split: options[:split], repetitions: options[:repeats], directory: directory,
-                        client_factory: factory, live: true, benchmark: options.fetch(:benchmark, false))
+                        client_factory: factory, live: true)
     puts JSON.pretty_generate('passed' => result['passed'], 'metrics' => result['metrics'],
                               'report' => File.join(directory, 'report.json'))
     exit 1 unless result['passed']

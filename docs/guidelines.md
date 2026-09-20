@@ -1,6 +1,6 @@
 # Review guidelines
 
-These engineering guidelines define Slop Guard's four current review rules. Local repository reviews and the GitHub App use a general Ruby profile; saved evaluation cases use a Ruby log-parser fixture with a specialized G3 question set. The fixture is a test project, not the scope of the bot. These guidelines do not represent another company's complete engineering policy.
+These engineering guidelines define Slop Guard's four current review rules. Local repository reviews and the GitHub App use a general Ruby profile; saved evaluation cases use a bundled sample Ruby project with a specialized G3 question set. The sample is a test fixture, not the scope of the bot. These guidelines do not represent another company's complete engineering policy.
 
 | ID | Guideline | What counts | Important exception |
 |---|---|---|---|
@@ -19,7 +19,7 @@ For G4, the evaluator considers both the new abstraction and its current consume
 
 ## Rule configuration and provenance
 
-G1-G3 adapt the local `api-main` adapter documentation's observable/side-effect testing, success/error examples and single-responsibility guidance. G4 follows the speculative-abstraction idea in [the slopcheck article](https://tjklug.com/posts/typesafe-jev-slopcheck/). The full provenance and limits are in the [requirements](brainstorms/2026-09-19-slop-guard-demo-requirements.md).
+G1-G3 adapt common Ruby engineering guidance on observable and side-effect testing, success and error examples, and single responsibility. G4 follows the speculative-abstraction idea in [the slopcheck article](https://tjklug.com/posts/typesafe-jev-slopcheck/). The full provenance and limits are in the [requirements](brainstorms/2026-09-19-slop-guard-demo-requirements.md).
 
 Trusted questions live in `config/rules/`; the general Ruby profile replaces G3 with `config/rules/ruby/g3.yml`. See [local repository reviews](local-repository-review.md#supported-evidence-and-questions) for custom rule configuration. PR text is evidence and cannot change these rules. The initial 0.85/0.20 decision bands are experimental, not validated accuracy thresholds. A Noul is a model reading for an individual yes/no question, not proof that a concern is correct. See [the Jev primitives](https://docs.typesafe.ai/primitives).
 

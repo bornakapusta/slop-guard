@@ -26,4 +26,4 @@ Specific development evidence:
 
 Next: inspect question wording and decision gates against these development examples, preserving the labels and this failed report. Do not simply lower thresholds until examples pass. Keep holdout untouched until development passes with frozen versions. GitHub implementation remains gated.
 
-The adjacent JSON summary records version fingerprints and case outcomes. The full readings remain in ignored tmp/evaluations/20260919T195144-20791/report.json.
+The raw JSON summary is no longer checked in; this note is the recorded summary. The full readings remain in ignored tmp/evaluations/20260919T195144-20791/report.json.

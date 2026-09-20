@@ -138,13 +138,7 @@ module SlopGuard
         runs.each do |run|
           run.fetch('report').fetch('rules').each do |id, rule|
             rule.fetch('readings').each_with_index do |values, batch|
-              # Reports written since 2026-09-20 always carry fingerprints. The committed docs/verification
-              # reports predate them and are still analysed offline, so batch position stands in for those.
-              identity = if rule.key?('question_fingerprints')
-                           rule.fetch('question_fingerprints').fetch(batch)
-                         else
-                           "legacy-#{batch}"
-                         end
+              identity = rule.fetch('question_fingerprints').fetch(batch)
               values.each { |question, value| signals["#{id}/#{identity}/#{question}"] << value }
             end
           end
@@ -255,7 +249,9 @@ module SlopGuard
         end
 
         rules.each_value do |rule|
-          unless rule.is_a?(Hash) && rule['readings'].is_a?(Array) && rule['readings'].all?(Hash)
+          fingerprints = rule.is_a?(Hash) ? rule['question_fingerprints'] : nil
+          unless rule.is_a?(Hash) && rule['readings'].is_a?(Array) && rule['readings'].all?(Hash) &&
+                 fingerprints.is_a?(Array) && fingerprints.size == rule['readings'].size
             raise InvalidInput, 'Invalid readings'
           end
 

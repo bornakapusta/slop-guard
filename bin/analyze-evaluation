@@ -18,11 +18,7 @@ begin
   split = report.fetch('split')
   raise SlopGuard::InvalidInput, 'Unknown evaluation split' unless %w[development holdout].include?(split)
 
-  # Committed docs/verification reports predate case_ids; the manifest supplies them for those historical files.
-  ids = report['case_ids'] || SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')).cases(split).map do |entry|
-    entry.fetch('id')
-  end
-  analysis = SlopGuard::EvaluationAnalysis.new(report, case_ids: ids)
+  analysis = SlopGuard::EvaluationAnalysis.new(report, case_ids: report.fetch('case_ids'))
   puts(options[:json] ? JSON.pretty_generate(analysis.to_h) : analysis.markdown)
 rescue SlopGuard::Error, OptionParser::ParseError, SystemCallError, JSON::ParserError, KeyError, TypeError => e
   warn SlopGuard.printable(e.message, keep_newlines: true)
