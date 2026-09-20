@@ -2,7 +2,7 @@
 
 An experimental general-purpose code reviewer, implemented in Ruby, that asks Jev focused questions about code changes. Ruby selects evidence and decides which advisory findings to report.
 
-The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the current CLI and evidence extraction support the supplied Ruby evaluation cases.
+The current evaluation dataset uses a Ruby log parser as a sample project. The reviewer is intended for use across projects; the CLI supports the supplied evaluation cases and committed changes in local Ruby/RSpec repositories.
 
 **Current status:** local review engine and evaluation harness implemented. Experimental threshold calibration detected one of four seeded violations in three fresh development passes; the rules are not qualified and defaults remain unchanged. See [the calibration results](docs/verification/threshold-calibration.md). GitHub App delivery is the next phase, gated on successful evaluation.
 
@@ -67,6 +67,26 @@ bundle exec ruby bin/review g2-violation --inspect
 ```
 
 Validation and inspection make no model requests. The supplied 24 cases include 16 development examples and 8 held-out examples. Every case has a readable `change.diff`, an `input.json` structured patch, and separate expected `labels.json`.
+
+## Review another local repository
+
+Run from the Slop Guard checkout with Ruby 3.4 activated. The target must be a local Git repository with the base and head commits available. This reviews committed changes from their merge base; staged, unstaged and untracked files are excluded.
+
+Write a change description with `## Expected behavior` and `## Failure cases` sections. Use [the example](docs/examples/review-expectations.md) as a starting point and replace its scenarios with the behavior your change promises.
+
+```sh
+# Offline: inspect exactly which committed source and tests will be sent.
+bundle exec ruby bin/review --repo /path/to/project \
+  --base main --head HEAD --expectations /path/to/change.md --inspect
+
+# Paid: send that evidence to Jev using Slop Guard's local API key.
+bundle exec ruby bin/review --repo /path/to/project \
+  --base main --head HEAD --expectations /path/to/change.md --live
+```
+
+Repository mode uses general Ruby responsibility questions; the saved log-parser benchmarks keep their original questions. Reports record the base, head, merge-base and rule revision. No GitHub token, webhook server or installation in the target repo is needed.
+
+This is a bounded Ruby/RSpec reviewer, not a whole-repository audit. Source selection, custom rules, size limits and offline test behavior are explained in [local repository reviews](docs/local-repository-review.md).
 
 ## Review one case with Jev
 

@@ -4,6 +4,7 @@
 
 Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The log parser is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
 
+- `lib/slop_guard/git_source.rb`: bounded, read-only local Git snapshots for repository reviews.
 - `lib/slop_guard/`: evidence extraction, rule evaluation, provider client, budgets, and reports; `lib/slop_guard.rb` loads the engine.
 - `bin/review`, `bin/evaluate`, and `bin/analyze-evaluation`: review, evaluation, and offline analysis entry points.
 - `config/rules/`: trusted YAML questions and thresholds for rules G1–G4.
@@ -48,3 +49,5 @@ Keep `TYPESAFE_API_KEY` in ignored `.env`, using `.env.example` as a template. N
 See `docs/ci.md` for the required Tests, Static analysis, Dependencies and Fixtures checks. Coverage and complexity have no numeric gates. PR checks run without application secrets. Paid development evaluation is a separate manual main-only workflow using the `jev-evaluation` environment; it does not qualify the model or block merges.
 
 Evaluation benchmarks must separate outcome agreement from finding correctness and repeat consistency. See `docs/evaluation-benchmark.md`. Keep label review status truthful, report independent-case counts, and preserve the existing budget guards.
+
+Local repository reviews compare committed revisions from their merge base. Test with temporary Git repositories and stubbed Jev responses; keep inspection offline and do not execute target code. See `docs/local-repository-review.md`. Preserve the saved benchmark rule definitions when changing the general Ruby profile.

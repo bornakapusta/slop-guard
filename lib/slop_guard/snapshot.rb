@@ -7,11 +7,12 @@ module SlopGuard
   class Snapshot
     attr_reader :files, :before, :expectations, :candidates, :gaps, :changed, :identity, :body, :skipped
 
-    def initialize(input)
+    def initialize(input, profile: nil)
       @files = input.fetch('files')
       @before = input.fetch('before')
       @body = input.fetch('pr_body')
       @gaps = input.fetch('omitted', []).map { |path| "Omitted file: #{path}" }
+      gaps.concat(input.fetch('source_gaps', []))
       raise InvalidInput, 'PR body exceeds 16 KiB' if body.bytesize > 16_384
 
       [files, before].each do |tree|
@@ -29,9 +30,11 @@ module SlopGuard
         end
       end
       gaps << 'More than 100 files' if files.size > 100
-      profile = YAML.safe_load_file(File.join(ROOT, 'config/demo.yml'))
+      @identity = SlopGuard.digest(profile ? [input, profile] : input)
+      profile ||= YAML.safe_load_file(File.join(ROOT, 'config/demo.yml'))
       permitted = ->(path) { profile.fetch('file_patterns').any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) } }
-      @skipped = (files.keys | before.keys).reject { |path| permitted.call(path) }
+      @skipped = ((files.keys | before.keys).reject { |path| permitted.call(path) } +
+                  input.fetch('skipped_paths', [])).uniq.sort
       @files = files.select { |path, _| permitted.call(path) }
       @before = before.select { |path, _| permitted.call(path) }
       @changed = changes
@@ -40,7 +43,6 @@ module SlopGuard
       @candidates = Candidates.new(files)
       gaps.concat(candidates.gaps)
       gaps << 'RSpec setup is missing' unless files.key?('spec/spec_helper.rb')
-      @identity = SlopGuard.digest(input)
     end
 
     def changed_candidates(kind)
@@ -66,7 +68,9 @@ module SlopGuard
         line = changed.fetch(candidate['path'], []).grep(candidate['line']..candidate['end_line']).first
         return { 'path' => candidate['path'], 'line' => line } if line
       end
-      path, lines = changed.find { |file, value| file.start_with?('lib/', 'bin/') && !value.empty? }
+      path, lines = changed.find do |file, value|
+        !file.start_with?('spec/') && (file.end_with?('.rb') || file.start_with?('bin/', 'exe/')) && !value.empty?
+      end
       path ? { 'path' => path, 'line' => lines.first } : nil
     end
 

@@ -1,0 +1,11 @@
+version: 1
+file_patterns:
+  - lib/**/*.rb
+  - app/**/*.rb
+  - bin/*
+  - exe/*
+  - '*.rb'
+  - spec/**/*.rb
+  - spec/fixtures/**/*.log
+  - spec/fixtures/**/*.txt
+  - .rspec

@@ -18,7 +18,7 @@ module SlopGuard
         @rule = rule
         @result = { 'outcome' => 'not_applicable', 'findings' => [], 'gaps' => [], 'readings' => [] }
         @results[id] = @result
-        next if snapshot.changed.empty?
+        next if snapshot.changed.empty? && snapshot.gaps.empty?
 
         unless snapshot.gaps.empty?
           inconclusive(snapshot.gaps.join('; '))
