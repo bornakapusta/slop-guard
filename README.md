@@ -118,7 +118,3 @@ Both examples are simplified API scenarios illustrating the checks, not recorded
 - [Install and host the GitHub App](docs/github-app.md)
 
 For details, see the [review guidelines](docs/guidelines.md), [evaluation guide](docs/evaluation.md), [benchmarks](docs/evaluation-benchmark.md), and [CI documentation](docs/ci.md).
-
-**Status:** experimental and advisory. Current support is limited to small Ruby/RSpec projects. Review accuracy and live GitHub delivery still need validation; see the [recorded evaluation results](docs/verification/threshold-calibration.md).
-
-Inspired by TJ Klug's [slopcheck](https://tjklug.com/posts/typesafe-jev-slopcheck/) approach to combining focused model judgments with decisions made in code.

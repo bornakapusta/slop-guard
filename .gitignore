@@ -12,6 +12,11 @@ vendor/
 # Generated reports and coverage (eval/ contains versioned fixtures)
 tmp/
 coverage/
+todos/
+claude/
+docs/brainstorms/
+docs/plans/
+docs/verification/
 
 # Local workspace and macOS metadata
 .context/
