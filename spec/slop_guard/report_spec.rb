@@ -2,13 +2,13 @@
 
 RSpec.describe SlopGuard::Report do
   it 'escapes mentions, links and HTML from untrusted evidence' do
-    text = described_class.escape('<script> @everyone [link](http://example.com) `code`')
+    text = SlopGuard::Markdown.escape('<script> @everyone [link](http://example.com) `code`')
     expect(text).not_to include('<script>', '@everyone', '[link]')
     expect(text).to include('&lt;script&gt;')
   end
 
   it 'shows control characters and line separators as visible escapes so evidence cannot forge report structure' do
-    text = described_class.escape("fixture\n## Injected\r- fake\e[31m\u2028tail")
+    text = SlopGuard::Markdown.escape("fixture\n## Injected\r- fake\e[31m\u2028tail")
     expect(text).to eq('fixture\n## Injected\r- fake\e\[31m\u2028tail')
     expect(text.lines.size).to eq(1)
     gap = "Missing fixture: spec/x\n## Forged heading"
@@ -74,9 +74,9 @@ RSpec.describe 'readable review results' do
 
   it 'encodes filenames in source links and escapes the displayed label' do
     anchor = { 'path' => 'lib/a ](evil)#?.rb', 'line' => 3 }
-    link = SlopGuard::Report.location(anchor, source_url: 'https://github.com/owner/demo/blob/abc')
+    link = SlopGuard::Markdown.location(anchor, source_url: 'https://github.com/owner/demo/blob/abc')
     expect(link).to end_with('/lib/a%20%5D%28evil%29%23%3F%2Erb#L3)')
     expect(link).to start_with('[lib/a \\](evil)#?.rb:3](')
-    expect(SlopGuard::Report.location(anchor)).not_to include('https://')
+    expect(SlopGuard::Markdown.location(anchor)).not_to include('https://')
   end
 end

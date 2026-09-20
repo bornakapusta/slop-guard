@@ -28,7 +28,7 @@ module SlopGuard
     def run(argv)
       options = parse(argv.dup)
       profile = load_profile(options)
-      rules = Rules.new(options.fetch(:rules, profile.rules_dir))
+      rules = Rules.load(options.fetch(:rules, profile.rules_dir))
       return show_rules(profile, rules) if options[:show_rules]
 
       snapshot = build_snapshot(options, profile)
@@ -106,24 +106,20 @@ module SlopGuard
     end
 
     def build_snapshot(options, profile)
+      Snapshot.build(input(options, profile), profile: profile)
+    end
+
+    # A local Git range, a saved input document, or a saved evaluation case.
+    def input(options, profile)
       if options[:repo]
-        source = GitSource.new(repository: options[:repo], base: options[:base], head: options[:head] || 'HEAD',
-                               profile: profile)
-        Snapshot.new(source.input(pr_body: expectations(options)), profile: profile)
+        GitSource.new(repository: options[:repo], base: options[:base], head: options[:head] || 'HEAD',
+                      profile: profile).input(pr_body: expectations(options))
       elsif options[:input]
-        raw = File.binread(options[:input], (Limits::BUNDLE_BYTES * 2) + 1)
-        raise InputTooLarge, 'Input document exceeds 2 MiB' if raw.bytesize > Limits::BUNDLE_BYTES * 2
-
-        input = JSON.parse(raw)
-        raise InvalidInput, 'Input document must be an object' unless input.is_a?(Hash)
-
-        Snapshot.new(input.merge('pr_body' => expectations(options)), profile: profile)
+        InputDocument.read(options[:input]).merge('pr_body' => expectations(options))
       else
         require_relative 'eval'
-        Snapshot.new(Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case)), profile: profile)
+        Eval::Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case))
       end
-    rescue JSON::ParserError
-      raise InvalidInput, 'Input document is not valid JSON'
     end
 
     def expectations(options)
@@ -156,7 +152,7 @@ module SlopGuard
       directory = File.join(options[:output] || @env.fetch('SLOP_GUARD_OUTPUT_DIR', File.join(ROOT, 'tmp/reviews')),
                             "#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}")
       ledger = File.join(directory, 'requests.jsonl')
-      budget = Budget.new(ledger: ledger)
+      budget = Budget.open(ledger: ledger)
       client = JevClient.new(api_key: api_key, budget: budget)
       report = Evaluator.new(client: client, rules: rules).call(snapshot)
       report_path = File.join(directory, 'report.json')

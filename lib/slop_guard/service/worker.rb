@@ -4,13 +4,12 @@ module SlopGuard
   module Service
     # A single worker checkpoints paid evaluation before publishing to GitHub.
     class Worker
-      def initialize(settings:, store:, client:, source: nil, evaluate: nil, logger: $stdout,
-                     profile: Profile.load('ruby'))
+      def initialize(settings:, store:, client:, profile:, source: nil, evaluate: nil, logger: $stdout)
         @settings = settings
         @store = store
         @source = source || GitHubSource.new(client: client, settings: settings, profile: profile)
         @publisher = Publisher.new(client: client, store: store)
-        @rules = Rules.new(profile.rules_dir)
+        @rules = Rules.load(profile.rules_dir)
         @evaluate = evaluate || method(:evaluate_snapshot)
         @logger = logger
       end
@@ -96,7 +95,7 @@ module SlopGuard
       end
 
       def evaluate_snapshot(snapshot)
-        budget = Budget.new(ledger: File.join(@settings.data_dir, 'budget.jsonl'))
+        budget = Budget.open(ledger: File.join(@settings.data_dir, 'budget.jsonl'))
         client = JevClient.new(api_key: @settings.typesafe_key, budget: budget)
         Evaluator.new(client: client, rules: @rules).call(snapshot)
       end

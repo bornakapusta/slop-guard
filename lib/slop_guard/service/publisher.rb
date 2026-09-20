@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
+require_relative 'publisher/delivery'
+require_relative 'publisher/inline_review'
+require_relative 'publisher/summary'
+
 module SlopGuard
   module Service
-    # Publishes changed-line comments and one summary, reconciling uncertain creates.
+    # Publishes changed-line comments and one summary per pull request, reconciling uncertain creates. Holds only
+    # the shared collaborators; every `publish` runs in fresh per-delivery objects.
     class Publisher
       SUMMARY_MARKER = '<!-- slop-guard:summary:v1 -->'
       MAX_INLINE = 20
@@ -13,149 +18,16 @@ module SlopGuard
       end
 
       def publish(number:, head:, run_id:, report:, changed:, current:)
-        @current = current
-        @pr = number
-        @head = head
-        @run_id = run_id
-        findings = report.fetch('rules').values.flat_map { |rule| rule.fetch('findings') }
-        inline_status = inline(findings, changed)
-        summary(report, inline_status)
-        @current.call
+        delivery = { client: client, store: store, number: number, head: head, run_id: run_id, report: report,
+                     changed: changed, current: current }
+        inline_status = InlineReview.new(**delivery).deliver
+        Summary.new(**delivery).deliver(inline_status)
+        current.call
       end
 
       private
 
-      def owned?(comment)
-        comment.dig('user', 'type') == 'Bot' && comment.dig('user', 'login') == @client.bot_login
-      end
-
-      def inline(findings, changed)
-        return 'No inline comments: this review produced no actionable findings.' if findings.empty?
-
-        marker = "<!-- slop-guard:review:#{@run_id} -->"
-        path = "#{@client.repo_path}/pulls/#{@pr}/reviews"
-        matches = @client.list(path).select { |review| owned?(review) && review['body'].to_s.include?(marker) }
-        raise PublicationUncertain, 'Multiple matching bot reviews require operator inspection' if matches.size > 1
-
-        key = "review:#{@run_id}"
-        if matches.first
-          @store.confirmed(key, matches.first.fetch('id'))
-          return 'Inline review already delivered.'
-        end
-        intent = @store.publication(key)
-        return 'Inline locations were rejected; findings are included below.' if intent && intent['remote_id']&.zero?
-        if intent
-          raise PublicationUncertain, 'Previous inline review delivery could not be confirmed; no duplicate was sent'
-        end
-
-        existing = @client.list("#{@client.repo_path}/pulls/#{@pr}/comments").select { |comment| owned?(comment) }
-        updated = 0
-        comments = findings.filter_map do |finding|
-          anchor = finding.fetch('anchor')
-          next unless changed.fetch(anchor['path'], []).include?(anchor['line'])
-
-          id = finding['id'] ||
-               SlopGuard.digest(finding.slice('rule', 'topic', 'scenario').merge('path' => anchor['path']))
-          finding_marker = "<!-- slop-guard:finding:#{id} -->"
-          body = inline_body(finding, finding_marker)
-          previous = existing.find do |comment|
-            comment['body'].to_s.include?(finding_marker) && comment['path'] == anchor['path'] &&
-              comment['line'] == anchor['line'] && !comment['position'].nil?
-          end
-          if previous
-            @current.call
-            @client.patch("#{@client.repo_path}/pulls/comments/#{previous.fetch('id')}", body: body)
-            updated += 1
-            next
-          end
-          { path: anchor['path'], line: anchor['line'], side: 'RIGHT', body: body }
-        end
-        comments = comments.uniq { |comment| comment[:body] }.first(MAX_INLINE)
-        if comments.empty?
-          return "#{updated} existing inline comment(s) updated. All findings are listed below." if updated.positive?
-
-          return 'No findings could be placed on changed lines. Review their code references below.'
-        end
-
-        @current.call
-        @store.intend(key)
-        begin
-          body = "#{marker}\nSlop Guard advisory findings for `#{@head}`. See the summary for coverage gaps."
-          review = @client.post(path, commit_id: @head, event: 'COMMENT', body: body, comments: comments)
-          @store.confirmed(key, review.fetch('id'))
-        rescue GitHubClient::Failure => e
-          if e.status == 422
-            @store.confirmed(key, 0)
-            return 'GitHub rejected inline locations; all findings remain in the summary.'
-          end
-          @store.clear_intent(key) if definitive_rejection?(e)
-          raise
-        end
-        "#{comments.size} new inline comment(s) posted; #{updated} existing comment(s) updated. " \
-          'All findings are listed below.'
-      end
-
-      def inline_body(finding, marker)
-        [marker, "**Slop Guard · #{Report.escape(Report.check_name(finding['rule']))}** (advisory)", '',
-         "**Code:** #{Report.location(finding.fetch('anchor'), source_url: source_url)}", '',
-         "**Context:** #{Report.escape(finding['scenario'] || finding['topic'])}", '',
-         Report.escape(finding['message']), '', "**Suggested change:** #{Report.escape(finding['correction'])}", '',
-         "Last reviewed commit: `#{@head}`. Test execution is not established."].join("\n")
-      end
-
-      def source_url
-        "https://github.com/#{@client.repo_path.delete_prefix('/repos/')}/blob/#{@head}"
-      end
-
-      def summary(report, inline_status)
-        path = "#{@client.repo_path}/issues/#{@pr}/comments"
-        matches = @client.list(path).select do |comment|
-          owned?(comment) && comment['body'].to_s.include?(SUMMARY_MARKER)
-        end
-        raise PublicationUncertain, 'Multiple bot summaries require operator inspection' if matches.size > 1
-
-        key = "summary:#{@pr}"
-        comment = matches.first
-        @store.confirmed(key, comment.fetch('id')) if comment
-        intent = @store.publication(key)
-        body = summary_body(report, inline_status)
-        @current.call
-        if comment
-          @client.patch("#{@client.repo_path}/issues/comments/#{comment.fetch('id')}", body: body)
-        elsif intent
-          raise PublicationUncertain, 'Previous summary delivery could not be confirmed; no duplicate was sent'
-        else
-          @store.intend(key)
-          begin
-            created = @client.post(path, body: body)
-            @store.confirmed(key, created.fetch('id'))
-          rescue GitHubClient::Failure => e
-            @store.clear_intent(key) if definitive_rejection?(e)
-            raise
-          end
-        end
-      end
-
-      def summary_body(report, inline_status)
-        body = "#{SUMMARY_MARKER}\n<!-- slop-guard:run:#{@run_id} -->\n" \
-               "#{Report.markdown(report, source_url: source_url)}\n\n" \
-               "#{inline_status}\n\nReviewed commit: `#{@head}`"
-        if report['status'] != 'complete'
-          previous = @store.previous_complete(@pr, excluding: @run_id)
-          if previous
-            label = 'Previous complete review — not cleared by this incomplete review'
-            body += "\n\n<details><summary>#{label}</summary>\n\n#{Report.markdown(previous)}\n</details>"
-          end
-        end
-        return body if body.bytesize <= 60_000
-
-        "#{body.byteslice(0,
-                          58_000).scrub}\n\nReport display truncated. Full report is retained in the service database."
-      end
-
-      def definitive_rejection?(error)
-        [400, 401, 403, 404, 422, 429].include?(error.status)
-      end
+      attr_reader :client, :store
     end
   end
 end

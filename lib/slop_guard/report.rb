@@ -1,19 +1,10 @@
 # frozen_string_literal: true
 
 module SlopGuard
-  # Renders escaped advisory findings without implying overall correctness.
+  # Renders a review report as advisory Markdown without implying overall correctness.
   module Report
-    # U+200C ZERO WIDTH NON-JOINER: inserted after "@" so GitHub does not resolve @mentions from untrusted evidence.
-    MENTION_BREAK = [0x200C].pack('U').freeze
-
-    CHECK_NAMES = { 'G1' => 'Behavior test coverage', 'G2' => 'Failure case coverage',
-                    'G3' => 'Focused responsibilities', 'G4' => 'Unnecessary abstractions' }.freeze
     OUTCOMES = { 'concern' => 'Needs attention', 'no_concern' => 'No concern found',
                  'inconclusive' => 'Could not determine', 'not_applicable' => 'Not applicable' }.freeze
-
-    def self.check_name(id)
-      CHECK_NAMES.fetch(id, id)
-    end
 
     def self.markdown(result, source_url: nil)
       rules = result.fetch('rules')
@@ -22,13 +13,7 @@ module SlopGuard
       rules.each do |id, rule|
         rule.fetch('findings').each { |finding| lines.concat(finding_lines(id, finding, source_url)) }
       end
-      unresolved = rules.reject { |_id, rule| rule.fetch('gaps').empty? }
-      unless unresolved.empty?
-        lines.push('', '### What still needs review', '')
-        unresolved.each do |id, rule|
-          rule.fetch('gaps').each { |gap| lines << "- **#{escape(check_name(id))}:** #{escape(explain_gap(gap))}" }
-        end
-      end
+      lines.concat(unresolved_lines(rules))
       lines.push('', 'Slop Guard inspected code and tests; it did not run them. This is an advisory review.', '')
       lines.concat(diagnostics(result)).join("\n")
     end
@@ -37,21 +22,34 @@ module SlopGuard
       rows = rules.map do |id, rule|
         outcome = OUTCOMES.fetch(rule.fetch('outcome'), rule['outcome'])
         outcome += '; some checks unresolved' if rule['outcome'] == 'concern' && !rule.fetch('gaps').empty?
-        "| #{escape(check_name(id))} | #{escape(outcome)} |"
+        "| #{Markdown.escape(Markdown.check_name(id))} | #{Markdown.escape(outcome)} |"
       end
       ['| Check | Result |', '| --- | --- |', *rows]
     end
 
+    def self.unresolved_lines(rules)
+      unresolved = rules.reject { |_id, rule| rule.fetch('gaps').empty? }
+      return [] if unresolved.empty?
+
+      lines = ['', '### What still needs review', '']
+      unresolved.each do |id, rule|
+        rule.fetch('gaps').each do |gap|
+          lines << "- **#{Markdown.escape(Markdown.check_name(id))}:** #{Markdown.escape(explain_gap(gap))}"
+        end
+      end
+      lines
+    end
+
     def self.diagnostics(result)
       lines = ['<details><summary>Review diagnostics</summary>', '',
-               "Snapshot: `#{escape(result.fetch('snapshot'))}`", '']
-      rules = result.fetch('rules')
-      rules.each do |id, rule|
-        lines << "- #{escape(id)}: #{escape(rule.fetch('outcome'))}"
-        rule.fetch('gaps').each { |gap| lines << "  - #{escape(gap)}" }
+               "Snapshot: `#{Markdown.escape(result.fetch('snapshot'))}`", '']
+      result.fetch('rules').each do |id, rule|
+        lines << "- #{Markdown.escape(id)}: #{Markdown.escape(rule.fetch('outcome'))}"
+        rule.fetch('gaps').each { |gap| lines << "  - #{Markdown.escape(gap)}" }
         rule.fetch('findings').each do |finding|
-          lines << "  - Review signals: #{escape(JSON.generate(finding['readings']))}; " \
-                   "thresholds: #{escape(JSON.generate(finding['thresholds']))}. These are not certainty scores."
+          lines << "  - Review signals: #{Markdown.escape(JSON.generate(finding['readings']))}; " \
+                   "thresholds: #{Markdown.escape(JSON.generate(finding['thresholds']))}. " \
+                   'These are not certainty scores.'
         end
       end
       lines.push('', '</details>')
@@ -74,21 +72,10 @@ module SlopGuard
     end
 
     def self.finding_lines(id, finding, source_url)
-      ['', "### #{escape(check_name(id))}", '',
-       "**Code:** #{location(finding.fetch('anchor'), source_url: source_url)}", '',
-       "**Context:** #{escape(finding['scenario'] || finding['topic'])}", '',
-       escape(finding['message']), '', "**Suggested change:** #{escape(finding['correction'])}"]
-    end
-
-    def self.location(anchor, source_url: nil)
-      label = escape("#{anchor.fetch('path')}:#{anchor.fetch('line')}")
-      return label unless source_url
-
-      # Encode each path segment so filenames cannot escape the Markdown link destination.
-      path = anchor.fetch('path').split('/').map do |segment|
-        segment.bytes.map { |byte| byte.chr.match?(/[a-zA-Z0-9_~-]/) ? byte.chr : format('%%%02X', byte) }.join
-      end.join('/')
-      "[#{label}](#{source_url}/#{path}#L#{Integer(anchor.fetch('line'))})"
+      ['', "### #{Markdown.escape(Markdown.check_name(id))}", '',
+       "**Code:** #{Markdown.location(finding.fetch('anchor'), source_url: source_url)}", '',
+       "**Context:** #{Markdown.escape(finding['scenario'] || finding['topic'])}", '',
+       Markdown.escape(finding['message']), '', "**Suggested change:** #{Markdown.escape(finding['correction'])}"]
     end
 
     def self.explain_gap(gap)
@@ -104,13 +91,6 @@ module SlopGuard
       else
         gap
       end
-    end
-
-    def self.escape(text)
-      escaped = text.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('@', "@#{MENTION_BREAK}")
-      escaped = escaped.gsub(/[\[\]`*_\\|]/) { |char| "\\#{char}" }
-      # Last, so the visible escapes it produces are not themselves re-escaped.
-      SlopGuard.printable(escaped)
     end
   end
 end

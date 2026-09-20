@@ -5,7 +5,7 @@ require_relative '../../lib/slop_guard/service'
 
 RSpec.shared_context 'app service' do
   let(:directory) { Dir.mktmpdir('slop-guard-service') }
-  let(:store) { SlopGuard::Service::Store.new(File.join(directory, 'app.sqlite3')) }
+  let(:store) { SlopGuard::Service::Store.open(File.join(directory, 'app.sqlite3')) }
   let(:settings) do
     instance_double(SlopGuard::Service::Settings, repository: 'owner/demo', repository_id: 42,
                                                   installation_id: 7, app_id: 8, engine_revision: 'engine-v1',

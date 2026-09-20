@@ -1,0 +1,138 @@
+{
+  "cases": [
+    {
+      "case": "g1-violation",
+      "state_bytes": 25736,
+      "gaps": []
+    },
+    {
+      "case": "g1-legitimate",
+      "state_bytes": 25777,
+      "gaps": []
+    },
+    {
+      "case": "g1-fixed",
+      "state_bytes": 25863,
+      "gaps": []
+    },
+    {
+      "case": "g1-incomplete",
+      "state_bytes": 25761,
+      "gaps": [
+        "Omitted file: spec/spec_helper.rb",
+        "spec/spec_helper.rb is missing"
+      ]
+    },
+    {
+      "case": "g2-violation",
+      "state_bytes": 25139,
+      "gaps": []
+    },
+    {
+      "case": "g2-legitimate",
+      "state_bytes": 25661,
+      "gaps": []
+    },
+    {
+      "case": "g2-fixed",
+      "state_bytes": 25632,
+      "gaps": []
+    },
+    {
+      "case": "g2-incomplete",
+      "state_bytes": 25164,
+      "gaps": [
+        "Omitted file: spec/spec_helper.rb",
+        "spec/spec_helper.rb is missing"
+      ]
+    },
+    {
+      "case": "g3-violation",
+      "state_bytes": 25452,
+      "gaps": []
+    },
+    {
+      "case": "g3-legitimate",
+      "state_bytes": 25009,
+      "gaps": []
+    },
+    {
+      "case": "g3-fixed",
+      "state_bytes": 25009,
+      "gaps": []
+    },
+    {
+      "case": "g3-incomplete",
+      "state_bytes": 25477,
+      "gaps": [
+        "Omitted file: spec/spec_helper.rb",
+        "spec/spec_helper.rb is missing"
+      ]
+    },
+    {
+      "case": "g4-violation",
+      "state_bytes": 25028,
+      "gaps": []
+    },
+    {
+      "case": "g4-legitimate",
+      "state_bytes": 25232,
+      "gaps": []
+    },
+    {
+      "case": "g4-fixed",
+      "state_bytes": 24928,
+      "gaps": []
+    },
+    {
+      "case": "g4-incomplete",
+      "state_bytes": 25052,
+      "gaps": [
+        "Omitted file: spec/spec_helper.rb",
+        "spec/spec_helper.rb is missing"
+      ]
+    },
+    {
+      "case": "g1-positive",
+      "state_bytes": 25600,
+      "gaps": []
+    },
+    {
+      "case": "g2-positive",
+      "state_bytes": 25151,
+      "gaps": []
+    },
+    {
+      "case": "g3-positive",
+      "state_bytes": 25589,
+      "gaps": []
+    },
+    {
+      "case": "g4-positive",
+      "state_bytes": 25092,
+      "gaps": []
+    },
+    {
+      "case": "g1-negative",
+      "state_bytes": 25602,
+      "gaps": []
+    },
+    {
+      "case": "g2-negative",
+      "state_bytes": 25637,
+      "gaps": []
+    },
+    {
+      "case": "g3-negative",
+      "state_bytes": 24965,
+      "gaps": []
+    },
+    {
+      "case": "g4-negative",
+      "state_bytes": 25398,
+      "gaps": []
+    }
+  ],
+  "labels_reviewed": false,
+  "live_qualified": false
+}

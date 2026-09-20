@@ -4,14 +4,15 @@
 require 'bundler/setup'
 require_relative '../lib/slop_guard/service'
 
-config = SlopGuard::Service::Settings.new
+config = SlopGuard::Service::Settings.from_env
 File.open(File.join(config.data_dir, 'worker.lock'), File::RDWR | File::CREAT, 0o600) do |lock|
   abort 'Another Slop Guard worker holds this data directory' unless lock.flock(File::LOCK_EX | File::LOCK_NB)
-  store = SlopGuard::Service::Store.new(File.join(config.data_dir, 'app.sqlite3'),
-                                        identity: [config.app_id, config.installation_id, config.repository_id])
+  store = SlopGuard::Service::Store.open(File.join(config.data_dir, 'app.sqlite3'),
+                                         identity: [config.app_id, config.installation_id, config.repository_id])
   store.recover
   client = SlopGuard::Service::GitHubClient.new(config)
-  worker = SlopGuard::Service::Worker.new(settings: config, store: store, client: client)
+  worker = SlopGuard::Service::Worker.new(settings: config, store: store, client: client,
+                                          profile: SlopGuard::Profile.load('ruby'))
   stopping = false
   %w[INT TERM].each { |signal| Signal.trap(signal) { stopping = true } }
   $stdout.sync = true

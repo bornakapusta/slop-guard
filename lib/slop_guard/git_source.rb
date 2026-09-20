@@ -10,7 +10,6 @@ module SlopGuard
     OUTPUT_LIMIT = 4 * 1024 * 1024
     STDERR_LIMIT = 4096
     TIMEOUT_SECONDS = 10
-    BLOB_MODES = %w[100644 100755].freeze
     # Plumbing only. Repository-local config is still read, so protocol handlers and the filesystem monitor hook
     # are disabled explicitly; global and system config are dropped through the environment.
     GIT_OPTIONS = ['--no-optional-locks', '--no-replace-objects',
@@ -66,32 +65,19 @@ module SlopGuard
       git('rev-parse', '--verify', '--end-of-options', "#{ref}^{commit}").strip
     end
 
+    # Oversized files are dropped with a gap, matching Snapshot; only the selected count is bounded hard.
     def tree(revision)
       gaps = []
       skipped = []
-      entries = git('ls-tree', '-r', '-l', '-z', '--full-tree', revision).split("\0")
-      selected = entries.filter_map do |entry|
-        header, path = entry.split("\t", 2)
-        mode, type, oid, size = header.split
-        validate_path!(path)
-        if mode == '160000'
-          gaps << "Submodule was not inspected: #{path}"
-          next
+      selected = entries(revision).filter_map do |entry|
+        case entry.classify(profile)
+        when :submodule then gaps << "Submodule was not inspected: #{entry.path}"
+        when :skipped then skipped << entry.path
+        when :non_regular then gaps << "Non-regular file was not inspected: #{entry.path}"
+        when :oversized then gaps << "File exceeds 16 KiB: #{entry.path}"
+        else next [entry.path, entry.oid]
         end
-        unless profile.permitted?(path)
-          skipped << path
-          next
-        end
-        unless type == 'blob' && BLOB_MODES.include?(mode)
-          gaps << "Non-regular file was not inspected: #{path}"
-          next
-        end
-        if size.to_i > Limits::FILE_BYTES
-          gaps << "File exceeds 16 KiB: #{path}"
-          next
-        end
-
-        [path, oid]
+        nil
       end
       if selected.size > Limits::FILE_COUNT
         raise InputTooLarge, "Repository exceeds #{Limits::FILE_COUNT} supported files per revision"
@@ -100,11 +86,14 @@ module SlopGuard
       Tree.new(files: blobs(selected), gaps: gaps, skipped: skipped)
     end
 
-    def validate_path!(path)
-      return if path&.valid_encoding? && !path.start_with?('/') && !path.match?(/[[:cntrl:]]/) &&
-                !path.split('/').intersect?(['', '.', '..'])
+    def entries(revision)
+      git('ls-tree', '-r', '-l', '-z', '--full-tree', revision).split("\0").map do |line|
+        header, path = line.split("\t", 2)
+        mode, type, oid, size = header.split
+        raise InvalidInput, 'Invalid Git tree path' if SourcePath.unsafe?(path, control_chars: true)
 
-      raise InvalidInput, 'Invalid Git tree path'
+        TreeEntry.new(path: path, mode: mode, type: type, size: size.to_i, oid: oid)
+      end
     end
 
     # One process per revision. Sizes were already bounded from ls-tree, so the stream is at most
@@ -128,7 +117,7 @@ module SlopGuard
 
         cursor = newline + 1 + length + 1
         body.force_encoding(Encoding::UTF_8)
-        raise InvalidInput, "Source must be UTF-8 text: #{path}" unless body.valid_encoding? && !body.include?("\0")
+        raise InvalidInput, "Source must be UTF-8 text: #{path}" unless SourceText.valid?(body)
 
         bytes += length
         raise InputTooLarge, 'Source bundle exceeds 1 MiB' if bytes > Limits::BUNDLE_BYTES

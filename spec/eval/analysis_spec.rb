@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe SlopGuard::EvaluationAnalysis do
+RSpec.describe SlopGuard::Eval::Analysis do
   let(:ids) { %w[missing_test corrected] }
   let(:fingerprint) { 'f' * 64 }
 

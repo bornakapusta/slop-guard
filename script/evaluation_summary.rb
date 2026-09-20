@@ -17,7 +17,7 @@ begin
   end
 
   # Includes runs appended after the last checkpoint, so a timed-out job still reports every finished review.
-  report = SlopGuard::EvalRunner.load(File.dirname(paths.first))
+  report = SlopGuard::Eval::Runner.load(File.dirname(paths.first))
   ledger = File.join(File.dirname(paths.first), 'requests.jsonl')
   raise SlopGuard::InvalidInput, 'Request ledger is missing' unless File.file?(ledger)
 
@@ -26,12 +26,12 @@ begin
     raise SlopGuard::InvalidInput, 'Request ledger contains invalid reservations'
   end
 
-  ids = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval')).cases('development').map { |entry| entry.fetch('id') }
-  summary = SlopGuard::EvaluationSummary.new(report: report, case_ids: ids, reserved: reservations.sum,
-                                             exit_status: Integer(ARGV[1]))
+  ids = SlopGuard::Eval::Dataset.new(File.join(SlopGuard::ROOT, 'eval')).cases('development').map { |entry| entry.fetch('id') }
+  summary = SlopGuard::Eval::Summary.new(report: report, case_ids: ids, reserved: reservations.sum,
+                                         exit_status: Integer(ARGV[1]))
   puts summary.markdown
   exit 1 unless summary.status == 'PASSED DEVELOPMENT LABELS'
 rescue SlopGuard::Error, JSON::ParserError, KeyError, ArgumentError, SystemCallError => e
-  puts "## Jev development evaluation\n\n**REPORT UNAVAILABLE:** #{SlopGuard::Report.escape(e.message)}"
+  puts "## Jev development evaluation\n\n**REPORT UNAVAILABLE:** #{SlopGuard::Markdown.escape(e.message)}"
   exit 2
 end

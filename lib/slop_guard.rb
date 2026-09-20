@@ -47,6 +47,7 @@ module SlopGuard
 end
 
 # The review engine only. The evaluation harness is `slop_guard/eval`; the GitHub App is `slop_guard/service`.
-%w[profile expectations candidates snapshot rules budget jev_client evaluator report git_source cli].each do |name|
+%w[source_path source_text tree_entry profile expectations candidates snapshot rule rules finding budget jev_client
+   evaluator markdown report input_document git_source cli].each do |name|
   require_relative "slop_guard/#{name}"
 end

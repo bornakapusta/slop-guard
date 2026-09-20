@@ -8,7 +8,7 @@ RSpec.describe SlopGuard::Service::Worker do
   let(:snapshot) { instance_double(SlopGuard::Snapshot, changed: changed) }
   let(:evaluate) { ->(_snapshot) { report } }
   let(:worker) do
-    described_class.new(settings: settings, store: store, client: client, source: source,
+    described_class.new(settings: settings, store: store, client: client, source: source, profile: ruby_profile,
                         evaluate: evaluate, logger: StringIO.new)
   end
 
@@ -58,7 +58,7 @@ RSpec.describe SlopGuard::Service::Worker do
 
   it 'reports an interrupted evaluation without resetting the paid budget' do
     id = SlopGuard.digest([42, 1, SlopGuard.digest(pull), settings.engine_revision,
-                           SlopGuard::Rules.new(SlopGuard::Profile.load('ruby').rules_dir).revision, SlopGuard::JevClient::MODEL])
+                           SlopGuard::Rules.load(SlopGuard::Profile.load('ruby').rules_dir).revision, SlopGuard::JevClient::MODEL])
     store.begin_run(id, 1)
     store.evaluating(id)
     worker.tick

@@ -14,7 +14,7 @@ module StubClient
   end
 
   def fixture_dataset
-    SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+    SlopGuard::Eval::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
   end
 
   def demo_profile
@@ -25,8 +25,12 @@ module StubClient
     SlopGuard::Profile.load('ruby')
   end
 
+  def demo_rules
+    SlopGuard::Rules.load(demo_profile.rules_dir)
+  end
+
   def demo_snapshot(input)
-    SlopGuard::Snapshot.new(input, profile: demo_profile)
+    SlopGuard::Snapshot.build(input, profile: demo_profile)
   end
 end
 

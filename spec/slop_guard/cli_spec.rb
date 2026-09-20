@@ -30,7 +30,7 @@ RSpec.describe SlopGuard::CLI do
     output = JSON.parse(stdout.string)
     expect(output['profile']['rules_dir']).to eq('config/rules/ruby')
     expect(output['definitions'].keys).to eq(%w[G1 G2 G3 G4])
-    expect(output['rules_revision']).to eq(SlopGuard::Rules.new(ruby_profile.rules_dir).revision)
+    expect(output['rules_revision']).to eq(SlopGuard::Rules.load(ruby_profile.rules_dir).revision)
   end
 
   it 'reviews an arbitrary input document with expectations from stdin' do
@@ -97,7 +97,7 @@ RSpec.describe 'local commands' do
   it 'analyzes saved evidence offline' do
     client = stub_client { |_state, questions| questions.transform_values { 0.5 } }
     Dir.mktmpdir do |directory|
-      runner = SlopGuard::EvalRunner.new(dataset: fixture_dataset)
+      runner = SlopGuard::Eval::Runner.new(dataset: fixture_dataset, profile: demo_profile, rules: demo_rules)
       runner.run(split: 'development', repetitions: 1, directory: directory, client_factory: ->(_) { client })
       path = File.join(directory, 'report.json')
       stdout, stderr, status = run_command('bin/analyze-evaluation', path, '--json')

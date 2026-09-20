@@ -7,7 +7,7 @@ require 'dotenv'
 require_relative '../lib/slop_guard/service'
 
 Dotenv.load(File.join(SlopGuard::ROOT, '.env.app'))
-SlopGuard::Service::Settings.new
+SlopGuard::Service::Settings.from_env
 Dir.chdir(SlopGuard::ROOT)
 children = []
 stopping = false
