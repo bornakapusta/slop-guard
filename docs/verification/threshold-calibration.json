@@ -1,0 +1,470 @@
+{
+  "status": "candidate_not_qualified_defaults_unchanged",
+  "source_report": "tmp/evaluations/20260919T195144-20791/report.json",
+  "live_report": "tmp/evaluations/20260919T200729-calibration/report.json",
+  "source_versions": {
+    "model": "jev-1.13.0",
+    "rules": "e33a42bb9bbda4d1aaecce25b57c8309f02c633414b6ae6ee0b46e291c4d91cf",
+    "engine": "76836c6bd1dec884cd03ca2fa26b613a87e7add1b01db3397af9596fe422aea3",
+    "dataset": "36bbaf78f4cf4100a5b36e1ccaa240a008587a0e4883619b34107f0ffc7bbcef",
+    "lockfile": "b643c9d72ca6dab7320d1551fcfed7b779ea5038cf3b361dc2e312a4fd378507",
+    "ruby": "3.4.5",
+    "profile": "0ab896d23b0f5cb7a88fe52a091f9c141e8cb22ad04c90652dbcf5d4fa9e256e"
+  },
+  "candidate_versions": {
+    "model": "jev-1.13.0",
+    "rules": "baf679b51a0e0d14bac959aae1acc939f1890185b84bc5c06c4d4d4d7c163a3c",
+    "engine": "76836c6bd1dec884cd03ca2fa26b613a87e7add1b01db3397af9596fe422aea3",
+    "dataset": "36bbaf78f4cf4100a5b36e1ccaa240a008587a0e4883619b34107f0ffc7bbcef",
+    "lockfile": "b643c9d72ca6dab7320d1551fcfed7b779ea5038cf3b361dc2e312a4fd378507",
+    "ruby": "3.4.5",
+    "profile": "0ab896d23b0f5cb7a88fe52a091f9c141e8cb22ad04c90652dbcf5d4fa9e256e"
+  },
+  "source_report_digest": "d182814b810f0519fa0a177534630aaf10867b80f1a548bdbe7f9e85a6d3826f",
+  "calibrator_sha256": "36f1a6bf4e87959641a72f50b8089b2e299fddfa49d0577769387803b199d79d",
+  "grid": {
+    "high": "0.50..0.95 step 0.05",
+    "low": "0.05..0.45 step 0.05"
+  },
+  "selection": "Complete replay, zero false positives, preserve correct abstentions; maximize true positives then exact rule matches then minimize unnecessary abstentions then threshold movement.",
+  "labels_reviewed": false,
+  "holdout_evaluated": false,
+  "rules": {
+    "G1": {
+      "baseline": {
+        "high": 0.85,
+        "low": 0.2,
+        "exact_rule_matches": 14,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 2,
+        "outcomes": {
+          "g1-violation/1": "inconclusive",
+          "g1-legitimate/1": "no_concern",
+          "g1-fixed/1": "no_concern",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "inconclusive",
+          "g2-legitimate/1": "no_concern",
+          "g2-fixed/1": "no_concern",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "no_concern",
+          "g3-legitimate/1": "no_concern",
+          "g3-fixed/1": "no_concern",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "no_concern",
+          "g4-legitimate/1": "no_concern",
+          "g4-fixed/1": "no_concern",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "best_replay": {
+        "high": 0.75,
+        "low": 0.2,
+        "exact_rule_matches": 15,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 1,
+        "outcomes": {
+          "g1-violation/1": "inconclusive",
+          "g1-legitimate/1": "no_concern",
+          "g1-fixed/1": "no_concern",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "no_concern",
+          "g2-legitimate/1": "no_concern",
+          "g2-fixed/1": "no_concern",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "no_concern",
+          "g3-legitimate/1": "no_concern",
+          "g3-fixed/1": "no_concern",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "no_concern",
+          "g4-legitimate/1": "no_concern",
+          "g4-fixed/1": "no_concern",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "grid_pairs": 90,
+      "pairs_with_unrecorded_questions": 0
+    },
+    "G2": {
+      "baseline": {
+        "high": 0.85,
+        "low": 0.2,
+        "exact_rule_matches": 14,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 2,
+        "outcomes": {
+          "g1-violation/1": "not_applicable",
+          "g1-legitimate/1": "not_applicable",
+          "g1-fixed/1": "not_applicable",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "inconclusive",
+          "g2-legitimate/1": "inconclusive",
+          "g2-fixed/1": "no_concern",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "not_applicable",
+          "g3-legitimate/1": "not_applicable",
+          "g3-fixed/1": "not_applicable",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "not_applicable",
+          "g4-legitimate/1": "not_applicable",
+          "g4-fixed/1": "not_applicable",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "best_replay": {
+        "high": 0.6,
+        "low": 0.2,
+        "exact_rule_matches": 16,
+        "unavailable": 0,
+        "true_positives": 1,
+        "false_positives": 0,
+        "misses": 0,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 0,
+        "outcomes": {
+          "g1-violation/1": "not_applicable",
+          "g1-legitimate/1": "not_applicable",
+          "g1-fixed/1": "not_applicable",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "concern",
+          "g2-legitimate/1": "no_concern",
+          "g2-fixed/1": "no_concern",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "not_applicable",
+          "g3-legitimate/1": "not_applicable",
+          "g3-fixed/1": "not_applicable",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "not_applicable",
+          "g4-legitimate/1": "not_applicable",
+          "g4-fixed/1": "not_applicable",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "grid_pairs": 90,
+      "pairs_with_unrecorded_questions": 0
+    },
+    "G3": {
+      "baseline": {
+        "high": 0.85,
+        "low": 0.2,
+        "exact_rule_matches": 4,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 12,
+        "outcomes": {
+          "g1-violation/1": "inconclusive",
+          "g1-legitimate/1": "inconclusive",
+          "g1-fixed/1": "inconclusive",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "inconclusive",
+          "g2-legitimate/1": "inconclusive",
+          "g2-fixed/1": "inconclusive",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "inconclusive",
+          "g3-legitimate/1": "inconclusive",
+          "g3-fixed/1": "inconclusive",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "inconclusive",
+          "g4-legitimate/1": "inconclusive",
+          "g4-fixed/1": "inconclusive",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "best_replay": {
+        "high": 0.85,
+        "low": 0.35,
+        "exact_rule_matches": 13,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 3,
+        "outcomes": {
+          "g1-violation/1": "no_concern",
+          "g1-legitimate/1": "no_concern",
+          "g1-fixed/1": "no_concern",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "no_concern",
+          "g2-legitimate/1": "no_concern",
+          "g2-fixed/1": "no_concern",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "inconclusive",
+          "g3-legitimate/1": "no_concern",
+          "g3-fixed/1": "no_concern",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "inconclusive",
+          "g4-legitimate/1": "no_concern",
+          "g4-fixed/1": "inconclusive",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "grid_pairs": 90,
+      "pairs_with_unrecorded_questions": 45
+    },
+    "G4": {
+      "baseline": {
+        "high": 0.85,
+        "low": 0.2,
+        "exact_rule_matches": 12,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 3,
+        "outcomes": {
+          "g1-violation/1": "not_applicable",
+          "g1-legitimate/1": "not_applicable",
+          "g1-fixed/1": "not_applicable",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "not_applicable",
+          "g2-legitimate/1": "not_applicable",
+          "g2-fixed/1": "not_applicable",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "not_applicable",
+          "g3-legitimate/1": "inconclusive",
+          "g3-fixed/1": "inconclusive",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "not_applicable",
+          "g4-legitimate/1": "inconclusive",
+          "g4-fixed/1": "not_applicable",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "best_replay": {
+        "high": 0.85,
+        "low": 0.4,
+        "exact_rule_matches": 14,
+        "unavailable": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "misses": 1,
+        "correct_abstentions": 4,
+        "unnecessary_abstentions": 0,
+        "outcomes": {
+          "g1-violation/1": "not_applicable",
+          "g1-legitimate/1": "not_applicable",
+          "g1-fixed/1": "not_applicable",
+          "g1-incomplete/1": "inconclusive",
+          "g2-violation/1": "not_applicable",
+          "g2-legitimate/1": "not_applicable",
+          "g2-fixed/1": "not_applicable",
+          "g2-incomplete/1": "inconclusive",
+          "g3-violation/1": "not_applicable",
+          "g3-legitimate/1": "not_applicable",
+          "g3-fixed/1": "not_applicable",
+          "g3-incomplete/1": "inconclusive",
+          "g4-violation/1": "not_applicable",
+          "g4-legitimate/1": "not_applicable",
+          "g4-fixed/1": "not_applicable",
+          "g4-incomplete/1": "inconclusive"
+        }
+      },
+      "grid_pairs": 90,
+      "pairs_with_unrecorded_questions": 0
+    }
+  },
+  "live": {
+    "repeats": [
+      {
+        "repeat": 1,
+        "cases": 16,
+        "exact_case_matches": 10,
+        "true_positives": 1,
+        "false_positives": 0,
+        "misses": 3,
+        "correct_abstentions": 16,
+        "unnecessary_abstentions": 6
+      },
+      {
+        "repeat": 2,
+        "cases": 16,
+        "exact_case_matches": 11,
+        "true_positives": 1,
+        "false_positives": 0,
+        "misses": 3,
+        "correct_abstentions": 16,
+        "unnecessary_abstentions": 5
+      },
+      {
+        "repeat": 3,
+        "cases": 16,
+        "exact_case_matches": 10,
+        "true_positives": 1,
+        "false_positives": 0,
+        "misses": 3,
+        "correct_abstentions": 16,
+        "unnecessary_abstentions": 6
+      }
+    ],
+    "metrics": {
+      "true_positives": 3,
+      "false_positives": 0,
+      "misses": 9,
+      "correct_abstentions": 48,
+      "unnecessary_abstentions": 17,
+      "precision": 1.0,
+      "recall": 0.25,
+      "operational_failures": 0,
+      "outcome_flips": 4,
+      "by_rule": {
+        "G1": {
+          "true_positives": 0,
+          "false_positives": 0,
+          "misses": 3,
+          "correct_abstentions": 12,
+          "unnecessary_abstentions": 3,
+          "precision": null,
+          "recall": 0.0
+        },
+        "G2": {
+          "true_positives": 3,
+          "false_positives": 0,
+          "misses": 0,
+          "correct_abstentions": 12,
+          "unnecessary_abstentions": 1,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "G3": {
+          "true_positives": 0,
+          "false_positives": 0,
+          "misses": 3,
+          "correct_abstentions": 12,
+          "unnecessary_abstentions": 12,
+          "precision": null,
+          "recall": 0.0
+        },
+        "G4": {
+          "true_positives": 0,
+          "false_positives": 0,
+          "misses": 3,
+          "correct_abstentions": 12,
+          "unnecessary_abstentions": 1,
+          "precision": null,
+          "recall": 0.0
+        }
+      }
+    },
+    "exact_rule_outcomes_out_of_48": {
+      "G1": 45,
+      "G2": 47,
+      "G3": 36,
+      "G4": 42
+    },
+    "flips": [
+      {
+        "case": "g1-legitimate",
+        "outcomes": [
+          {
+            "G1": "no_concern",
+            "G2": "inconclusive",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          }
+        ]
+      },
+      {
+        "case": "g1-violation",
+        "outcomes": [
+          {
+            "G1": "inconclusive",
+            "G2": "not_applicable",
+            "G3": "inconclusive",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "inconclusive",
+            "G2": "not_applicable",
+            "G3": "inconclusive",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "inconclusive",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          }
+        ]
+      },
+      {
+        "case": "g3-fixed",
+        "outcomes": [
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "inconclusive",
+            "G4": "not_applicable"
+          }
+        ]
+      },
+      {
+        "case": "g4-legitimate",
+        "outcomes": [
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "not_applicable"
+          },
+          {
+            "G1": "no_concern",
+            "G2": "not_applicable",
+            "G3": "no_concern",
+            "G4": "inconclusive"
+          }
+        ]
+      }
+    ],
+    "attempts": 185,
+    "input_tokens": 1930253,
+    "estimated_usd": 0.081070626,
+    "reserved_usd": 0.49727999999999994,
+    "seconds": 184.4137320000009
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Slop Guard is an experimental Ruby CLI reviewer that uses Jev to assess changes to a log-parser fixture.
+Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The log parser is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
 
 - `lib/slop_guard/`: evidence extraction, rule evaluation, provider client, budgets, and reports; `lib/slop_guard.rb` loads the engine.
 - `bin/review` and `bin/evaluate`: review and evaluation entry points.

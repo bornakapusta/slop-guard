@@ -7,6 +7,8 @@ topic: slop-guard-demo
 
 ## Problem Frame
 
+Slop Guard is a general-purpose code reviewer. This document scopes its first demonstration; the log parser is the sample project used to evaluate that milestone.
+
 Developers need review feedback tied to explicit engineering guidelines, with enough evidence to understand and correct a concern. Generic suggestions or confident findings without the relevant context undermine trust.
 
 The first milestone is a repeatable GitHub demonstration using the existing Ruby log-parser project. The audience should understand the feature, see a guideline violation identified on a PR, and see the review update after the fix. This is an evaluation of a small reviewer, not a claim that it can establish complete correctness or compliance.

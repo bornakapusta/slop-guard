@@ -13,7 +13,7 @@ origin: docs/brainstorms/2026-09-19-slop-guard-demo-requirements.md
 
 ## Overview and Problem Frame
 
-Build a small Ruby GitHub App that reviews log-parser PRs against four explicit guidelines: observable behavior tests (G1), relevant failure-case tests (G2), focused responsibilities (G3), and justified abstractions (G4). Findings are advisory, appear inline where possible, and cite the applicable guideline and evidence. Jev supplies bounded judgments; Ruby owns context selection, thresholds, explanations, and GitHub actions.
+Build a general-purpose code reviewer implemented in Ruby, with GitHub App delivery. This milestone uses log-parser PRs to evaluate four explicit guidelines: observable behavior tests (G1), relevant failure-case tests (G2), focused responsibilities (G3), and justified abstractions (G4). Findings are advisory, appear inline where possible, and cite the applicable guideline and evidence. Jev supplies bounded judgments; Ruby owns context selection, thresholds, explanations, and GitHub actions.
 
 Prove review quality before investing in GitHub delivery. Phase A qualifies the four rules using saved patches and live Jev evaluations. Phase B connects the same engine to GitHub and demonstrates opening a PR, receiving feedback, fixing the issue, and seeing the review update. A working webhook is not evidence of a useful reviewer.
 

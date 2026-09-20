@@ -26,6 +26,20 @@ bundle exec ruby bin/evaluate --live --split holdout --repeats 3 --frozen tmp/fr
 
 Each invocation creates a new evaluation directory with `report.json` and a request-reservation ledger. Interrupted sessions retain the last complete case report and conservative cost reservations. There is no automatic resume or request-cache path; a new invocation starts a new explicitly requested session. Do not keep retrying a failed holdout until it happens to pass.
 
+## Calibrating thresholds from saved readings
+
+Run the offline sweep against a complete live **development** report from the current engine, rules and dataset:
+
+```sh
+ruby script/calibrate_thresholds.rb tmp/evaluations/RUN/report.json tmp/calibration/threshold-grid.json
+```
+
+This makes no API calls. It tests 90 high/low pairs per rule through the actual evaluator: high 0.50–0.95 and low 0.05–0.45, both in 0.05 steps. It first verifies version fingerprints and reproduces every original rule result exactly. Request replay matches the complete evidence and question text. If changed thresholds enter a branch whose questions were never recorded, that candidate is marked unavailable; no readings are invented.
+
+Selection requires complete replay, zero false-positive findings and preserved correct abstentions. It then favors detected violations, exact rule matches, fewer unnecessary abstentions and smaller threshold changes, in that order. The output includes all candidates, original settings and the best replay settings. It does not modify the configured rules or qualify the reviewer. Fresh repeated development evaluations are needed to check whether an apparent improvement survives new model responses.
+
+See [the first threshold calibration](verification/threshold-calibration.md) for the measured results and remaining blockers. These examples have provisional labels and only one seeded violation per rule, so fitted thresholds cannot establish general accuracy.
+
 ## Scoring
 
 A true positive must match the rule, intended concern and an allowed source anchor. Wrong reasons/locations and duplicate accusations are false positives. An inconclusive answer on an answerable positive remains a miss in recall. Correct abstentions on intentionally incomplete cases and needless abstentions are separate counts. API failures fail completion and are reported separately from semantic accuracy. Raw readings remain available for inspection; the harness does not use another model to set ground truth.
@@ -34,6 +48,6 @@ Metrics include totals and counts per rule. Undefined precision/recall is `null`
 
 ## What is still unverified
 
-- Live Jev judgments, calibrated thresholds and reproducible held-out outcomes.
+- Reliable detection across all four rules, qualified thresholds and reproducible held-out outcomes.
 - Actual GitHub installation, webhook lifecycle, comment locations and publication recovery.
 - The planned hosted worker's persistence and restart behavior. The current reservation ledger covers local sessions only.
