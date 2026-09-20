@@ -24,8 +24,8 @@ RSpec.describe SlopGuard::Report do
   end
 end
 
-RSpec.describe 'shared test findings' do
-  it 'renders one explanation with both guideline references while preserving machine attribution' do
+RSpec.describe 'findings from two rules at one location' do
+  it 'renders each rule under its own heading so the JSON and Markdown finding sets agree' do
     finding = { 'scenario' => 'Reject nil', 'topic' => 'nil', 'anchor' => { 'path' => 'lib/input.rb', 'line' => 3 },
                 'message' => 'The nil assertion is missing.', 'correction' => 'Assert the error.',
                 'readings' => { 'missing' => 0.95 },
@@ -34,8 +34,7 @@ RSpec.describe 'shared test findings' do
       [id, { 'outcome' => 'concern', 'findings' => [finding.merge('rule' => id)], 'gaps' => [] }]
     end }
     markdown = SlopGuard::Report.markdown(report)
-    expect(markdown.scan('The nil assertion is missing.').size).to eq(1)
-    expect(markdown).to include('see G1; also applies to G2')
-    expect(report['rules']['G2']['findings'].size).to eq(1)
+    expect(markdown.scan('The nil assertion is missing.').size).to eq(2)
+    expect(markdown.lines.grep(/^## /).map(&:strip)).to eq(['## G1: concern', '## G2: concern'])
   end
 end

@@ -30,9 +30,10 @@ module SlopGuard
       matched = []
       false_positives = 0
       actual.each do |finding|
+        anchor = finding.fetch('anchor').slice('path', 'line')
         index = expected.each_index.find do |i|
           !matched.include?(i) && expected[i]['rule'] == finding['rule'] && expected[i]['topic'] == finding['topic'] &&
-            expected[i]['anchors'].include?(finding['anchor'])
+            expected[i]['anchors'].any? { |candidate| candidate.slice('path', 'line') == anchor }
         end
         index ? matched << index : false_positives += 1
       end

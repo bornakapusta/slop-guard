@@ -54,6 +54,19 @@ RSpec.describe SlopGuard::Rules do
     expect { described_class.new(alternatives) }.to raise_error(SlopGuard::InvalidInput, /candidate references/)
   end
 
+  it 'requires a declared kind, scenario source and candidate kind' do
+    kindless = rules_directory('G1') { |rule| rule['kind'] = 'vibes' }
+    expect { described_class.new(kindless) }.to raise_error(SlopGuard::InvalidInput, /kind must be one of/)
+    sourceless = rules_directory('G2') { |rule| rule['scenarios'] = 'wishes' }
+    expect { described_class.new(sourceless) }.to raise_error(SlopGuard::InvalidInput, /scenario source/)
+    unkinded = rules_directory('G4') { |rule| rule.delete('candidate_kind') }
+    expect { described_class.new(unkinded) }.to raise_error(SlopGuard::InvalidInput, /g1.yml through g4.yml/)
+    rules = described_class.new
+    expect(rules.test_rule?('G1')).to be(true)
+    expect(rules.test_rule?('G3')).to be(false)
+    expect(rules.definitions.dig('G2', 'scenarios')).to eq('failures')
+  end
+
   it 'treats any_positive as optional and requires non-empty question text' do
     optional = rules_directory('G3') { |rule| rule.delete('any_positive') }
     expect(described_class.new(optional).definitions['G3']).not_to have_key('any_positive')
@@ -64,7 +77,7 @@ RSpec.describe SlopGuard::Rules do
   it 'reports missing keys, missing files and malformed YAML as invalid configuration without a backtrace' do
     keyless = rules_directory('G1') { |rule| rule.delete('applicable') }
     expect { described_class.new(keyless) }.to raise_error(SlopGuard::InvalidInput, /g1.yml through g4.yml/)
-    expect { described_class.new(Dir.mktmpdir) }.to raise_error(SlopGuard::InvalidInput, /g1.yml through g4.yml/)
+    expect { described_class.new(Dir.mktmpdir) }.to raise_error(SlopGuard::InvalidInput, /No rule files/)
     malformed = rules_directory
     File.write(File.join(malformed, 'g4.yml'), "high: [unclosed\n")
     expect { described_class.new(malformed) }.to raise_error(SlopGuard::InvalidInput, /g1.yml through g4.yml/)

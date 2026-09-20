@@ -1,5 +1,7 @@
 name: Relevant failure cases
 version: 1
+kind: tests
+scenarios: failures
 high: 0.85
 low: 0.20
 applicable: Does this PR change input validation or an established error contract with a relevant failure scenario?

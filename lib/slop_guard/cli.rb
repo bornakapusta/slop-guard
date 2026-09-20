@@ -10,6 +10,8 @@ module SlopGuard
     EXIT_INCOMPLETE = 1
     EXIT_INVALID = 2
     EXIT_OPERATIONAL = 3
+    # Leaves room for one full question next to the state, which is what the client checks per request.
+    QUESTION_HEADROOM = 2048
 
     USAGE = "Usage: bin/review CASE_ID [--profile demo] [--inspect | --live | --show-rules]\n       " \
             'bin/review --repo PATH --base REF [--head REF] --expectations FILE|- ' \
@@ -137,13 +139,15 @@ module SlopGuard
     end
 
     def inspect(snapshot, rules)
-      state = snapshot.state
+      bytes = snapshot.state_bytes
       @stdout.puts JSON.pretty_generate('snapshot' => snapshot.identity, 'gaps' => snapshot.gaps,
                                         'expectation_gaps' => snapshot.expectations.gaps,
                                         'skipped_paths' => snapshot.skipped, 'source' => snapshot.source,
                                         'profile' => snapshot.profile.to_h, 'rules_revision' => rules.revision,
-                                        'rules_files' => rules.files,
-                                        'state_bytes' => JSON.generate(state).bytesize, 'evidence' => state)
+                                        'rules_files' => rules.files, 'state_bytes' => bytes,
+                                        'live_limit_bytes' => JevClient::MAX_STATE_BYTES,
+                                        'fits_live_limit' => bytes + QUESTION_HEADROOM <= JevClient::MAX_STATE_BYTES,
+                                        'evidence' => snapshot.state)
       EXIT_COMPLETE
     end
 

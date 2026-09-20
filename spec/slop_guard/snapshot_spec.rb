@@ -41,6 +41,34 @@ RSpec.describe SlopGuard::Snapshot do
     expect(described_class.new(input, profile: demo_profile).changed).to have_key('lib/path_tracker/page.rb')
   end
 
+  it 'sends changed files, test files and their require_relative closure in full and lists the rest by path' do
+    input = dataset.input('g1-violation')
+    input['files']['lib/path_tracker/untouched.rb'] = "module PathTracker\n  UNTOUCHED = true\nend\n"
+    input['before']['lib/path_tracker/untouched.rb'] = input['files']['lib/path_tracker/untouched.rb']
+    snapshot = described_class.new(input, profile: demo_profile)
+    state = snapshot.state
+    expect(state['head'].keys).to include(*snapshot.changed.keys.select { |path| input['files'].key?(path) })
+    expect(state['head'].keys).to include('spec/spec_helper.rb')
+    expect(state['head'].keys).not_to include('lib/path_tracker/untouched.rb')
+    expect(state['unchanged_paths']).to include('lib/path_tracker/untouched.rb')
+    expect(state['scenario_columns']).to eq(%w[id text])
+    expect(state['scenarios'].map(&:first)).to eq(snapshot.expectations.behaviors.map { |item| item['id'] })
+    expect(state['candidate_columns']).to include('name')
+    expect(state['head'].size).to be < snapshot.files.size
+    expect(state['head'].size + state['unchanged_paths'].size).to eq(snapshot.files.size)
+  end
+
+  it 'anchors a scenario to the changed method its text names before falling back to the first changed line' do
+    input = dataset.input('g1-violation')
+    snapshot = described_class.new(input, profile: demo_profile)
+    method = snapshot.changed_candidates('method').first
+    short = method['name'].split('#').last
+    expect(snapshot.anchor(scenario: "Calling #{short} returns the count")['line'])
+      .to eq(snapshot.changed[method['path']].find { |line| line.between?(method['line'], method['end_line']) })
+    fallback = snapshot.anchor(scenario: 'Nothing here names a method')
+    expect(fallback).to eq(snapshot.anchor)
+  end
+
   it 'marks oversized evidence incomplete and rejects unsafe paths' do
     input = dataset.input('g1-fixed')
     input['files']['spec/huge.rb'] = '#' * 17_000

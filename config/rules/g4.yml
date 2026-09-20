@@ -1,5 +1,7 @@
 name: Justified abstractions
 version: 1
+kind: design
+candidate_kind: class
 high: 0.85
 low: 0.20
 applicable: Does the PR introduce or expand a factory, strategy, registry, interface, or wrapper layer?

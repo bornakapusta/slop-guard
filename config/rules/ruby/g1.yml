@@ -1,5 +1,7 @@
 name: Observable behavior tests
 version: 1
+kind: tests
+scenarios: behaviors
 high: 0.85
 low: 0.20
 applicable: Does this PR change observable behavior that requires an identified test scenario?

@@ -3,8 +3,11 @@
 module SlopGuard
   # Loads trusted questions and thresholds with a content revision.
   class Rules
+    # The saved benchmark rule set. The evaluation harness validates labels against exactly these IDs.
     IDS = %w[G1 G2 G3 G4].freeze
-    TEST_RULES = %w[G1 G2].freeze
+    KINDS = %w[tests design].freeze
+    SCENARIO_SOURCES = %w[behaviors failures].freeze
+    CANDIDATE_KINDS = %w[method class].freeze
 
     attr_reader :definitions, :revision, :files
 
@@ -13,17 +16,17 @@ module SlopGuard
       allocate.tap { |rules| rules.send(:assign, definitions, []) }
     end
 
+    # Every `*.yml` directly inside the directory is a rule; its ID is the upper-cased file name.
     def initialize(directory = File.join(ROOT, 'config/rules'))
-      files = IDS.map { |id| File.join(directory, "#{id.downcase}.yml") }
-      definitions = IDS.zip(files).to_h do |id, path|
+      files = Dir[File.join(directory, '*.yml')].sort
+      raise InvalidInput, 'No rule files found' if files.empty?
+
+      definitions = files.to_h do |path|
         rule = YAML.safe_load_file(path)
         raise InvalidInput, 'Each rule file must be a mapping' unless rule.is_a?(Hash)
 
-        validate_questions!(id, rule)
-        valid = rule.fetch('low').between?(0, 1) && rule.fetch('high').between?(0, 1) &&
-                rule['low'] < rule['high']
-        raise InvalidInput, 'Invalid rule thresholds' unless valid
-
+        id = File.basename(path, '.yml').upcase
+        validate!(id, rule)
         [id, rule]
       end
       assign(definitions, files)
@@ -32,7 +35,7 @@ module SlopGuard
     end
 
     def test_rule?(id)
-      TEST_RULES.include?(id)
+      definitions.fetch(id).fetch('kind') == 'tests'
     end
 
     def question(text)
@@ -49,20 +52,39 @@ module SlopGuard
       @revision = SlopGuard.digest(definitions)
     end
 
-    def validate_questions!(id, rule)
-      fields = %w[name applicable message correction] + (test_rule?(id) ? ['missing'] : ['global'])
-      valid = fields.all? { |key| rule.fetch(key).is_a?(String) && !rule[key].strip.empty? }
-      unless test_rule?(id)
-        candidates = rule.fetch('candidate')
-        valid &&= candidates.is_a?(Hash) && !candidates.empty? &&
-                  candidates.all? { |key, value| key.is_a?(String) && value.is_a?(String) && !value.strip.empty? }
-        %w[positive negative any_positive].each do |key|
-          names = key == 'any_positive' ? rule.fetch(key, []) : rule.fetch(key)
-          valid &&= names.is_a?(Array) && candidates.is_a?(Hash) && names.all? { |name| candidates.key?(name) }
-          valid &&= !names.empty? unless key == 'any_positive'
-        end
+    def validate!(id, rule)
+      unless rule.fetch('low').between?(0, 1) && rule.fetch('high').between?(0, 1) && rule['low'] < rule['high']
+        raise InvalidInput, 'Invalid rule thresholds'
+      end
+
+      kind = rule.fetch('kind')
+      raise InvalidInput, "Rule #{id} kind must be one of #{KINDS.join(', ')}" unless KINDS.include?(kind)
+
+      kind == 'tests' ? validate_test_rule!(rule) : validate_design_rule!(rule)
+    end
+
+    def validate_test_rule!(rule)
+      valid = text?(rule, %w[name applicable message correction missing]) &&
+              SCENARIO_SOURCES.include?(rule.fetch('scenarios'))
+      raise InvalidInput, 'Invalid rule configuration: missing questions or scenario source' unless valid
+    end
+
+    def validate_design_rule!(rule)
+      candidates = rule.fetch('candidate')
+      valid = text?(rule, %w[name applicable message correction global]) &&
+              CANDIDATE_KINDS.include?(rule.fetch('candidate_kind')) &&
+              candidates.is_a?(Hash) && !candidates.empty? &&
+              candidates.all? { |key, value| key.is_a?(String) && value.is_a?(String) && !value.strip.empty? }
+      %w[positive negative any_positive].each do |key|
+        names = key == 'any_positive' ? rule.fetch(key, []) : rule.fetch(key)
+        valid &&= names.is_a?(Array) && candidates.is_a?(Hash) && names.all? { |name| candidates.key?(name) }
+        valid &&= !names.empty? unless key == 'any_positive'
       end
       raise InvalidInput, 'Invalid rule configuration: missing questions or candidate references' unless valid
+    end
+
+    def text?(rule, fields)
+      fields.all? { |key| rule.fetch(key).is_a?(String) && !rule[key].strip.empty? }
     end
   end
 end

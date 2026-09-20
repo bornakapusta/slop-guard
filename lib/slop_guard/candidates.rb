@@ -5,7 +5,8 @@ require 'prism'
 module SlopGuard
   # Enumerates supported Ruby methods and tests without executing reviewed code.
   class Candidates
-    attr_reader :items, :gaps
+    # dependencies: path => paths it reaches with require_relative, used to select evidence for the model.
+    attr_reader :items, :gaps, :dependencies
 
     EXAMPLES = %i[it specify example].freeze
     GROUPS = %i[describe context].freeze
@@ -19,6 +20,7 @@ module SlopGuard
       @files = files
       @items = []
       @gaps = []
+      @dependencies = Hash.new { |hash, key| hash[key] = [] }
       files.each do |path, text|
         next unless path.end_with?('.rb')
 
@@ -102,6 +104,7 @@ module SlopGuard
       if node.name == :require_relative
         target = Pathname.new(File.join(File.dirname(path), arg.unescaped)).cleanpath.to_s
         target += '.rb' unless target.end_with?('.rb')
+        @dependencies[path] << target
         gaps << "Missing dependency: #{target}" unless @files.key?(target)
       elsif !@profile.known_requires.include?(arg.unescaped)
         gaps << "Uninspected dependency: #{arg.unescaped}"

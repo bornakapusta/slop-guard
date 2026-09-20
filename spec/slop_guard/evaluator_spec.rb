@@ -4,23 +4,35 @@ RSpec.describe SlopGuard::Evaluator do
   let(:dataset) { fixture_dataset }
   let(:snapshot) { demo_snapshot(dataset.input('g1-violation')) }
 
+  # Question IDs are "<scenario>/<question>" within one batched ask; a lone 'applicable' means no scenarios.
   def answers(questions, missing: 0.95, covered: false)
+    scenarios = questions.keys.any? { |id| id.end_with?('/missing') }
     questions.to_h do |id, _|
-      value = case id
+      value = case id.split('/').last
               when 'clear' then 0.95
-              when 'applicable' then questions.key?('missing') ? 0.95 : 0.05
+              when 'applicable' then scenarios ? 0.95 : 0.05
               when 'missing' then missing
-              else id.start_with?('exercise_', 'assert_') && covered ? 0.95 : 0.05
+              else id.split('/').last.start_with?('exercise_', 'assert_') && covered ? 0.95 : 0.05
               end
       [id, value]
     end
   end
 
-  it 'finds a missing test only with consistent complete evidence' do
-    client = stub_client { |_state, questions| answers(questions) }
+  it 'finds a missing test only with consistent complete evidence, asking once per rule' do
+    asks = []
+    client = stub_client do |state, questions|
+      asks << questions.keys
+      expect(questions.values.map { |q| q['instructions'] }.join).not_to include(state['scenarios'].first.last)
+      answers(questions)
+    end
     report = described_class.new(client: client).call(snapshot)
+    expect(report['report_version']).to eq(1)
     expect(report.dig('rules', 'G1', 'outcome')).to eq('concern')
-    expect(report.dig('rules', 'G1', 'findings').first['topic']).to eq('behavior')
+    finding = report.dig('rules', 'G1', 'findings').first
+    expect(finding.values_at('topic', 'severity')).to eq(%w[behavior advisory])
+    expect(finding['id']).to match(/\A\h{64}\z/)
+    expect(finding['anchor']['side']).to eq('head')
+    expect(asks.count { |keys| keys.any? { |key| key.end_with?('/missing') } }).to eq(1)
   end
 
   it 'abstains on conflicting answers instead of ignoring an existing test' do
@@ -46,7 +58,7 @@ RSpec.describe SlopGuard::Evaluator do
 
   it 'preserves completed findings when a later rule fails' do
     client = stub_client do |_state, questions|
-      raise SlopGuard::ProviderError, 'Jev unavailable' unless questions.key?('missing')
+      raise SlopGuard::ProviderError, 'Jev unavailable' unless questions.keys.any? { |key| key.end_with?('/missing') }
 
       answers(questions)
     end
