@@ -4,9 +4,9 @@
 
 Slop Guard is an experimental general-purpose code reviewer implemented in Ruby, using Jev to assess code changes. The bundled sample Ruby project under `eval/` is the current evaluation fixture. Keep product scope separate from the current CLI and Ruby evidence-extraction limits.
 
-- `lib/slop_guard.rb` loads the engine only: `profile.rb` (trusted file patterns, rules directory and Ruby/RSpec conventions), evidence extraction (`snapshot.rb`, `candidates.rb`, `expectations.rb`), `rules.rb`, `evaluator.rb`, `jev_client.rb`, `budget.rb`, `report.rb`, `git_source.rb` (bounded, read-only local Git snapshots) and `cli.rb` (the `bin/review` command and its exit codes).
-- `lib/slop_guard/eval/`: the evaluation harness (dataset, runner, analysis, CI summary, threshold replay), loaded with `require 'slop_guard/eval'`. Product code never depends on it.
-- `lib/slop_guard/service/`: the Ruby GitHub App receiver, durable inbox, worker, source adapter and publisher, loaded with `require 'slop_guard/service'`.
+- `lib/slop_guard.rb` loads the engine only: `profile.rb` (trusted file patterns, rules directory and Ruby/RSpec conventions); shared source rules (`source_path.rb`, `source_text.rb`, `tree_entry.rb`); evidence extraction (`snapshot.rb` with `snapshot/{trees,changes,evidence}.rb`, `candidates.rb` with `candidates/extractor.rb`, `expectations.rb`); `rule.rb` and `rules.rb`; `finding.rb`; `evaluator.rb` with `evaluator/{rule_result,rule_run,test_rule_run,design_rule_run}.rb`; `jev_client.rb` (including the typed `Question` envelope); `budget.rb` with `budget/{deadline,ledger}.rb`; `markdown.rb` (escaping and links) and `report.rb` (rendering); `input_document.rb`; `git_source.rb` (bounded, read-only local Git snapshots) and `cli.rb` (the `bin/review` command and its exit codes).
+- `lib/slop_guard/eval/`: the evaluation harness under `SlopGuard::Eval` (`Dataset`, `Runner`, `Analysis`, `Summary`), loaded with `require 'slop_guard/eval'`. Product code never depends on it.
+- `lib/slop_guard/service/`: the Ruby GitHub App receiver, durable inbox, worker, source adapter (`GitHubSource` with a per-snapshot `TreeCollection`) and publisher (`Publisher` with per-delivery `InlineReview` and `Summary`), loaded with `require 'slop_guard/service'`.
 - `bin/app-server`, `bin/app-worker`: hosted App entry points; setup and operations are in `docs/github-app.md`.
 - `bin/review`, `bin/evaluate`, and `bin/analyze-evaluation`: review, evaluation, and offline analysis entry points. `script/` holds thin CI entry points only.
 - `config/demo.yml` and `config/repository.yml`: the `demo` and `ruby` profiles. `config/rules/` holds the saved benchmark rule definitions G1–G4; `config/rules/ruby/` holds the Ruby profile's rules. Each rule declares `kind`, plus `scenarios` or `candidate_kind`.
@@ -32,6 +32,8 @@ Run one spec with `bundle exec rspec spec/slop_guard/evaluator_spec.rb`. Validat
 ## Coding Style & Naming Conventions
 
 Follow existing Ruby code: two-space indentation, `snake_case` files and methods, `CamelCase` classes under `SlopGuard`, and `# frozen_string_literal: true`. Prefer single-quoted strings unless interpolation is needed. RuboCop targets Ruby 3.4; all enabled non-Metrics cops are required. Metrics are reported separately. Keep responsibilities focused and introduce abstractions for present needs.
+
+Class shape: constructors only assign. Reading, parsing, diffing or DDL happens in a class-level factory (`Snapshot.build`, `Candidates.extract`, `Expectations.parse`, `Rules.load`, `Budget.open`, `Store.open`, `Settings.from_env`); `Budget.new` and `Store.new` are private. An object that accumulates per-call state is created for that call and discarded (`Candidates::Extractor`, `GitHubSource::TreeCollection`, `Publisher::InlineReview`); shared objects hold only collaborators. Value objects are `Data.define` and convert to String-keyed hashes with `to_h` at the report boundary, in `docs/report-schema.md` order. No default argument reads the filesystem: callers pass `profile:` and `rules:` explicitly. Every constant lives at the path its name implies. Behaviour-preserving refactors are gated by `spec/golden_spec.rb` and `spec/slop_guard/digests_spec.rb`; regenerate goldens with `script/regenerate_goldens.rb` only when an output change is intended, and review that diff.
 
 ## Testing Guidelines
 

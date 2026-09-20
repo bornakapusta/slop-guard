@@ -26,12 +26,13 @@ begin
   raise SlopGuard::InvalidInput, parser.to_s unless ARGV.empty? && [options[:validate], options[:live],
                                                                     !options[:freeze].nil?].count(true) == 1
 
-  dataset = SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
-  runner = SlopGuard::EvalRunner.new(dataset: dataset)
+  dataset = SlopGuard::Eval::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+  profile = SlopGuard::Profile.load('demo')
+  runner = SlopGuard::Eval::Runner.new(dataset: dataset, profile: profile, rules: SlopGuard::Rules.load(profile.rules_dir))
   if options[:validate]
     dataset.validate!
     contexts = dataset.cases.map do |entry|
-      snapshot = SlopGuard::Snapshot.build(dataset.input(entry['id']), profile: SlopGuard::Profile.load('demo'))
+      snapshot = SlopGuard::Snapshot.build(dataset.input(entry['id']), profile: profile)
       { 'case' => entry['id'], 'state_bytes' => JSON.generate(snapshot.state).bytesize, 'gaps' => snapshot.gaps }
     end
     puts JSON.pretty_generate('cases' => contexts, 'labels_reviewed' => dataset.manifest['labels_reviewed'],

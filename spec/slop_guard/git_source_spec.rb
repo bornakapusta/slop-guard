@@ -97,7 +97,7 @@ RSpec.describe SlopGuard::GitSource do
     expect(snapshot.gaps).to include('Non-regular file was not inspected: lib/link.rb')
     client = silent_client
     expect(client).not_to receive(:ask)
-    result = SlopGuard::Evaluator.new(client: client).call(snapshot)
+    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.load).call(snapshot)
     expect(result['status']).to eq('incomplete')
   end
 
@@ -261,7 +261,7 @@ RSpec.describe SlopGuard::GitSource do
     expect(snapshot.changed).to eq({})
     client = silent_client
     expect(client).not_to receive(:ask)
-    result = SlopGuard::Evaluator.new(client: client).call(snapshot)
+    result = SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.load).call(snapshot)
     expect(result['status']).to eq('incomplete')
     expect(result['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['inconclusive'])
   end

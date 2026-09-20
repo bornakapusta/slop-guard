@@ -11,7 +11,8 @@ File.open(File.join(config.data_dir, 'worker.lock'), File::RDWR | File::CREAT, 0
                                          identity: [config.app_id, config.installation_id, config.repository_id])
   store.recover
   client = SlopGuard::Service::GitHubClient.new(config)
-  worker = SlopGuard::Service::Worker.new(settings: config, store: store, client: client)
+  worker = SlopGuard::Service::Worker.new(settings: config, store: store, client: client,
+                                          profile: SlopGuard::Profile.load('ruby'))
   stopping = false
   %w[INT TERM].each { |signal| Signal.trap(signal) { stopping = true } }
   $stdout.sync = true

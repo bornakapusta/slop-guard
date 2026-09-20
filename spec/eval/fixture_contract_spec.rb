@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe SlopGuard::Dataset do
+RSpec.describe SlopGuard::Eval::Dataset do
   subject(:dataset) { described_class.new(File.join(SlopGuard::ROOT, 'eval')) }
 
   it 'validates all four rules across 16 development and 8 held-out cases' do

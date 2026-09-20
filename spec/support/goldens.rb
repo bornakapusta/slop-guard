@@ -93,7 +93,7 @@ module Goldens
   end
 
   def review(covered: false, fail_design: false, client: fixed_client(covered: covered, fail_design: fail_design))
-    SlopGuard::Evaluator.new(client: client).call(snapshot)
+    SlopGuard::Evaluator.new(client: client, rules: SlopGuard::Rules.load).call(snapshot)
   end
 
   def fixed_client(covered: false, fail_design: false)
@@ -105,6 +105,6 @@ module Goldens
   end
 
   def dataset
-    SlopGuard::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
+    SlopGuard::Eval::Dataset.new(File.join(SlopGuard::ROOT, 'eval'))
   end
 end

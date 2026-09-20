@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe SlopGuard::EvalRunner do
+RSpec.describe SlopGuard::Eval::Runner do
   let(:dataset) { fixture_dataset }
-  let(:runner) { described_class.new(dataset: dataset) }
+  let(:runner) { described_class.new(dataset: dataset, profile: demo_profile, rules: demo_rules) }
   let(:labels) { dataset.labels('g1-violation') }
 
   def report_with(findings, outcome = 'concern')
@@ -56,7 +56,7 @@ RSpec.describe 'evaluation prerequisites' do
   it 'rejects empty datasets rather than treating zero cases as a pass' do
     Dir.mktmpdir do |directory|
       File.write(File.join(directory, 'manifest.json'), JSON.generate('cases' => []))
-      dataset = SlopGuard::Dataset.new(directory)
+      dataset = SlopGuard::Eval::Dataset.new(directory)
       expect { dataset.validate! }.to raise_error(SlopGuard::InvalidInput, /16 development/)
     end
   end

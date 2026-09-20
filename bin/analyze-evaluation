@@ -18,7 +18,7 @@ begin
   split = report.fetch('split')
   raise SlopGuard::InvalidInput, 'Unknown evaluation split' unless %w[development holdout].include?(split)
 
-  analysis = SlopGuard::EvaluationAnalysis.new(report, case_ids: report.fetch('case_ids'))
+  analysis = SlopGuard::Eval::Analysis.new(report, case_ids: report.fetch('case_ids'))
   puts(options[:json] ? JSON.pretty_generate(analysis.to_h) : analysis.markdown)
 rescue SlopGuard::Error, OptionParser::ParseError, SystemCallError, JSON::ParserError, KeyError, TypeError => e
   warn SlopGuard.printable(e.message, keep_newlines: true)

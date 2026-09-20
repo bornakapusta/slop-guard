@@ -4,7 +4,7 @@ require_relative '../../support/service'
 
 RSpec.describe SlopGuard::Service::GitHubSource do
   include_context 'app service'
-  let(:source) { described_class.new(client: client, settings: settings) }
+  let(:source) { described_class.new(client: client, settings: settings, profile: ruby_profile) }
   let(:ancestor) { 'c' * 40 }
   let(:tree_entries) do
     [{ 'path' => 'lib/parser.rb', 'type' => 'blob', 'mode' => '100644', 'size' => 30, 'sha' => 'd' * 40 },

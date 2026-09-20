@@ -76,26 +76,26 @@ Exit: goldens identical; no duplicated path/blob predicate (grep `include?("\0")
 
 ## Phase 5 — Namespaces, defaults, naming (rules 9, 14)
 
-- [ ] `lib/slop_guard/eval/*` → `SlopGuard::Eval::Runner`, `Eval::Analysis`, `Eval::Summary`, `Eval::Dataset`. Callers: `bin/evaluate:29-30`, `bin/analyze-evaluation:21`, `script/evaluation_summary.rb:20,29,30`, `cli.rb:123`, `stub_client.rb:17`, `spec/eval/*`, `spec/ci/evaluation_summary_spec.rb:20`, `metrics_spec.rb`, `fixture_contract_spec.rb`. Closes `todos/021` naming item.
-- [ ] Remove disk-reading defaults: `profile: Profile.load('ruby')` (`github_source.rb:11`, `worker.rb:8`), `rules: Rules.new` (`evaluator.rb:10`), `Eval::Runner` defaults (`runner.rb:27`). Callers pass explicitly: `bin/app-worker:14`, `bin/evaluate:30,34`, `evaluator_spec.rb` (8 sites), `design_rules_spec.rb:17`, `git_source_spec.rb:100,264`. Add `spec/support` helpers `demo_rules`/`ruby_rules`.
-- [ ] `Rules::IDS` / `Analysis::RULES` / `Report::CHECK_NAMES` keep `%w[G1 G2 G3 G4]` (fixture contract).
-- [ ] AGENTS.md structure section: new files, `.build/.load/.open` convention, per-call object rule, value-object boundary rule. `docs/report-schema.md` unchanged (verify). `docs/github-app.md` deploy note re engine_revision re-key.
-- [ ] Metrics: re-run, record delta here. Target: RuleRun/Snapshot/Publisher/Budget/GitHubSource offences gone; remaining hotspots (`eval/analysis.rb#validate!`, `runner.rb#score`, `cli.rb#parse`) listed in `todos/023` update or new todo.
+- [x] `lib/slop_guard/eval/*` → `SlopGuard::Eval::Runner`, `Eval::Analysis`, `Eval::Summary`, `Eval::Dataset`. Callers: `bin/evaluate:29-30`, `bin/analyze-evaluation:21`, `script/evaluation_summary.rb:20,29,30`, `cli.rb:123`, `stub_client.rb:17`, `spec/eval/*`, `spec/ci/evaluation_summary_spec.rb:20`, `metrics_spec.rb`, `fixture_contract_spec.rb`. Closes `todos/021` naming item.
+- [x] Remove disk-reading defaults: `profile: Profile.load('ruby')` (`github_source.rb:11`, `worker.rb:8`), `rules: Rules.new` (`evaluator.rb:10`), `Eval::Runner` defaults (`runner.rb:27`). Callers pass explicitly: `bin/app-worker:14`, `bin/evaluate:30,34`, `evaluator_spec.rb` (8 sites), `design_rules_spec.rb:17`, `git_source_spec.rb:100,264`. Add `spec/support` helpers `demo_rules`/`ruby_rules`.
+- [x] `Rules::IDS` / `Analysis::RULES` / `Report::CHECK_NAMES` keep `%w[G1 G2 G3 G4]` (fixture contract).
+- [x] AGENTS.md structure section: new files, `.build/.load/.open` convention, per-call object rule, value-object boundary rule. `docs/report-schema.md` unchanged (verify). `docs/github-app.md` deploy note re engine_revision re-key.
+- [x] Metrics: 234 → 218 total (lib/bin/script 184). RuleRun ClassLength, `Snapshot#initialize`, `Publisher#inline`, `GitHubSource#tree` hotspots gone. Remaining (`eval/analysis.rb` 21, `eval/runner.rb` 15, `git_source.rb` 15, `cli.rb` 12, `eval/summary.rb` 12, `jev_client.rb` 12) recorded in `todos/030`; `todos/023` closed.
 
-Exit: rspec, `rubocop --except Metrics`, `bin/evaluate --validate`, goldens all green.
+Exit: rspec, `rubocop --except Metrics`, `bin/evaluate --validate`, goldens all green. Done: 209 examples; `SlopGuard::Eval::{Dataset,Runner,Analysis,Summary}`; `Evaluator`, `Eval::Runner`, `Worker`, `GitHubSource` take `rules:`/`profile:` explicitly (`Rules.load`/`Profile.load` remain as loader class methods only); `spec/support/stub_client.rb` gained `demo_rules`.
 
 ## Acceptance criteria
 
-- [ ] Goldens (Phase 0) byte-identical at every phase; pinned digests unchanged.
-- [ ] No constructor in `lib/` performs IO, parsing, diffing or DDL (grep review).
-- [ ] No ivar assigned outside `initialize` in `Publisher`, `GitHubSource`; `Evaluator` stateless.
-- [ ] `Evaluator::RuleRun` replaced by `RuleRun`/`TestRuleRun`/`DesignRuleRun` ≤ 80 lines each.
-- [ ] In-memory report has no Symbol keys (deep-walk spec).
-- [ ] No default argument in `lib/` calls `Profile.load`, `Rules.load`, or reads disk.
-- [ ] Every constant path matches file path (`SlopGuard::Eval::Runner` in `eval/runner.rb`).
-- [ ] Metrics offences < 234 baseline; number recorded. Non-Metrics RuboCop clean.
-- [ ] `todos/023` complete; `todos/021` naming item complete; new todo for leftover Metrics hotspots.
-- [ ] Landed before plan 002 Phase 6 freeze; deploy note written.
+- [x] Goldens (Phase 0) byte-identical at every phase; pinned digests unchanged.
+- [x] No constructor in `lib/` performs IO, parsing, diffing or DDL (grep review). Exceptions by design: `GitSource#initialize` resolves `File.realpath` and scrubs ENV (path validation, no reads); `Store.open`/`Settings.from_env`/`Budget.open` are the factories.
+- [x] No ivar assigned outside `initialize` in `Publisher`, `GitHubSource`; `Evaluator` stateless (spec: publisher keeps only `@client`/`@store`).
+- [x] `Evaluator::RuleRun` replaced by `RuleRun`/`TestRuleRun`/`DesignRuleRun` (85 / 80 / 78 lines incl. comments).
+- [x] In-memory report has no Symbol keys (deep-walk spec).
+- [x] No default argument in `lib/` calls `Profile.load`, `Rules.load`, or reads disk.
+- [x] Every constant path matches file path (`SlopGuard::Eval::Runner` in `eval/runner.rb`).
+- [x] Metrics offences 218 < 234 baseline. Non-Metrics RuboCop clean.
+- [x] `todos/023` complete; `todos/021` naming item (Eval namespace) done; `todos/030` opened for leftover Metrics hotspots.
+- [x] Deploy note written (`docs/github-app.md`, engine revision re-keys open PR runs). Landing before the plan 002 Phase 6 freeze is the maintainer's merge decision.
 
 ## Risks
 

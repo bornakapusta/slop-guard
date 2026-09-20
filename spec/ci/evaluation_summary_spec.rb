@@ -3,7 +3,7 @@
 require 'open3'
 require 'rbconfig'
 
-RSpec.describe SlopGuard::EvaluationSummary do
+RSpec.describe SlopGuard::Eval::Summary do
   let(:cases) { %w[violation fixed] }
   let(:counts) { { 'true_positives' => 1, 'false_positives' => 0, 'misses' => 0, 'unnecessary_abstentions' => 0 } }
   let(:report) do

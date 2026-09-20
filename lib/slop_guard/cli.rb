@@ -118,7 +118,7 @@ module SlopGuard
         InputDocument.read(options[:input]).merge('pr_body' => expectations(options))
       else
         require_relative 'eval'
-        Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case))
+        Eval::Dataset.new(File.join(ROOT, 'eval')).input(options.fetch(:case))
       end
     end
 

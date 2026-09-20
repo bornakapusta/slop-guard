@@ -25,7 +25,7 @@ RSpec.describe SlopGuard::Evaluator do
       expect(questions.values.map { |q| q['instructions'] }.join).not_to include(state['scenarios'].first.last)
       answers(questions)
     end
-    report = described_class.new(client: client).call(snapshot)
+    report = described_class.new(client: client, rules: demo_rules).call(snapshot)
     expect(report['report_version']).to eq(1)
     expect(report.dig('rules', 'G1', 'outcome')).to eq('concern')
     finding = report.dig('rules', 'G1', 'findings').first
@@ -37,22 +37,24 @@ RSpec.describe SlopGuard::Evaluator do
 
   it 'abstains on conflicting answers instead of ignoring an existing test' do
     client = stub_client { |_state, questions| answers(questions, covered: true) }
-    report = described_class.new(client: client).call(snapshot)
+    report = described_class.new(client: client, rules: demo_rules).call(snapshot)
     expect(report.dig('rules', 'G1', 'outcome')).to eq('inconclusive')
   end
 
   it 'accepts a supported existing test and treats the threshold boundary consistently' do
     client = stub_client { |_state, questions| answers(questions, missing: 0.20, covered: true) }
-    expect(described_class.new(client: client).call(snapshot).dig('rules', 'G1', 'outcome')).to eq('no_concern')
+    expect(described_class.new(client: client, rules: demo_rules).call(snapshot).dig('rules', 'G1',
+                                                                                     'outcome')).to eq('no_concern')
     client = stub_client { |_state, questions| answers(questions, missing: 0.85) }
-    expect(described_class.new(client: client).call(snapshot).dig('rules', 'G1', 'outcome')).to eq('concern')
+    expect(described_class.new(client: client, rules: demo_rules).call(snapshot).dig('rules', 'G1',
+                                                                                     'outcome')).to eq('concern')
   end
 
   it 'does not call Jev when required evidence is missing' do
     client = silent_client
     expect(client).not_to receive(:ask)
     input = demo_snapshot(dataset.input('g1-incomplete'))
-    report = described_class.new(client: client).call(input)
+    report = described_class.new(client: client, rules: demo_rules).call(input)
     expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['inconclusive'])
   end
 
@@ -62,7 +64,7 @@ RSpec.describe SlopGuard::Evaluator do
 
       answers(questions)
     end
-    report = described_class.new(client: client).call(snapshot)
+    report = described_class.new(client: client, rules: demo_rules).call(snapshot)
     expect(report['status']).to eq('failed')
     expect(report.dig('rules', 'G1', 'outcome')).to eq('concern')
     expect(report.dig('rules', 'G3', 'outcome')).to eq('inconclusive')
@@ -74,7 +76,7 @@ RSpec.describe SlopGuard::Evaluator do
       asks += 1
       raise SlopGuard::ProviderError, 'Jev returned HTTP 401'
     end
-    report = described_class.new(client: client).call(snapshot)
+    report = described_class.new(client: client, rules: demo_rules).call(snapshot)
     expect(asks).to eq(1)
     expect(report['status']).to eq('failed')
     expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['inconclusive'])
@@ -86,7 +88,7 @@ RSpec.describe SlopGuard::Evaluator do
     input['before'] = input['files']
     client = silent_client
     expect(client).not_to receive(:ask)
-    report = described_class.new(client: client).call(demo_snapshot(input))
+    report = described_class.new(client: client, rules: demo_rules).call(demo_snapshot(input))
     expect(report['rules'].values.map { |rule| rule['outcome'] }.uniq).to eq(['not_applicable'])
   end
 end

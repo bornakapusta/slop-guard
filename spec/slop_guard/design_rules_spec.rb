@@ -14,7 +14,7 @@ RSpec.describe 'design decisions' do
         questions.to_h { |key, _| [key, key.end_with?('/clear') ? 0.95 : 0.05] }
       end
     end
-    SlopGuard::Evaluator.new(client: client).call(demo_snapshot(dataset.input(id)))
+    SlopGuard::Evaluator.new(client: client, rules: demo_rules).call(demo_snapshot(dataset.input(id)))
   end
 
   it 'requires the abstraction to lack both consumers and a present constraint' do

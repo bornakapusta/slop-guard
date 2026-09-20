@@ -8,7 +8,7 @@ RSpec.describe SlopGuard::Service::Worker do
   let(:snapshot) { instance_double(SlopGuard::Snapshot, changed: changed) }
   let(:evaluate) { ->(_snapshot) { report } }
   let(:worker) do
-    described_class.new(settings: settings, store: store, client: client, source: source,
+    described_class.new(settings: settings, store: store, client: client, source: source, profile: ruby_profile,
                         evaluate: evaluate, logger: StringIO.new)
   end
 

@@ -17,7 +17,7 @@ module SlopGuard
         value
       end
 
-      def initialize(client:, settings:, profile: Profile.load('ruby'))
+      def initialize(client:, settings:, profile:)
         @client = client
         @settings = settings
         @profile = profile

@@ -4,8 +4,7 @@ module SlopGuard
   module Service
     # A single worker checkpoints paid evaluation before publishing to GitHub.
     class Worker
-      def initialize(settings:, store:, client:, source: nil, evaluate: nil, logger: $stdout,
-                     profile: Profile.load('ruby'))
+      def initialize(settings:, store:, client:, profile:, source: nil, evaluate: nil, logger: $stdout)
         @settings = settings
         @store = store
         @source = source || GitHubSource.new(client: client, settings: settings, profile: profile)
