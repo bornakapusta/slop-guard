@@ -1,0 +1,192 @@
+{
+  "analysis_version": 1,
+  "source_report_digest": "2de6f9559dd74c3dcafe59cda69ad6ea9d1e35007507d9071ff1a9044da3cd32",
+  "live": true,
+  "labels_reviewed": false,
+  "versions": {
+    "model": "jev-1.13.0",
+    "rules": "baf679b51a0e0d14bac959aae1acc939f1890185b84bc5c06c4d4d4d7c163a3c",
+    "engine": "76836c6bd1dec884cd03ca2fa26b613a87e7add1b01db3397af9596fe422aea3",
+    "dataset": "36bbaf78f4cf4100a5b36e1ccaa240a008587a0e4883619b34107f0ffc7bbcef",
+    "lockfile": "b643c9d72ca6dab7320d1551fcfed7b779ea5038cf3b361dc2e312a4fd378507",
+    "ruby": "3.4.5",
+    "profile": "0ab896d23b0f5cb7a88fe52a091f9c141e8cb22ad04c90652dbcf5d4fa9e256e"
+  },
+  "split": "development",
+  "complete": true,
+  "distinct_cases": 16,
+  "observed_reviews": 48,
+  "repetitions": 3,
+  "exact_matches": 31,
+  "exact_match_rate_observed": 0.6458333333333334,
+  "operational_failures": 0,
+  "by_rule": {
+    "G1": {
+      "true_positives": 0,
+      "false_positives": 0,
+      "misses": 3,
+      "matches": 45,
+      "observations": 48,
+      "accuracy": 0.9375,
+      "confusion_expected_actual": {
+        "concern": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 3
+        },
+        "no_concern": {
+          "concern": 0,
+          "no_concern": 33,
+          "not_applicable": 0,
+          "inconclusive": 0
+        },
+        "not_applicable": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 12
+        }
+      },
+      "cases_with_pairs": 16,
+      "mean_case_repeat_agreement": 1.0,
+      "finding_precision": null,
+      "finding_recall": 0.0
+    },
+    "G2": {
+      "true_positives": 3,
+      "false_positives": 0,
+      "misses": 0,
+      "matches": 47,
+      "observations": 48,
+      "accuracy": 0.9791666666666666,
+      "confusion_expected_actual": {
+        "concern": {
+          "concern": 3,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 0
+        },
+        "no_concern": {
+          "concern": 0,
+          "no_concern": 6,
+          "not_applicable": 0,
+          "inconclusive": 0
+        },
+        "not_applicable": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 26,
+          "inconclusive": 1
+        },
+        "inconclusive": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 12
+        }
+      },
+      "cases_with_pairs": 16,
+      "mean_case_repeat_agreement": 0.9583333333333334,
+      "finding_precision": 1.0,
+      "finding_recall": 1.0
+    },
+    "G3": {
+      "true_positives": 0,
+      "false_positives": 0,
+      "misses": 3,
+      "matches": 36,
+      "observations": 48,
+      "accuracy": 0.75,
+      "confusion_expected_actual": {
+        "concern": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 3
+        },
+        "no_concern": {
+          "concern": 0,
+          "no_concern": 24,
+          "not_applicable": 0,
+          "inconclusive": 9
+        },
+        "not_applicable": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 12
+        }
+      },
+      "cases_with_pairs": 16,
+      "mean_case_repeat_agreement": 0.9166666666666666,
+      "finding_precision": null,
+      "finding_recall": 0.0
+    },
+    "G4": {
+      "true_positives": 0,
+      "false_positives": 0,
+      "misses": 3,
+      "matches": 42,
+      "observations": 48,
+      "accuracy": 0.875,
+      "confusion_expected_actual": {
+        "concern": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 3,
+          "inconclusive": 0
+        },
+        "no_concern": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 2,
+          "inconclusive": 1
+        },
+        "not_applicable": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 30,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "concern": 0,
+          "no_concern": 0,
+          "not_applicable": 0,
+          "inconclusive": 12
+        }
+      },
+      "cases_with_pairs": 16,
+      "mean_case_repeat_agreement": 0.9583333333333334,
+      "finding_precision": null,
+      "finding_recall": 0.0
+    }
+  },
+  "review_latency_seconds": {
+    "samples": 0,
+    "mean": null,
+    "p50": null,
+    "p95": null
+  },
+  "usage": {
+    "input_tokens": 1930253,
+    "estimated_usd": 0.081070626,
+    "reserved_usd": 0.49727999999999994,
+    "request_attempts": 185,
+    "mean_estimated_usd_per_observed_review": 0.001688971375
+  },
+  "source_file_sha256": "f6aa75decbba38e67f3ea38ab05932ddd2ce51fec83262bc84a105588466bdd0",
+  "evidence_kind": "offline analysis of historical live calibration; not a new evaluation"
+}

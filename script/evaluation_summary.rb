@@ -44,6 +44,10 @@ module SlopGuard
       else
         lines << 'This run is incomplete. Final metrics and repeat stability are unavailable.'
       end
+      if report.key?('case_ids')
+        analysis = EvaluationAnalysis.new(report, case_ids: expected.map(&:first).uniq)
+        lines << '' << analysis.markdown
+      end
       lines << '' << '### Recorded versions'
       report.fetch('versions').each { |name, value| lines << "- #{Report.escape(name)}: #{Report.escape(value)}" }
       lines << '' << 'Development results are separate from code-quality CI and held-out qualification.'

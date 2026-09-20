@@ -59,3 +59,9 @@ After the workflow is merged into `main`, dispatch **Development evaluation** fr
 The job summary distinguishes a completed label match, mismatch, interrupted run and unavailable report. It reports provisional-label status, per-rule counts, repeat variability, versions, estimated input cost and request reservations. Download the raw report and ledger within 14 days. Code-quality CI and this workflow are independent; a green CI run is not model qualification. See [CI operation](ci.md).
 
 The CI style cleanup and gem additions change version fingerprints. Earlier baseline and calibration reports remain historical evidence; they cannot freeze or qualify the new version.
+
+## Accuracy and repeatability reports
+
+Use `bundle exec ruby bin/analyze-evaluation REPORT.json` to analyze saved evidence offline. Add `--json` for confusion matrices, per-case agreement, finding precision/recall and per-question sample variance. New reports include per-review latency. The [benchmark guide](evaluation-benchmark.md) documents the optional development-only `--benchmark --repeats 10` mode, partial-run handling and the unchanged budget guard.
+
+Freezing now requires the report's labels to be marked reviewed. Exploratory benchmark reports cannot be frozen; use a fresh ordinary development evaluation after label review and calibration.

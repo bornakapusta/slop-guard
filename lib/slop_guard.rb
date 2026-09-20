@@ -21,6 +21,7 @@ module SlopGuard
   end
 end
 
-%w[dataset expectations candidates snapshot rules budget jev_client evaluator report eval_runner].each do |name|
+%w[dataset expectations candidates snapshot rules budget jev_client evaluator report eval_runner
+   evaluation_analysis].each do |name|
   require_relative "slop_guard/#{name}"
 end

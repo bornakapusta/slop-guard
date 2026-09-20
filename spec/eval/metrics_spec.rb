@@ -32,6 +32,20 @@ RSpec.describe SlopGuard::EvalRunner do
     expect(score['unnecessary_abstentions']).to eq(1)
   end
 
+  it 'does not freeze provisional labels or an exploratory benchmark as qualification' do
+    source = { 'live' => true, 'passed' => true, 'split' => 'development', 'versions' => runner.versions,
+               'runs' => dataset.cases('development').map { |entry| { 'case' => entry['id'] } },
+               'labels_reviewed' => false }
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, 'report.json')
+      File.write(path, JSON.generate(source))
+      expect { runner.freeze!(path, File.join(directory, 'frozen.json')) }.to raise_error(SlopGuard::InvalidInput)
+      source.merge!('labels_reviewed' => true, 'mode' => 'benchmark')
+      File.write(path, JSON.generate(source))
+      expect { runner.freeze!(path, File.join(directory, 'frozen.json')) }.to raise_error(SlopGuard::InvalidInput)
+    end
+  end
+
   it 'rejects freezing fabricated replay results' do
     Dir.mktmpdir do |directory|
       path = File.join(directory, 'report.json')
